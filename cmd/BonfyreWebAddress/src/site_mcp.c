@@ -149,8 +149,8 @@ static void site_page_metadata(FILE *out,const McpSite *site,const char *route,
     const char *description=summary&&*summary?summary:site->tagline;
     int article=ed&&ed->article;
     ui_start(out,"link");ui_attr(out,"rel","canonical");ui_attr_open(out,"href");htext(out,url);fputs("\">",out);
-    fputs(article?"<meta property=\"og:type\" content=\"article\">":
-         "<meta property=\"og:type\" content=\"website\">",out);
+    if(article)ui_open_a(out,"meta","property","og:type","content","article");
+    else ui_open_a(out,"meta","property","og:type","content","website");
     ui_start(out,"meta");ui_attr(out,"property","og:url");ui_attr_open(out,"content");
     htext(out,url);fputs("\"><meta property=\"og:title\" content=\"",out);
     htext(out,title);fputs("\"><meta property=\"og:site_name\" content=\"",out);
@@ -165,7 +165,8 @@ static void site_page_metadata(FILE *out,const McpSite *site,const char *route,
         ui_start(out,"meta");ui_attr(out,"property","article:modified_time");ui_attr_open(out,"content");
         htext(out,ed->updated_at);fputs("\">",out);
     }
-    fputs("<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":",out);
+    ui_start(out,"script");ui_attr(out,"type","application/ld+json");ui_gt(out);
+    ui_lit(out,"{\"@context\":\"https://schema.org\",\"@type\":");
     site_script_text(out,article?"Article":"WebPage");
     fputs(",\"url\":",out);site_script_text(out,url);
     fputs(article?",\"headline\":":",\"name\":",out);site_script_text(out,title);
@@ -741,13 +742,16 @@ static char *ui_view(sqlite3 *db, const McpSite *site, size_t *len) {
     FILE *out = open_memstream(&html, len);
     sqlite3_stmt *st = NULL;
     long n = 0;
-    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-          "<meta name=\"color-scheme\" content=\"light dark\"><title>", out);
+    ui_lit(out,"<!doctype html>");ui_start(out,"html");ui_attr(out,"lang","en");ui_gt(out);
+    ui_open(out,"head",NULL);ui_open_a(out,"meta","charset","utf-8");
+    ui_open_a(out,"meta","name","viewport","content","width=device-width,initial-scale=1");
+    ui_open_a(out,"meta","name","color-scheme","content","light dark");ui_open(out,"title",NULL);
     htext(out, site->title);
-    ui_close(out,"title"); site_browser_icon(out, site); fputs("<style>", out);
+    ui_close(out,"title"); site_browser_icon(out, site); ui_open(out,"style",NULL);
     style_tokens(out, site);
     fputs(SHARED_CSS, out);
-    fputs("</style></head><body><main><header class=\"mast\"><p class=\"eyebrow\" id=\"host\">", out);
+    ui_close(out,"style");ui_close(out,"head");ui_open(out,"body",NULL);ui_open(out,"main",NULL);
+    ui_open(out,"header","mast");ui_start(out,"p");ui_attr(out,"class","eyebrow");ui_attr(out,"id","host");ui_gt(out);
     htext(out, site->host);
     ui_close(out,"p");ui_start(out,"h1");ui_attr(out,"id","name");ui_gt(out); htext(out, site->title);
     ui_close(out,"h1");ui_start(out,"p");ui_attr(out,"class","lede");ui_attr(out,"id","about");ui_gt(out); htext(out, site->tagline);
@@ -769,7 +773,7 @@ static char *ui_view(sqlite3 *db, const McpSite *site, size_t *len) {
     }
     if (!n) {ui_open(out,"p","empty");ui_copy(out,"Nothing published here yet.");ui_close(out,"p");}
     ui_close(out,"section");ui_open(out,"footer",NULL);ui_copy(out,"From ");ui_start(out,"span");ui_attr(out,"id","src");ui_gt(out); htext(out, site->host);
-    fputs("</span></footer></main><script>", out);
+    ui_close(out,"span");ui_close(out,"footer");ui_close(out,"main");ui_open(out,"script",NULL);
     /* Text is set as text, never as markup: a post cannot script the view. */
     fputs(
         "(function(){var pending={},seq=1,box=document.getElementById('posts');"
@@ -798,7 +802,7 @@ static char *ui_view(sqlite3 *db, const McpSite *site, size_t *len) {
         "request('ui/initialize',{protocolVersion:'2025-06-18',appInfo:{name:'site-posts',version:'1'},appCapabilities:{}})"
         ".then(function(r){theme(r);note('ui/notifications/initialized');size()});"
         "window.addEventListener('resize',size)})();", out);
-    fputs("</script></body></html>", out);
+    ui_close(out,"script");ui_close(out,"body");ui_close(out,"html");
     fclose(out);
     return html;
 }
@@ -1272,7 +1276,7 @@ static void table_row(FILE *out, const char *line, size_t n, const char *cell) {
         if (!bar && stop == at) break;
         while (from < stop && *from == ' ') from++;
         while (stop > from && stop[-1] == ' ') stop--;
-        fprintf(out, "<%s>", cell); inline_text(out, from, (size_t)(stop - from)); fprintf(out, "</%s>", cell);
+        ui_open(out, cell, NULL); inline_text(out, from, (size_t)(stop - from)); ui_close(out, cell);
         if (!bar) break;
         at = bar + 1;
     }
@@ -1300,7 +1304,8 @@ static void rich_text(FILE *out, const char *body) {
             ui_start(out,"figure");ui_attr(out,"class","code");ui_attr_open(out,"data-lang"); hspan(out, info, lang);
             fputs("\"><figcaption><span>", out);
             if (label) hspan(out, gap + 1, label); else if (shell) fputs("Terminal", out); else hspan(out, info, lang);
-            fputs("</span><button type=\"button\" class=\"code-copy\">Copy</button></figcaption><pre><code>", out);
+            ui_close(out,"span");ui_open_a(out,"button","type","button","class","code-copy");ui_copy(out,"Copy");
+            ui_close(out,"button");ui_close(out,"figcaption");ui_open(out,"pre",NULL);ui_open(out,"code",NULL);
             for (const char *line = code; line < close; ) {
                 const char *end = memchr(line, '\n', (size_t)(close - line));
                 size_t length = end ? (size_t)(end - line) : (size_t)(close - line);
@@ -1324,22 +1329,23 @@ static void rich_text(FILE *out, const char *body) {
             size_t prefix = level == 3 ? 4 : 3;
             char heading[200];
             snprintf(heading, sizeof(heading), "%.*s", (int)(n - prefix), at + prefix);
-            fprintf(out, "<h%d id=\"", level);
+            char htag[4]; snprintf(htag, sizeof(htag), "h%d", level);
+            ui_start(out, htag); ui_attr_open(out, "id");
             slug_text(out, heading);
             fputs("\">", out);
             inline_text(out, at + prefix, n - prefix);
-            fprintf(out, "</h%d>", level);
+            ui_close(out, htag);
         } else if (!strncmp(at, "- ", 2) || !strncmp(at, "* ", 2) || (isdigit((unsigned char)at[0]) && at[1] == '.' && at[2] == ' ')) {
             int ordered = isdigit((unsigned char)at[0]);
             size_t lead = ordered ? 3 : 2;
-            fputs(ordered ? "<ol>" : "<ul>", out);
+            if (ordered) ui_open(out,"ol",NULL); else ui_open(out,"ul",NULL);
             for (;;) {
                 ui_open(out,"li",NULL); inline_text(out, at + lead, n - lead); ui_close(out,"li");
                 if (!eol) break;
                 if (ordered ? !(isdigit((unsigned char)eol[1]) && eol[2] == '.' && eol[3] == ' ') : (strncmp(eol + 1, "- ", 2) && strncmp(eol + 1, "* ", 2))) break;
                 at = eol + 1; eol = strchr(at, '\n'); n = eol ? (size_t)(eol - at) : strlen(at);
             }
-            fputs(ordered ? "</ol>" : "</ul>", out);
+            if (ordered) ui_close(out,"ol"); else ui_close(out,"ul");
         } else if (at[0] == '|') {
             int row = 0, headed = eol && !strncmp(eol + 1, "|-", 2), blank_head = 1;
             for (size_t i = 0; i < n; i++) if (at[i] != '|' && at[i] != ' ') blank_head = 0;
@@ -1391,7 +1397,12 @@ static void pages_nav(FILE *out, sqlite3 *db, const char *site_id, const char *c
     sqlite3_bind_text(st, 1, site_id, -1, SQLITE_STATIC);
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *route = (const char *)sqlite3_column_text(st, 0);
-        if (!n++) fprintf(out, "<nav class=\"site-program-nav\" aria-label=\"Pages\"><a href=\"/\"%s>Home</a>", current && !strcmp(current, "/") ? " aria-current=\"page\"" : "");
+        if (!n++) do {
+            ui_start(out,"nav");ui_attr(out,"class","site-program-nav");ui_attr(out,"aria-label","Pages");ui_gt(out);
+            ui_start(out,"a");ui_attr(out,"href","/");
+            if (current && !strcmp(current, "/")) ui_attr(out,"aria-current","page");
+            ui_gt(out);ui_copy(out,"Home");ui_close(out,"a");
+        } while (0);
         ui_start(out,"a");ui_attr_open(out,"href"); htext(out, route);
         fprintf(out, "\"%s>", current && !strcmp(current, route) ? " aria-current=\"page\"" : "");
         htext(out, (const char *)sqlite3_column_text(st, 1));
@@ -1402,8 +1413,15 @@ static void pages_nav(FILE *out, sqlite3 *db, const char *site_id, const char *c
     }
     sqlite3_finalize(st);
     /* Every site can be written to; the way in is always in the menu. */
-    if (!n) fprintf(out, "<nav class=\"site-program-nav\" aria-label=\"Pages\"><a href=\"/\"%s>Home</a>", current && !strcmp(current, "/") ? " aria-current=\"page\"" : "");
-    fprintf(out, "<a href=\"/contact\"%s>Contact</a></nav>", current && !strcmp(current, "/contact") ? " aria-current=\"page\"" : "");
+    if (!n) do {
+        ui_start(out,"nav");ui_attr(out,"class","site-program-nav");ui_attr(out,"aria-label","Pages");ui_gt(out);
+        ui_start(out,"a");ui_attr(out,"href","/");
+        if (current && !strcmp(current, "/")) ui_attr(out,"aria-current","page");
+        ui_gt(out);ui_copy(out,"Home");ui_close(out,"a");
+    } while (0);
+    ui_start(out,"a");ui_attr(out,"href","/contact");
+    if (current && !strcmp(current, "/contact")) ui_attr(out,"aria-current","page");
+    ui_gt(out);ui_copy(out,"Contact");ui_close(out,"a");ui_close(out,"nav");
 }
 
 void bf_site_pages_nav(sqlite3 *db, const char *site_id) { pages_nav(stdout, db, site_id, "/"); }
@@ -1412,8 +1430,9 @@ void bf_site_pages_nav(sqlite3 *db, const char *site_id) { pages_nav(stdout, db,
  * write to it on the right.  A manual adds its finder between the two. */
 static void site_bar(FILE *out, const char *title, const char *current) {
     ui_open(out,"header","manual-bar");ui_start(out,"a");ui_attr(out,"class","manual-name");ui_attr(out,"href","/");ui_gt(out); htext(out, title);
-    fprintf(out, "</a><a class=\"manual-contact\" href=\"/contact\"%s>Contact</a></header>",
-            current && !strcmp(current, "/contact") ? " aria-current=\"page\"" : "");
+    ui_close(out,"a");ui_start(out,"a");ui_attr(out,"class","manual-contact");ui_attr(out,"href","/contact");
+    if (current && !strcmp(current, "/contact")) ui_attr(out,"aria-current","page");
+    ui_gt(out);ui_copy(out,"Contact");ui_close(out,"a");ui_close(out,"header");
 }
 void bf_site_bar(const char *title) { site_bar(stdout, title, "/"); }
 
@@ -1442,7 +1461,7 @@ static void site_foot(FILE *out, sqlite3 *db, const char *site_id, const char *t
         sqlite3_finalize(st);
     }
 name:
-    fputs("<p class=\"site-foot-name\" aria-hidden=\"true\">", out);
+    ui_start(out,"p");ui_attr(out,"class","site-foot-name");ui_attr(out,"aria-hidden","true");ui_gt(out);
     htext(out, title); ui_close(out,"p");ui_close(out,"footer");
 }
 
@@ -1516,7 +1535,7 @@ static void site_page_authored_or_legacy(FILE *out, sqlite3 *db,
         int ready=bf_site_authored_document_project(db,site->id,route,compiled,cap,&blocks);
         if(ready==1&&blocks>0){
             ui_start(out,"link");ui_attr(out,"rel","stylesheet");ui_attr(out,"href","/assets/authoring-reader.css");ui_gt(out);
-            fputs("<script defer src=\"/assets/authoring-reader.js\"></script>",out);
+            ui_start(out,"script");ui_flag(out,"defer");ui_attr(out,"src","/assets/authoring-reader.js");ui_gt(out);ui_close(out,"script");
             ui_start(out,"div");ui_attr(out,"class","site-authored-native");ui_attr_open(out,"data-authored-route");
             htext(out,route);fputs("\">",out);
             fputs(compiled,out);ui_close(out,"div");
@@ -1725,7 +1744,9 @@ static int site_article_recording(FILE *out, sqlite3 *db, const McpSite *site,
     htext(out,asset);fputs("\" data-title=\"",out);htext(out,title);
     if(peaks[0]){fputs("\" data-peaks=\"",out);htext(out,peaks);}
     if(transcript[0]){fputs("\" data-transcript=\"",out);htext(out,transcript);}
-    fputs("\" data-by=\"Published audio edition\"><button class=\"lift\" type=\"button\">Play recording</button></li></ol>",out);
+    fputs("\" data-by=\"Published audio edition\">",out);
+    ui_open_a(out,"button","class","lift","type","button");ui_copy(out,"Play recording");ui_close(out,"button");
+    ui_close(out,"li");ui_close(out,"ol");
     fputs(bf_public_audio_deck,out);
     if(mix_profile[0]){
         ui_start(out,"p");ui_attr(out,"class","bf-article-music-credit");ui_attr_open(out,"data-music-sha256");
@@ -1750,12 +1771,12 @@ static void site_article_listening(FILE *out, sqlite3 *db, const McpSite *site,
                                    const SiteEditorial *ed, const char *title) {
     if(!ed||!ed->article)return;
     int recorded=site_article_recording(out,db,site,ed,title);
-    if(recorded) fputs("<details class=\"bf-article-voice-choice\" data-article-voice-choice>"
-                       "<summary>Listen with your device voice instead</summary>",out);
+    if(recorded)do{ui_open_a(out,"details","class","bf-article-voice-choice","data-article-voice-choice",(const char *)NULL);
+        ui_open(out,"summary",NULL);ui_copy(out,"Listen with your device voice instead");ui_close(out,"summary");}while(0);
     ui_start(out,"div");ui_attr(out,"data-article-listen-scope","site");ui_gt(out);
     bf_article_listen_emit(out);
     ui_close(out,"div");
-    if(recorded) fputs("</details>",out);
+    if(recorded)ui_close(out,"details");
 }
 
 /* A site with a shelf of pages reads as a manual: every page in a grouped
@@ -1765,9 +1786,14 @@ static void manual_page(FILE *out, sqlite3 *db, const McpSite *site, const char 
     char group[160] = "\x01", mine[160] = "", before[2][200] = {"", ""}, after[2][200] = {"", ""}, last[2][200] = {"", ""};
     int found = 0;
     ui_open(out,"header","manual-bar");ui_start(out,"a");ui_attr(out,"class","manual-name");ui_attr(out,"href","/");ui_gt(out); htext(out, site->title);
-    fputs("</a><label class=\"manual-find\"><span>Find</span><input type=\"search\" placeholder=\"Find a page or a section\" autocomplete=\"off\" "
-          "aria-label=\"Find a page or a section\"><kbd>/</kbd></label><a class=\"manual-contact\" href=\"/contact\">Contact</a></header>"
-          "<div class=\"manual-frame\"><nav class=\"manual-pages\" aria-label=\"Pages\">", out);
+    ui_close(out,"a");ui_open(out,"label","manual-find");ui_open(out,"span",NULL);ui_copy(out,"Find");ui_close(out,"span");
+    ui_start(out,"input");ui_attr(out,"type","search");ui_attr(out,"placeholder","Find a page or a section");
+    ui_attr(out,"autocomplete","off");ui_attr(out,"aria-label","Find a page or a section");ui_gt(out);
+    ui_open(out,"kbd",NULL);ui_copy(out,"/");ui_close(out,"kbd");ui_close(out,"label");
+    ui_start(out,"a");ui_attr(out,"class","manual-contact");ui_attr(out,"href","/contact");ui_gt(out);
+    ui_copy(out,"Contact");ui_close(out,"a");ui_close(out,"header");
+    ui_start(out,"div");ui_attr(out,"class","manual-frame");ui_gt(out);
+    ui_start(out,"nav");ui_attr(out,"class","manual-pages");ui_attr(out,"aria-label","Pages");ui_gt(out);
     if (sqlite3_prepare_v2(db, PAGES_SQL, -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, site->id, -1, SQLITE_STATIC);
         while (sqlite3_step(st) == SQLITE_ROW) {
@@ -1824,13 +1850,18 @@ static int serve_page(sqlite3 *db, const McpSite *site, const char *route) {
         sqlite3_finalize(st);
     }
     out = open_memstream(&html, &len);
-    fputs("<!doctype html><html lang=\"en\" class=\"site-program\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>", out);
+    ui_lit(out,"<!doctype html>");ui_start(out,"html");ui_attr(out,"lang","en");ui_attr(out,"class","site-program");ui_gt(out);
+    ui_open(out,"head",NULL);ui_open_a(out,"meta","charset","utf-8");
+    ui_open_a(out,"meta","name","viewport","content","width=device-width,initial-scale=1");ui_open(out,"title",NULL);
     htext(out, title); fputs(" · ", out); htext(out, site->title);
     ui_close(out,"title");
     if (summary && *summary) { ui_start(out,"meta");ui_attr(out,"name","description");ui_attr_open(out,"content"); htext(out, summary); fputs("\">", out); }
     site_page_metadata(out,site,route,title,summary,&editorial);
-    site_browser_icon(out, site); fputs("<link rel=\"stylesheet\" href=\"/assets/own-site.css?v=6\"><link rel=\"mcp\" href=\"/.well-known/mcp/server-card.json\">"
-          "<script src=\"/assets/own-site-agent.js\" defer></script><script src=\"/assets/own-site-reading.js\" defer></script>", out);
+    site_browser_icon(out, site);
+    ui_open_a(out,"link","rel","stylesheet","href","/assets/own-site.css?v=6");
+    ui_open_a(out,"link","rel","mcp","href","/.well-known/mcp/server-card.json");
+    ui_start(out,"script");ui_attr(out,"src","/assets/own-site-agent.js");ui_flag(out,"defer");ui_gt(out);ui_close(out,"script");
+    ui_start(out,"script");ui_attr(out,"src","/assets/own-site-reading.js");ui_flag(out,"defer");ui_gt(out);ui_close(out,"script");
     emit_tokens(out, db, site);
     ui_close(out,"head");ui_open(out,"body","site-program-body");ui_start(out,"main");ui_attr_open(out,"class");ui_copy(out,"site-composition");ui_copy(out,manual ? " site-manual" : "");ui_attr_close(out);ui_attr_open(out,"data-site");
     htext(out, site->id); fputs("\"", out); bf_site_presentation_attributes(out,db,site->profile); fputs(">", out);
@@ -2109,38 +2140,84 @@ static void serve_human(const McpSite *site, const char *endpoint) {
     char *html = NULL;
     size_t len = 0;
     FILE *out = open_memstream(&html, &len);
-    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-          "<meta name=\"color-scheme\" content=\"light dark\"><title>Assistant inspector \xc2\xb7 ", out);
+    ui_lit(out,"<!doctype html>");ui_start(out,"html");ui_attr(out,"lang","en");ui_gt(out);
+    ui_open(out,"head",NULL);ui_open_a(out,"meta","charset","utf-8");
+    ui_open_a(out,"meta","name","viewport","content","width=device-width,initial-scale=1");
+    ui_open_a(out,"meta","name","color-scheme","content","light dark");ui_open(out,"title",NULL);
+    ui_copy(out,"Assistant inspector \xc2\xb7 ");
     htext(out, site->title);
-    ui_close(out,"title"); site_browser_icon(out, site); fputs("<style>", out);
+    ui_close(out,"title"); site_browser_icon(out, site); ui_open(out,"style",NULL);
     style_tokens(out, site);
     fputs(SHARED_CSS, out);
     fputs(INSPECTOR_CSS, out);
-    fputs("</style></head><body><main class=\"mcp-ins\" data-mcp-inspector><div class=\"mcp-strip\"><span>MCP</span><span>Site <b>", out);
+    ui_close(out,"style");ui_close(out,"head");ui_open(out,"body",NULL);
+    ui_start(out,"main");ui_attr(out,"class","mcp-ins");ui_flag(out,"data-mcp-inspector");ui_gt(out);
+    ui_open(out,"div","mcp-strip");ui_open(out,"span",NULL);ui_copy(out,"MCP");ui_close(out,"span");
+    ui_open(out,"span",NULL);ui_copy(out,"Site ");ui_open(out,"b",NULL);
     htext(out, site->host);
     ui_close(out,"b");ui_close(out,"span");ui_open(out,"span",NULL);ui_copy(out,"Read-only tools");ui_close(out,"span");ui_start(out,"span");ui_attr(out,"class","on");ui_flag(out,"data-mcp-state");ui_gt(out);ui_copy(out,"Checking the endpoint");ui_close(out,"span");ui_close(out,"div");ui_open(out,"header","mast");ui_open(out,"p","eyebrow");ui_copy(out,"For AI assistants");ui_close(out,"p");ui_open(out,"h1",NULL);
     htext(out, site->title);
-    fputs(": assistant inspector</h1><p class=\"lede\">The tools an assistant gets when it connects here. Pick one, edit the request, and run it against this site exactly as an assistant would.</p></header>"
-          "<div class=\"mcp-grid\"><section class=\"mcp-pane\" aria-label=\"Tools\"><h2><span data-mcp-count>Tools</span><span>Annotated read-only</span></h2>"
-          "<ul class=\"mcp-tools\" data-mcp-tools><li><p class=\"empty\" style=\"padding:14px 18px\">Reading the tool list\xe2\x80\xa6</p></li></ul></section>"
-          "<section class=\"mcp-pane\" aria-label=\"Run a tool\"><dl class=\"mcp-stats\"><div><dt>Wall time</dt><dd data-mcp-ms>\xe2\x80\x94</dd></div><div><dt>Status</dt><dd data-mcp-status>Not run</dd></div>"
-          "<div><dt>Response size</dt><dd data-mcp-bytes>\xe2\x80\x94</dd></div><div><dt>Calls this visit</dt><dd data-mcp-calls>0</dd></div></dl>"
-          "<label class=\"mcp-sub\" for=\"mcp-payload\"><span>tools/call request</span><span data-mcp-chars></span></label>"
-          "<textarea id=\"mcp-payload\" spellcheck=\"false\" data-mcp-payload>{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/call\",\n  \"params\": { \"name\": \"site_info\", \"arguments\": {} }\n}</textarea>"
-          "<p class=\"mcp-lint\" data-mcp-lint>Valid JSON-RPC 2.0</p><div class=\"mcp-acts\"><button class=\"run\" type=\"button\" data-mcp-run>Run against this site</button>"
-          "<button type=\"button\" data-mcp-reset>Reset to the tool's defaults</button><button type=\"button\" data-mcp-copy>Copy response</button></div>"
-          "<div class=\"mcp-tabs\" role=\"group\" aria-label=\"Response view\"><button type=\"button\" aria-pressed=\"true\" data-mcp-view=\"result\">Result</button><button type=\"button\" aria-pressed=\"false\" data-mcp-view=\"raw\">Raw response</button><button type=\"button\" aria-pressed=\"false\" data-mcp-view=\"schema\">Tool schema</button></div>"
-          "<pre class=\"mcp-out\" data-mcp-out aria-live=\"polite\">Run a tool to see what it returns.</pre>"
-          "<h2 class=\"mcp-sub\" style=\"margin-top:18px\">Boundary, as the tool declares it</h2><dl class=\"mcp-audit\"><div><dt>Changes anything</dt><dd data-mcp-ro>\xe2\x80\x94</dd></div>"
-          "<div><dt>Destructive</dt><dd data-mcp-de>\xe2\x80\x94</dd></div><div><dt>Reaches outside this site</dt><dd data-mcp-ow>\xe2\x80\x94</dd></div></dl></section></div>"
-          "<section class=\"mcp-connect\"><div class=\"mcp-pane\"><h2>The address</h2><pre id=\"endpoint\">", out);
+    ui_copy(out,": assistant inspector");ui_close(out,"h1");ui_open(out,"p","lede");
+    ui_copy(out,"The tools an assistant gets when it connects here. Pick one, edit the request, and run it against this site exactly as an assistant would.");
+    ui_close(out,"p");ui_close(out,"header");
+    ui_open(out,"div","mcp-grid");ui_start(out,"section");ui_attr(out,"class","mcp-pane");ui_attr(out,"aria-label","Tools");ui_gt(out);
+    ui_open(out,"h2",NULL);ui_start(out,"span");ui_flag(out,"data-mcp-count");ui_gt(out);ui_copy(out,"Tools");ui_close(out,"span");
+    ui_open(out,"span",NULL);ui_copy(out,"Annotated read-only");ui_close(out,"span");ui_close(out,"h2");
+    ui_start(out,"ul");ui_attr(out,"class","mcp-tools");ui_flag(out,"data-mcp-tools");ui_gt(out);ui_open(out,"li",NULL);
+    ui_start(out,"p");ui_attr(out,"class","empty");ui_attr(out,"style","padding:14px 18px");ui_gt(out);
+    ui_copy(out,"Reading the tool list\xe2\x80\xa6");ui_close(out,"p");ui_close(out,"li");ui_close(out,"ul");ui_close(out,"section");
+    ui_start(out,"section");ui_attr(out,"class","mcp-pane");ui_attr(out,"aria-label","Run a tool");ui_gt(out);
+    ui_open(out,"dl","mcp-stats");
+    ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Wall time");ui_close(out,"dt");
+    ui_start(out,"dd");ui_flag(out,"data-mcp-ms");ui_gt(out);ui_copy(out,"\xe2\x80\x94");ui_close(out,"dd");ui_close(out,"div");
+    ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Status");ui_close(out,"dt");
+    ui_start(out,"dd");ui_flag(out,"data-mcp-status");ui_gt(out);ui_copy(out,"Not run");ui_close(out,"dd");ui_close(out,"div");
+    ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Response size");ui_close(out,"dt");
+    ui_start(out,"dd");ui_flag(out,"data-mcp-bytes");ui_gt(out);ui_copy(out,"\xe2\x80\x94");ui_close(out,"dd");ui_close(out,"div");
+    ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Calls this visit");ui_close(out,"dt");
+    ui_start(out,"dd");ui_flag(out,"data-mcp-calls");ui_gt(out);ui_copy(out,"0");ui_close(out,"dd");ui_close(out,"div");
+    ui_close(out,"dl");
+    ui_start(out,"label");ui_attr(out,"class","mcp-sub");ui_attr(out,"for","mcp-payload");ui_gt(out);
+    ui_open(out,"span",NULL);ui_copy(out,"tools/call request");ui_close(out,"span");
+    ui_start(out,"span");ui_flag(out,"data-mcp-chars");ui_gt(out);ui_close(out,"span");ui_close(out,"label");
+    ui_start(out,"textarea");ui_attr(out,"id","mcp-payload");ui_attr(out,"spellcheck","false");ui_flag(out,"data-mcp-payload");ui_gt(out);
+    ui_copy(out,"{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/call\",\n  \"params\": { \"name\": \"site_info\", \"arguments\": {} }\n}");
+    ui_close(out,"textarea");
+    ui_start(out,"p");ui_attr(out,"class","mcp-lint");ui_flag(out,"data-mcp-lint");ui_gt(out);
+    ui_copy(out,"Valid JSON-RPC 2.0");ui_close(out,"p");ui_open(out,"div","mcp-acts");
+    ui_open_a(out,"button","class","run","type","button","data-mcp-run",(const char *)NULL);
+    ui_copy(out,"Run against this site");ui_close(out,"button");
+    ui_start(out,"button");ui_attr(out,"type","button");ui_flag(out,"data-mcp-reset");ui_gt(out);
+    ui_copy(out,"Reset to the tool's defaults");ui_close(out,"button");
+    ui_start(out,"button");ui_attr(out,"type","button");ui_flag(out,"data-mcp-copy");ui_gt(out);
+    ui_copy(out,"Copy response");ui_close(out,"button");ui_close(out,"div");
+    ui_start(out,"div");ui_attr(out,"class","mcp-tabs");ui_attr(out,"role","group");ui_attr(out,"aria-label","Response view");ui_gt(out);
+    ui_open_a(out,"button","type","button","aria-pressed","true","data-mcp-view","result");
+    ui_copy(out,"Result");ui_close(out,"button");
+    ui_open_a(out,"button","type","button","aria-pressed","false","data-mcp-view","raw");
+    ui_copy(out,"Raw response");ui_close(out,"button");
+    ui_open_a(out,"button","type","button","aria-pressed","false","data-mcp-view","schema");
+    ui_copy(out,"Tool schema");ui_close(out,"button");ui_close(out,"div");
+    ui_start(out,"pre");ui_attr(out,"class","mcp-out");ui_flag(out,"data-mcp-out");ui_attr(out,"aria-live","polite");ui_gt(out);
+    ui_copy(out,"Run a tool to see what it returns.");ui_close(out,"pre");
+    ui_start(out,"h2");ui_attr(out,"class","mcp-sub");ui_attr(out,"style","margin-top:18px");ui_gt(out);
+    ui_copy(out,"Boundary, as the tool declares it");ui_close(out,"h2");ui_open(out,"dl","mcp-audit");
+    ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Changes anything");ui_close(out,"dt");
+    ui_start(out,"dd");ui_flag(out,"data-mcp-ro");ui_gt(out);ui_copy(out,"\xe2\x80\x94");ui_close(out,"dd");ui_close(out,"div");
+    ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Destructive");ui_close(out,"dt");
+    ui_start(out,"dd");ui_flag(out,"data-mcp-de");ui_gt(out);ui_copy(out,"\xe2\x80\x94");ui_close(out,"dd");ui_close(out,"div");
+    ui_open(out,"div",NULL);ui_open(out,"dt",NULL);ui_copy(out,"Reaches outside this site");ui_close(out,"dt");
+    ui_start(out,"dd");ui_flag(out,"data-mcp-ow");ui_gt(out);ui_copy(out,"\xe2\x80\x94");ui_close(out,"dd");ui_close(out,"div");
+    ui_close(out,"dl");ui_close(out,"section");ui_close(out,"div");
+    ui_open(out,"section","mcp-connect");ui_open(out,"div","mcp-pane");ui_open(out,"h2",NULL);
+    ui_copy(out,"The address");ui_close(out,"h2");ui_start(out,"pre");ui_attr(out,"id","endpoint");ui_gt(out);
     htext(out, endpoint);
     ui_close(out,"pre");ui_close(out,"div");ui_open(out,"div","mcp-pane");ui_open(out,"h2",NULL);ui_copy(out,"Claude Code");ui_close(out,"h2");ui_open(out,"pre",NULL);ui_copy(out,"claude mcp add --transport http ");
     htext(out, site->id); fputc(' ', out); htext(out, endpoint); ui_close(out,"pre");ui_close(out,"div");
     ui_open(out,"div","mcp-pane");ui_open(out,"h2",NULL);ui_copy(out,"Any client that takes a configuration");ui_close(out,"h2");ui_open(out,"pre",NULL);ui_copy(out,"{\n  \"mcpServers\": {\n    \"");
     htext(out, site->id); fputs("\": { \"type\": \"http\", \"url\": \"", out);
     htext(out, endpoint); fputs("\" }\n  }\n}</pre></div></section>", out);
-    fputs("<script>(function(){'use strict';var $=function(s){return document.querySelector(s)},E=location.pathname,tools=[],cur=null,last=null,view='result',calls=0;"
+    ui_script(out,"(function(){'use strict';var $=function(s){return document.querySelector(s)},E=location.pathname,tools=[],cur=null,last=null,view='result',calls=0;"
           "var list=$('[data-mcp-tools]'),pay=$('[data-mcp-payload]'),out=$('[data-mcp-out]'),lint=$('[data-mcp-lint]');"
           "function rpc(body){return fetch(E,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json, text/event-stream'},body:body,credentials:'omit'})}"
           "function defaults(t){var a={},p=(t.inputSchema&&t.inputSchema.properties)||{},r=(t.inputSchema&&t.inputSchema.required)||[];for(var k in p){if('default' in p[k])a[k]=p[k].default;else if(r.indexOf(k)>=0)a[k]=p[k].type==='integer'?1:'';}return a}"
@@ -2165,7 +2242,7 @@ static void serve_human(const McpSite *site, const char *endpoint) {
           "tools.forEach(function(t){var li=document.createElement('li'),b=document.createElement('button'),n=document.createElement('strong'),d=document.createElement('small'),c=document.createElement('code');"
           "b.type='button';b.dataset.name=t.name;n.textContent=t.name;var args=Object.keys((t.inputSchema&&t.inputSchema.properties)||{});c.textContent='args: '+(args.length?args.join(', '):'none');d.textContent=t.title||t.description||'';"
           "b.append(n,c,d);b.onclick=function(){pick(t)};li.append(b);list.append(li)});if(tools[0])pick(tools[0])})"
-          ".catch(function(){$('[data-mcp-state]').textContent='Endpoint not answering';list.innerHTML='<li><p class=\"empty\" style=\"padding:14px 18px\">The tool list could not be read from this site.</p></li>'})})();</script>", out);
+          ".catch(function(){$('[data-mcp-state]').textContent='Endpoint not answering';list.innerHTML='<li><p class=\"empty\" style=\"padding:14px 18px\">The tool list could not be read from this site.</p></li>'})})();");
     ui_open(out,"footer",NULL);fprintf(out,"%ld",site->posts);ui_copy(out," post");ui_copy(out,site->posts == 1 ? "" : "s");ui_copy(out," published. Also for plain readers: ");ui_start(out,"a");ui_attr(out,"href","/llms.txt");ui_gt(out);ui_copy(out,"/llms.txt");ui_close(out,"a");ui_copy(out,". Back to ");ui_start(out,"a");ui_attr(out,"href","/");ui_gt(out);
     htext(out, site->title);
     ui_close(out,"a");ui_copy(out,".");ui_close(out,"footer");ui_close(out,"main");ui_close(out,"body");ui_close(out,"html");
@@ -2307,12 +2384,16 @@ static int member_host_for(const char *site_host, char *out, size_t cap) {
 }
 
 static void page_open(FILE *out, const McpSite *site, sqlite3 *db, const char *title, const char *route) {
-    fputs("<!doctype html><html lang=\"en\" class=\"site-program\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>", out);
+    ui_lit(out,"<!doctype html>");ui_start(out,"html");ui_attr(out,"lang","en");ui_attr(out,"class","site-program");ui_gt(out);
+    ui_open(out,"head",NULL);ui_open_a(out,"meta","charset","utf-8");
+    ui_open_a(out,"meta","name","viewport","content","width=device-width,initial-scale=1");ui_open(out,"title",NULL);
     htext(out, title); fputs(" · ", out); htext(out, site->title);
     ui_close(out,"title");
     if (relay_base[0]) { ui_start(out,"base");ui_attr_open(out,"href");ui_copy(out,"https://"); htext(out, relay_base); fputs("/\">", out); }
-    site_browser_icon(out, site); fputs("<link rel=\"stylesheet\" href=\"/assets/own-site.css?v=6\"><link rel=\"mcp\" href=\"/.well-known/mcp/server-card.json\">"
-          "<script src=\"/assets/own-site-agent.js\" defer></script>", out);
+    site_browser_icon(out, site);
+    ui_open_a(out,"link","rel","stylesheet","href","/assets/own-site.css?v=6");
+    ui_open_a(out,"link","rel","mcp","href","/.well-known/mcp/server-card.json");
+    ui_start(out,"script");ui_attr(out,"src","/assets/own-site-agent.js");ui_flag(out,"defer");ui_gt(out);ui_close(out,"script");
     emit_tokens(out, db, site);
     ui_close(out,"head");ui_open(out,"body","site-program-body");ui_start(out,"main");ui_attr(out,"class","site-composition");ui_attr_open(out,"data-site"); htext(out, site->id); fputs("\"",out); bf_site_presentation_attributes(out,db,site->profile);
     fputs(">", out); site_bar(out, site->title, route);
@@ -2364,8 +2445,10 @@ static void intake_fields(FILE *out, sqlite3 *db, const McpSite *site, const cha
         const char *fact = (const char *)sqlite3_column_text(st, 0), *question = (const char *)sqlite3_column_text(st, 1);
         if (!fact || !question) continue;
         if (!n++) {ui_open(out,"fieldset","contact-intake");ui_open(out,"legend",NULL);ui_copy(out,"A few facts, if you have them");ui_close(out,"legend");ui_open(out,"p",NULL);ui_copy(out,"Leave any blank you are unsure of. We confirm each one with you before relying on it.");ui_close(out,"p");}
-        ui_open(out,"label",NULL); htext(out, question); fputs("<input name=\"ask_", out); htext(out, fact);
-        fputs("\" maxlength=\"300\" data-fact=\"", out); htext(out, fact); fputs("\"></label>", out);
+        ui_open(out,"label",NULL); htext(out, question);
+        ui_start(out,"input");ui_attr_open(out,"name");ui_copy(out,"ask_");htext(out, fact);ui_attr_close(out);
+        ui_attr(out,"maxlength","300");ui_attr_open(out,"data-fact");htext(out, fact);ui_attr_close(out);ui_gt(out);
+        ui_close(out,"label");
     }
     if (n) ui_close(out,"fieldset");
     sqlite3_finalize(st);
@@ -2403,22 +2486,32 @@ static void serve_contact_form(sqlite3 *db, const McpSite *site, const char *que
     else {ui_open(out,"p","lede");ui_copy(out,"Write to us here. Your message goes straight to the owner's inbox.");ui_close(out,"p");}
     {
         char member[64];
-        fputs("<form class=\"contact-form\" method=\"post\" action=\"", out);
+        ui_start(out,"form");ui_attr(out,"class","contact-form");ui_attr(out,"method","post");ui_attr_open(out,"action");
         if (member_host_for(site->host, member, sizeof(member))) { fputs("https://", out); htext(out, member); fputs("/site-contact/", out); htext(out, site->id); }
         else fputs("/contact", out);
         fputs("\">", out);
     }
-    fputs("<label>Your name<input name=\"name\" required maxlength=\"120\" autocomplete=\"name\"></label>"
-          "<label>How to reach you<input name=\"contact\" required minlength=\"3\" maxlength=\"200\" placeholder=\"Email or phone\" autocomplete=\"email\"></label>"
-          "<label>Message<textarea name=\"message\" required minlength=\"5\" maxlength=\"4000\" rows=\"6\">", out);
+    ui_open(out,"label",NULL);ui_copy(out,"Your name");
+    ui_start(out,"input");ui_attr(out,"name","name");ui_flag(out,"required");ui_attr(out,"maxlength","120");ui_attr(out,"autocomplete","name");ui_gt(out);
+    ui_close(out,"label");
+    ui_open(out,"label",NULL);ui_copy(out,"How to reach you");
+    ui_start(out,"input");ui_attr(out,"name","contact");ui_flag(out,"required");ui_attr(out,"minlength","3");ui_attr(out,"maxlength","200");ui_attr(out,"placeholder","Email or phone");ui_attr(out,"autocomplete","email");ui_gt(out);
+    ui_close(out,"label");
+    ui_open(out,"label",NULL);ui_copy(out,"Message");
+    ui_start(out,"textarea");ui_attr(out,"name","message");ui_flag(out,"required");ui_attr(out,"minlength","5");ui_attr(out,"maxlength","4000");ui_attr(out,"rows","6");ui_gt(out);
     if (about[0]) { fputs("About: ", out); htext(out, about); fputs("\n\n", out); }
-    fputs("</textarea></label>", out);
+    ui_close(out,"textarea");ui_close(out,"label");
     intake_fields(out, db, site, about);
-    fputs(/* A field no person sees or fills; a program that fills every field gives itself away. */
-          "<label class=\"contact-extra\" aria-hidden=\"true\">Website<input name=\"website\" tabindex=\"-1\" autocomplete=\"off\"></label>"
-          "<input type=\"hidden\" name=\"about\" value=\"", out);
+    /* A field no person sees or fills; a program that fills every field gives itself away. */
+    ui_start(out,"label");ui_attr(out,"class","contact-extra");ui_attr(out,"aria-hidden","true");ui_gt(out);
+    ui_copy(out,"Website");
+    ui_start(out,"input");ui_attr(out,"name","website");ui_attr(out,"tabindex","-1");ui_attr(out,"autocomplete","off");ui_gt(out);
+    ui_close(out,"label");
+    ui_start(out,"input");ui_attr(out,"type","hidden");ui_attr(out,"name","about");ui_attr_open(out,"value");
     htext(out, about);
-    fputs("\"><button type=\"submit\">Send message</button></form></section>", out);
+    fputs("\">", out);
+    ui_start(out,"button");ui_attr(out,"type","submit");ui_gt(out);ui_copy(out,"Send message");ui_close(out,"button");
+    ui_close(out,"form");ui_close(out,"section");
     site_foot(out, db, site->id, site->title);
     ui_close(out,"main");ui_close(out,"body");ui_close(out,"html");
     fclose(out);
@@ -2617,8 +2710,10 @@ int bf_site_mcp_serve(const char *method, const char *target, const char *query,
             char *html = NULL;
             size_t len = 0;
             FILE *out = open_memstream(&html, &len);
-            fputs("<!doctype html><html lang=\"en\" class=\"site-program\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" "
-                  "content=\"width=device-width,initial-scale=1\"><title>Not found · ", out);
+            ui_lit(out,"<!doctype html>");ui_start(out,"html");ui_attr(out,"lang","en");ui_attr(out,"class","site-program");ui_gt(out);
+            ui_open(out,"head",NULL);ui_open_a(out,"meta","charset","utf-8");
+            ui_open_a(out,"meta","name","viewport","content","width=device-width,initial-scale=1");ui_open(out,"title",NULL);
+            ui_copy(out,"Not found · ");
             htext(out, site.title);
             ui_close(out,"title"); site_browser_icon(out, &site); ui_start(out,"link");ui_attr(out,"rel","stylesheet");ui_attr(out,"href","/assets/own-site.css?v=6");ui_gt(out);
             emit_tokens(out, db, &site);

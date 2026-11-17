@@ -70,6 +70,7 @@ architecture cmd-auth
   maturity measured
   command BonfyreAuth
   publishes Authority
+  publishes ActorClosure
   internal_calculus bonfyre-auth binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   forbidden_inference an Auth ActorClosure -> ActorGraph identity verification, relationship, institutional authority, library access, media right, delivery or watch proof
@@ -88,6 +89,8 @@ architecture cmd-auth
   witness packs/no-simulation/command-evidence-20261010.tsv
   witness cmd/BonfyreAuth/tests/actor_closure_test.sh proves an unbound session cannot produce an ActorClosure, an explicit binding projects one current canonical actor coordinate, and revocation immediately refuses that same session without turning Auth into ActorGraph or AuthorityGraph
   witness cmd/BonfyreAuth/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.auth=pass
+  witness 2026-11-16 dogfood P0-8: org_subaccount_create grants creator admin on the child id (atomic with creation, replay refuses to restore removed grants); organization_workspace.test.mjs 9 pass/283 expects rewrites the old no-implied-grants contract, which left subaccounts unusable by anyone
+  witness 2026-11-16 dogfood P0-2: cmd_signup mints the first session (tier-following scope, free gets self) and returns it; CLI-verified the signup token verifies and authorizes; all auth shell suites still pass
   source_lineage the 91-command capability surface
   known_gap operator command.auth quality-proven on a real input in the command workload of 2026-10-10 (receipt rcpt-e34aed7e77590883cbf0), one run on one input; realizes Authority; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing
 
@@ -705,6 +708,7 @@ architecture cmd-frappe-compiler
   maturity measured
   command BonfyreFrappeCompiler
   internal_calculus bonfyre-frappe-compiler binary
+  publishes BonfyreFrappeCompiler
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness cmd/BonfyreFrappeCompiler/tests/standalone_check.sh
@@ -1558,6 +1562,7 @@ architecture cmd-queue
   maturity implemented
   command BonfyreQueue
   publishes WorkState
+  publishes QueueRecipientNotification
   internal_calculus bonfyre-queue binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   invariant enqueue files a job under a settable family, defaulting to queue; TYPE names the operator and is not the family, and hardcoding the family made --family match nothing however much work was waiting
@@ -2194,6 +2199,9 @@ architecture cmd-web-address
   source_path cmd/BonfyreRecipe/src/recipe_nutrition.c
   source_path cmd/BonfyreWebAddress/src/ui_tree.h
   witness 2026-11-15 dogfood: 24 mistyped ui_open_v(struct-array) call sites across front_community/front_editorial/page_media_spaces/page_routes_and_emitters/page_core_rendering converted to ui_open_a string pairs; tree binary then renders /discover on all four territories in <2s (previously spun in strpbrk), verified against preview lane copies
+  witness 2026-11-16 dogfood P0 batch: login-redirect allowlist covers all 14 profile tabs (participant-journey-witness: 14x303 + bogus 400, Makefile-gated); companions -1 path renders sign-in/empty state with footer instead of truncating; /packs registry emits via bf_jsonw (differential probe: legacy shape invalid on hostile fields, new shape valid with identical keys)
+  witness 2026-11-16 depth: keep/save actions wired into front cards (lead, dispatches, reading, tracks, agenda) and nine region topologies via shared ms_keep with idempotent lifecycle; Companions added to shell sections and footer Find; build clean, guard and ui-ratchet green (render eyeball queued on probing)
+  witness 2026-11-16 L1-page: hand-printed markup fully migrated to builders in page_media_spaces.h, front_editorial.h and page_core_rendering.h (item links collapsed into page_emit_item_open, scripts via ui_script, SVG numeric leaves intentionally printf); ratchet tightened to controls=222 markup=412 styles=60
   witness cmd/BonfyreWebAddress/tests/week_web.test.mjs passes 39 source, native formulation, browser form, request/field-capacity and private CMS/Desk checks
   witness 2026-11-15 speed lane: retained feed reader (page_tag_attr, rss_tag_text, page_feed_picture, author/podcast:person in page_collect_retained) searched with unbounded strstr, rescanning the rest of the feed for every optional tag an item lacked; bounded bf_span_find (site_and_world_material.h, fuzzed equal to strstr-then-<end over 5M cases) took cold item pages on lane preview copies from 0.24-2.4 s to 0.14-0.37 s with byte-identical HTML apart from relative times
   witness 2026-11-15 speed lane: /people aggregate memoized per worker in people_projection.c, keyed by archive and CMS file+WAL identity, query, page and a ten-minute clock, and the duplicate COUNT DISTINCT scan folded into one pass; repeat uncached /people 1.0-1.5 s to 0.06-0.13 s, output identical
@@ -2859,6 +2867,7 @@ architecture cmd-observation-boundary
   maturity implemented
   command BonfyreObservationBoundary
   internal_calculus BonfyreObservationBoundary binary
+  publishes ForeignObservation
   forbidden_inference the command exists -> its effect is authorized; Authority gates mutation and read scope still applies
   source_path cmd/BonfyreObservationBoundary/src/main.c
   source_lineage current command directory and command_smoke.json census

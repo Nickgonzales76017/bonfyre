@@ -10,8 +10,8 @@ architecture standing-automation
   maturity implemented
   consumes InternetCensus
   consumes SourceFrontier
-  consumes LatentCoordinateAtlas
-  consumes CredentialBoundary
+  consumes LatentChart
+  consumes CredentialedRequest
   publishes AutomationRun
   node_types AutomationRun
   node_types AutomationStep

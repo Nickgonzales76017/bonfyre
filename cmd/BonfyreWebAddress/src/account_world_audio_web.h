@@ -103,7 +103,7 @@ static void wa_hidden(const char *site,sqlite3_int64 world,const char *space,con
     ph_hidden("operation",op);snprintf(n,sizeof(n),"%lld",revision);ph_hidden("revision",n);ph_hidden("return","studio");
 }
 static void wa_form(const char *site,sqlite3_int64 world,const char *space,const char *op,long long revision,const char *name){
-    fputs("<form method=\"post\" action=\"/workspace/world-audio\"",stdout);if(name){fputs(" data-sound-form=\"",stdout);html(name);fputs("\"",stdout);}fputs(">",stdout);
+    ui_start(stdout,"form");ui_attr(stdout,"method","post");ui_attr(stdout,"action","/workspace/world-audio");if(name){ui_attr_open(stdout,"data-sound-form");html(name);ui_attr_close(stdout);}ui_gt(stdout);
     wa_hidden(site,world,space,op,revision);
 }
 static const char *wa_mark_label(const char *kind){
@@ -115,19 +115,19 @@ static void world_audio_studio(sqlite3 *db,const char *subject,const char *site_
     WaSound snd;int have=wa_sound(db,subject,site_id,world,space,&snd);PhSite site;ph_site(db,NULL,site_id,&site);
     ui_open_a(stdout,"section","id","sound","class","aw-sound-studio","data-world-sound-studio",(const char *)NULL); ui_open(stdout,"h3",NULL); fputs("Station or show",stdout); ui_close(stdout,"h3"); ui_open(stdout,"p",NULL); fputs("Set this up if the space is a radio station or a podcast. Listeners only hear a recording when its own source states open terms, such as CC BY or public domain. Anything else is linked to where it is published.",stdout); ui_close(stdout,"p");
     wa_form(site_id,world,space,"sound",revision,"sound");
-    fputs("<div class=\"aw-row\"><label>This space is<select name=\"kind\"><option value=\"station\"",stdout);if(have&&!strcmp(snd.kind,"station"))fputs(" selected",stdout);
-    fputs(">A station, with a weekly schedule</option><option value=\"show\"",stdout);if(have&&!strcmp(snd.kind,"show"))fputs(" selected",stdout);
-    fputs(">A show, with episodes and a feed</option></select></label><label>Time zone<small>The station&rsquo;s own clock, such as America/Chicago</small><input name=\"timezone\" required maxlength=\"64\" list=\"aw-zones\" value=\"",stdout);
+    ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"This space is");ui_open_a(stdout,"select","name","kind");ui_start(stdout,"option");ui_attr(stdout,"value","station");if(have&&!strcmp(snd.kind,"station"))ui_flag(stdout,"selected");
+    ui_gt(stdout);ui_copy(stdout,"A station, with a weekly schedule");ui_close(stdout,"option");ui_start(stdout,"option");ui_attr(stdout,"value","show");if(have&&!strcmp(snd.kind,"show"))ui_flag(stdout,"selected");
+    ui_gt(stdout);ui_copy(stdout,"A show, with episodes and a feed");ui_close(stdout,"option");ui_close(stdout,"select");ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Time zone");ui_open(stdout,"small",NULL);ui_copy(stdout,"The station&rsquo;s own clock, such as America/Chicago");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","timezone");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","64");ui_attr(stdout,"list","aw-zones");ui_attr_open(stdout,"value");
     html(have?snd.timezone:"UTC");fputs("\">",stdout); ui_open_a(stdout,"datalist","id","aw-zones");
     const char *zones[]={"UTC","America/Chicago","America/New_York","America/Los_Angeles","America/Denver","Europe/London","Europe/Berlin","Europe/Paris","Africa/Lagos","Asia/Tokyo","Asia/Kolkata","Australia/Sydney"};
     for(size_t i=0;i<sizeof(zones)/sizeof(zones[0]);i++){ui_open_a(stdout,"option",UI_DYN,"value","",(zones[i]));}
-    fputs("</datalist></label></div><div class=\"aw-row\"><label>Made by<small>The name listeners see</small><input name=\"author\" required maxlength=\"160\" value=\"",stdout);html(have?snd.author:site.name[0]?site.name:"");
-    fputs("\"></label><label>Language<small>A code such as en or es-MX</small><input name=\"language\" required maxlength=\"16\" pattern=\"[A-Za-z-]{2,16}\" value=\"",stdout);html(have?snd.language:"en");
-    fputs("\"></label><label>Category<small>Used by podcast apps</small><input name=\"category\" required maxlength=\"64\" list=\"aw-categories\" value=\"",stdout);html(have?snd.category:"Music");
+    ui_close(stdout,"datalist");ui_close(stdout,"label");ui_close(stdout,"div");ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"Made by");ui_open(stdout,"small",NULL);ui_copy(stdout,"The name listeners see");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","author");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","160");ui_attr_open(stdout,"value");html(have?snd.author:site.name[0]?site.name:"");
+    ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Language");ui_open(stdout,"small",NULL);ui_copy(stdout,"A code such as en or es-MX");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","language");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","16");ui_attr(stdout,"pattern","[A-Za-z-]{2,16}");ui_attr_open(stdout,"value");html(have?snd.language:"en");
+    ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Category");ui_open(stdout,"small",NULL);ui_copy(stdout,"Used by podcast apps");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","category");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","64");ui_attr(stdout,"list","aw-categories");ui_attr_open(stdout,"value");html(have?snd.category:"Music");
     fputs("\"><datalist id=\"aw-categories\"><option value=\"Music\"><option value=\"Arts\"><option value=\"History\"><option value=\"Society &amp; Culture\"><option value=\"News\"><option value=\"Science\"><option value=\"Education\"><option value=\"Comedy\"><option value=\"Fiction\"></datalist></label></div>",stdout);
-    fputs("<label>Live stream<small>Optional. The address after /o/ of the piece that is the stream. It plays only if its source states open terms</small><input name=\"stream\" maxlength=\"120\" value=\"",stdout);html(have?snd.stream:"");
-    fputs("\"></label><label class=\"aw-check\"><input type=\"checkbox\" name=\"explicit\" value=\"1\"",stdout);if(have&&snd.explicit_content)fputs(" checked",stdout);
-    fputs("> Contains explicit language</label><div class=\"aw-actions\"><button type=\"submit\">Save station or show</button></div></form>",stdout);
+    ui_open(stdout,"label",NULL);ui_copy(stdout,"Live stream");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional. The address after /o/ of the piece that is the stream. It plays only if its source states open terms");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","stream");ui_attr(stdout,"maxlength","120");ui_attr_open(stdout,"value");html(have?snd.stream:"");
+    ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label","aw-check");ui_start(stdout,"input");ui_attr(stdout,"type","checkbox");ui_attr(stdout,"name","explicit");ui_attr(stdout,"value","1");if(have&&snd.explicit_content)ui_flag(stdout,"checked");
+    ui_gt(stdout);ui_copy(stdout," Contains explicit language");ui_close(stdout,"label");ui_open(stdout,"div","aw-actions");ui_open_a(stdout,"button","type","submit");ui_copy(stdout,"Save station or show");ui_close(stdout,"button");ui_close(stdout,"div");ui_close(stdout,"form");
     if(!have){ui_close(stdout,"section");return;}
     /* schedule: stations only */
     WaSlot slots[AWA_SLOT_LIMIT];int ns=wa_slots(db,subject,site_id,world,space,slots),used[AWA_SLOT_LIMIT+1]={0};
@@ -136,13 +136,13 @@ static void world_audio_studio(sqlite3 *db,const char *subject,const char *site_
     if(!ns)ui_text(stdout, "p", NULL, "No programmes scheduled yet.");
     else{ui_open_a(stdout,"table","data-sound-schedule",(const char *)NULL); ui_open(stdout,"thead",NULL); ui_open(stdout,"tr",NULL); ui_open(stdout,"th",NULL); fputs("When",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Programme",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); ui_close(stdout,"th"); ui_close(stdout,"tr"); ui_close(stdout,"thead"); ui_open(stdout,"tbody",NULL);
         for(int i=0;i<ns;i++){used[slots[i].slot]=1;int end=slots[i].start+slots[i].minutes;
-            printf("<tr data-slot=\"%d\"><td>%s %02d:%02d&ndash;%02d:%02d</td><td>",slots[i].slot,wa_day(slots[i].weekday),slots[i].start/60,slots[i].start%60,(end/60)%24,end%60);
+            ui_start(stdout,"tr");printf(" data-slot=\"%d\">",slots[i].slot);ui_open(stdout,"td",NULL);printf("%s %02d:%02d&ndash;%02d:%02d",wa_day(slots[i].weekday),slots[i].start/60,slots[i].start%60,(end/60)%24,end%60);ui_close(stdout,"td");ui_open(stdout,"td",NULL);
             html(slots[i].programme);if(slots[i].host[0]){fputs(" with ",stdout);html(slots[i].host);}ui_close(stdout,"td"); ui_open(stdout,"td",NULL);
             wa_form(site_id,world,space,"unslot",revision,NULL);char n[8];snprintf(n,sizeof(n),"%d",slots[i].slot);ph_hidden("slot",n);ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Remove",stdout); ui_close(stdout,"button"); ui_close(stdout,"form"); ui_close(stdout,"td"); ui_close(stdout,"tr");}
         ui_close(stdout,"tbody"); ui_close(stdout,"table");}
     int free_slot=0;for(int i=1;i<=AWA_SLOT_LIMIT&&!free_slot;i++)if(!used[i])free_slot=i;
     if(free_slot){wa_form(site_id,world,space,"slot",revision,"slot");char n[8];snprintf(n,sizeof(n),"%d",free_slot);ph_hidden("slot",n);
-        ui_open(stdout,"div","aw-row"); ui_open(stdout,"label",NULL); fputs("Day",stdout); ui_open_a(stdout,"select","name","weekday");for(int d=1;d<=7;d++)printf("<option value=\"%d\">%s</option>",d,wa_day(d));
+        ui_open(stdout,"div","aw-row"); ui_open(stdout,"label",NULL); fputs("Day",stdout); ui_open_a(stdout,"select","name","weekday");for(int d=1;d<=7;d++){ui_start(stdout,"option");printf(" value=\"%d\">%s",d,wa_day(d));ui_close(stdout,"option");}
         ui_close(stdout,"select"); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("Starts",stdout); ui_open_a(stdout,"input","type","time","name","start","required",(const char *)NULL,"value","21:00"); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("Minutes",stdout); ui_open_a(stdout,"input","type","number","name","minutes","required",(const char *)NULL,"min","1","max","1440","value","60"); ui_close(stdout,"label"); ui_close(stdout,"div"); ui_open(stdout,"div","aw-row"); ui_open(stdout,"label",NULL); fputs("Programme",stdout); ui_open_a(stdout,"input","name","title","required",(const char *)NULL,"maxlength","160"); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("Host",stdout); ui_open(stdout,"small",NULL); fputs("Optional",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"input","name","host","maxlength","160"); ui_close(stdout,"label"); ui_close(stdout,"div"); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Add to the schedule",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form");}
     }
     /* episodes */
@@ -151,23 +151,23 @@ static void world_audio_studio(sqlite3 *db,const char *subject,const char *site_
     if(aw_items(db,subject,site_id,world,space,&items)==1)while(sqlite3_step(items)==SQLITE_ROW){
         int pos=sqlite3_column_int(items,0);const char *ref=wa_col(items,1);if(!strncmp(ref,"space:",6))continue;shown++;
         WaEpisode ep=wa_episode(db,subject,site_id,world,space,ref);
-        printf("<details data-sound-episode=\"%d\"><summary>%d. ",pos,pos);world_web_words(wa_col(items,2));fputs(" <code>",stdout);html(ref);ui_close(stdout,"code");
+        ui_start(stdout,"details");printf(" data-sound-episode=\"%d\">",pos);ui_open(stdout,"summary",NULL);printf("%d. ",pos);world_web_words(wa_col(items,2));ui_copy(stdout," <code>");html(ref);ui_close(stdout,"code");
         if(ep.found)printf(" &middot; season %d, episode %d, %s",ep.season,ep.number,ep.published);ui_close(stdout,"summary");
         wa_form(site_id,world,space,"episode",revision,"episode");ph_hidden("ref",ref);
-        char n[16];fputs("<div class=\"aw-row\"><label>Season<input type=\"number\" name=\"season\" min=\"0\" max=\"999\" value=\"",stdout);snprintf(n,sizeof(n),"%d",ep.found?ep.season:1);html(n);
-        fputs("\"></label><label>Episode<input type=\"number\" name=\"number\" min=\"0\" max=\"9999\" value=\"",stdout);snprintf(n,sizeof(n),"%d",ep.found?ep.number:pos);html(n);
-        fputs("\"></label><label>Date<input type=\"date\" name=\"published\" required value=\"",stdout);html(ep.found?ep.published:"");fputs("\"></label></div><div class=\"aw-actions\"><button type=\"submit\">Save episode details</button></div></form>",stdout);
+        char n[16];ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"Season");ui_start(stdout,"input");ui_attr(stdout,"type","number");ui_attr(stdout,"name","season");ui_attr(stdout,"min","0");ui_attr(stdout,"max","999");ui_attr_open(stdout,"value");snprintf(n,sizeof(n),"%d",ep.found?ep.season:1);html(n);
+        ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Episode");ui_start(stdout,"input");ui_attr(stdout,"type","number");ui_attr(stdout,"name","number");ui_attr(stdout,"min","0");ui_attr(stdout,"max","9999");ui_attr_open(stdout,"value");snprintf(n,sizeof(n),"%d",ep.found?ep.number:pos);html(n);
+        ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Date");ui_start(stdout,"input");ui_attr(stdout,"type","date");ui_attr(stdout,"name","published");ui_flag(stdout,"required");ui_attr_open(stdout,"value");html(ep.found?ep.published:"");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_close(stdout,"div");ui_open(stdout,"div","aw-actions");ui_open_a(stdout,"button","type","submit");ui_copy(stdout,"Save episode details");ui_close(stdout,"button");ui_close(stdout,"div");ui_close(stdout,"form");
         sqlite3_stmt *marks=NULL;int nm=0;
         if(awa_rows(db,subject,site_id,world,space,AWA_MARKS,ref,&marks)==1)while(sqlite3_step(marks)==SQLITE_ROW){
             if(!nm++)do{ ui_open_a(stdout,"table","data-sound-marks",(const char *)NULL); ui_open(stdout,"thead",NULL); ui_open(stdout,"tr",NULL); ui_open(stdout,"th",NULL); fputs("At",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("What",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("State",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); ui_close(stdout,"th"); ui_close(stdout,"tr"); ui_close(stdout,"thead"); ui_open(stdout,"tbody",NULL); }while(0);
             long long id=sqlite3_column_int64(marks,0),start=sqlite3_column_int64(marks,3),end=sqlite3_column_int64(marks,4);int checked=sqlite3_column_int(marks,8);
             const char *kind=wa_col(marks,2);char a[24],b[24];wa_clock(start,a);wa_clock(end,b);
-            printf("<tr data-mark=\"%lld\" data-mark-kind=\"%s\"><td>",id,kind);
+            ui_start(stdout,"tr");printf(" data-mark=\"%lld\" data-mark-kind=\"%s\">",id,kind);ui_open(stdout,"td",NULL);
             if(strcmp(kind,"person")){html(a);if(end){fputs("&ndash;",stdout);html(b);}}ui_close(stdout,"td"); ui_open(stdout,"td",NULL); ui_open(stdout,"strong",NULL);html(wa_mark_label(kind));ui_close(stdout,"strong"); fputs(" ",stdout);
             const char *credit=wa_col(marks,6);if(*credit){html(credit);fputs(!strcmp(kind,"person")?" &middot; ":": ",stdout);}html(wa_col(marks,5));
             const char *href=wa_col(marks,7);if(*href){fputs(" <code>",stdout);html(href);ui_close(stdout,"code");}ui_close(stdout,"td"); ui_open(stdout,"td",NULL);
             int reviewable=!strcmp(kind,"track")||!strcmp(kind,"cue")||!strcmp(kind,"clip");
-            if(reviewable){fputs("<span class=\"aw-flag\"",stdout);if(checked)fputs(" data-ok",stdout);fputs(">",stdout);
+            if(reviewable){ui_start(stdout,"span");ui_attr(stdout,"class","aw-flag");if(checked)ui_flag(stdout,"data-ok");ui_gt(stdout);
                 fputs(!strcmp(kind,"track")?(checked?"Confirmed":"Unconfirmed"):(checked?"Reviewed":"Needs review"),stdout);ui_close(stdout,"span");}
             ui_close(stdout,"td"); ui_open(stdout,"td",NULL);char idn[24];snprintf(idn,sizeof(idn),"%lld",id);
             if(reviewable){wa_form(site_id,world,space,"check",revision,NULL);ph_hidden("id",idn);if(!checked)ph_hidden("checked","1");
@@ -181,7 +181,7 @@ static void world_audio_studio(sqlite3 *db,const char *subject,const char *site_
         ui_open(stdout,"label",NULL); fputs("Transcript",stdout); ui_open(stdout,"small",NULL); fputs("Paste WebVTT from your transcription. Lines arrive unreviewed; reviewed lines are kept when you paste again",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"textarea","name","vtt","rows","4","required",(const char *)NULL,"placeholder","WEBVTT"); ui_close(stdout,"textarea"); ui_close(stdout,"label"); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Bring in transcript",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form"); ui_close(stdout,"details");
     }
     sqlite3_finalize(items);if(!shown)ui_text(stdout, "p", NULL, "Add a recording to this space first.");
-    if(state&&!strcmp(state,"public")&&site.host[0]){fputs("<p>Podcast apps can follow <a href=\"https://",stdout);html(site.host);fputs("/worlds/",stdout);html(space);fputs("/feed.xml\">this feed</a> once an episode has a date and a playable recording.</p>",stdout);}
+    if(state&&!strcmp(state,"public")&&site.host[0]){ui_open(stdout,"p",NULL);ui_copy(stdout,"Podcast apps can follow ");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");html(site.host);ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/feed.xml");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"this feed");ui_close(stdout,"a");ui_copy(stdout," once an episode has a date and a playable recording.");ui_close(stdout,"p");}
     ui_close(stdout,"section");
 }
 
@@ -277,7 +277,7 @@ static int wa_page_scripted;
 static void world_audio_station(sqlite3 *db,const PhSite *site,sqlite3_int64 world,const char *space){
     WaSound snd;if(!wa_sound(db,NULL,site->id,world,space,&snd))return;
     WaSlot slots[AWA_SLOT_LIMIT];int n=wa_slots(db,NULL,site->id,world,space,slots);
-    fputs("<section class=\"aw-sound\" data-world-sound=\"",stdout);html(snd.kind);fputs("\" aria-label=\"",stdout);fputs(!strcmp(snd.kind,"station")?"On air":"About the show",stdout);fputs("\">",stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","aw-sound");ui_attr_open(stdout,"data-world-sound");html(snd.kind);ui_attr_close(stdout);ui_attr_open(stdout,"aria-label");fputs(!strcmp(snd.kind,"station")?"On air":"About the show",stdout);ui_attr_close(stdout);ui_gt(stdout);
     ui_open(stdout,"p","aw-credit");fputs(!strcmp(snd.kind,"station")?"A station by ":"A show by ",stdout);html(snd.author);ui_close(stdout,"p");
     if(snd.stream[0]){
         PageMaterial *m=calloc(1,sizeof(*m));PageItem *it=calloc(1,sizeof(*it));char loaded[96]="";
@@ -300,20 +300,20 @@ static void world_audio_station(sqlite3 *db,const PhSite *site,sqlite3_int64 wor
             if(slots[on].host[0]){fputs(" with ",stdout);html(slots[on].host);}printf(", until %02d:%02d</p>",(end/60)%24,end%60);}
         else do{ ui_open_a(stdout,"p","data-now",(const char *)NULL); ui_open(stdout,"span","aw-role"); fputs("On air now",stdout); ui_close(stdout,"span"); fputs(" Nothing is scheduled right now.",stdout); ui_close(stdout,"p"); }while(0);
         if(next>=0){time_t at=now-local.tm_sec+(time_t)best*60;struct tm u;gmtime_r(&at,&u);char iso[32];strftime(iso,sizeof(iso),"%Y-%m-%dT%H:%MZ",&u);
-            printf("<p data-next><span class=\"aw-role\">Next</span> <time datetime=\"%s\">%s %02d:%02d</time> &middot; ",iso,best>=1440||slots[next].weekday!=(local.tm_wday?local.tm_wday:7)?wa_day(slots[next].weekday):"Today",slots[next].start/60,slots[next].start%60);
+            ui_open_a(stdout,"p","data-next",(const char *)NULL);ui_open(stdout,"span","aw-role");ui_copy(stdout,"Next");ui_close(stdout,"span");ui_copy(stdout," ");ui_start(stdout,"time");printf(" datetime=\"%s\">",iso);printf("%s %02d:%02d",best>=1440||slots[next].weekday!=(local.tm_wday?local.tm_wday:7)?wa_day(slots[next].weekday):"Today",slots[next].start/60,slots[next].start%60);ui_close(stdout,"time");ui_copy(stdout," &middot; ");
             html(slots[next].programme);if(slots[next].host[0]){fputs(" with ",stdout);html(slots[next].host);}ui_close(stdout,"p");}
         ui_open(stdout,"p","aw-terms"); fputs("Times are the station&rsquo;s clock, ",stdout);html(snd.timezone);printf(". It is %s there now.</p></div>",stamp);
     }else if(n){ui_open(stdout,"p","aw-terms"); fputs("The station&rsquo;s time zone is not known here, so what is on now cannot be shown.",stdout); ui_close(stdout,"p");}
     if(n){ui_open_a(stdout,"table","class","aw-schedule","data-world-schedule",(const char *)NULL); ui_open(stdout,"caption",NULL); fputs("Every week",stdout); ui_close(stdout,"caption"); ui_open(stdout,"tbody",NULL);
-        for(int i=0;i<n;i++){int end=slots[i].start+slots[i].minutes;printf("<tr><th scope=\"row\">%s</th><td>%02d:%02d&ndash;%02d:%02d</td><td>",wa_day(slots[i].weekday),slots[i].start/60,slots[i].start%60,(end/60)%24,end%60);
+        for(int i=0;i<n;i++){int end=slots[i].start+slots[i].minutes;ui_open(stdout,"tr",NULL);ui_open_a(stdout,"th","scope","row");printf("%s",wa_day(slots[i].weekday));ui_close(stdout,"th");ui_open(stdout,"td",NULL);printf("%02d:%02d&ndash;%02d:%02d",slots[i].start/60,slots[i].start%60,(end/60)%24,end%60);ui_close(stdout,"td");ui_open(stdout,"td",NULL);
             if(slots[i].ref[0]&&!strncmp(slots[i].ref,"space:",6)){ui_link_path(stdout, (const char *const[]){"/worlds/", slots[i].ref+6}, 2, slots[i].programme);}
             else if(slots[i].ref[0]){ui_link_path(stdout, (const char *const[]){"/o/", slots[i].ref}, 2, slots[i].programme);}
             else html(slots[i].programme);
             if(slots[i].host[0]){fputs(" <span>with ",stdout);html(slots[i].host);ui_close(stdout,"span");}ui_close(stdout,"td"); ui_close(stdout,"tr");}
         ui_close(stdout,"tbody"); ui_close(stdout,"table");}
     ui_open(stdout,"p","aw-listen");
-    if(n){fputs("<a href=\"/worlds/",stdout);html(space);fputs("/schedule.ics\" data-world-calendar>Add the schedule to your calendar</a>",stdout);}
-    fputs("<a href=\"/worlds/",stdout);html(space);fputs("/feed.xml\" data-world-feed>Follow in a podcast app</a></p></section>",stdout);
+    if(n){ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/schedule.ics");ui_attr_close(stdout);ui_flag(stdout,"data-world-calendar");ui_gt(stdout);ui_copy(stdout,"Add the schedule to your calendar");ui_close(stdout,"a");}
+    ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/feed.xml");ui_attr_close(stdout);ui_flag(stdout,"data-world-feed");ui_gt(stdout);ui_copy(stdout,"Follow in a podcast app");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section");
 }
 /* Episode details under item N: people, chapters, tracklist, clips, sources, transcript. */
 static void world_audio_episode(sqlite3 *db,const PhSite *site,sqlite3_int64 world,const char *space,int position,const char *ref,const PageItem *item){
@@ -328,14 +328,14 @@ static void world_audio_episode(sqlite3 *db,const PhSite *site,sqlite3_int64 wor
     sqlite3_finalize(s);
     if(!ep.found&&!n){free(m);return;}
     int play=wa_open_audio(item);char t[24],u[24];
-    printf("<section class=\"aw-episode\" data-episode-for=\"piece-%d\" aria-label=\"Episode details\">",position);
+    ui_start(stdout,"section");ui_attr(stdout,"class","aw-episode");printf(" data-episode-for=\"piece-%d\"",position);ui_attr(stdout,"aria-label","Episode details");ui_gt(stdout);
     if(ep.found||item->duration_ms>0){ui_open(stdout,"p","aw-epmeta");
         if(ep.found){if(ep.season)printf("Season %d &middot; ",ep.season);if(ep.number)printf("Episode %d &middot; ",ep.number);
             struct tm d={0};d.tm_year=atoi(ep.published)-1900;d.tm_mon=atoi(ep.published+5)-1;d.tm_mday=atoi(ep.published+8);char nice[40];strftime(nice,sizeof(nice),"%e %B %Y",&d);
             ui_open_a(stdout,"time",UI_DYN,"datetime","",(ep.published));html(nice[0]==' '?nice+1:nice);ui_close(stdout,"time");}
         if(item->duration_ms>0)printf("%s%ld min",ep.found?" &middot; ":"",(item->duration_ms+59999)/60000);ui_close(stdout,"p");}
-    #define WA_AT(k) do{wa_clock((k)->start,t);if(play)printf("<button type=\"button\" class=\"aw-at\" data-seek=\"%lld\" aria-label=\"Play from %s\">%s</button> ",(k)->start,t,t);else printf("<span class=\"aw-at\">%s</span> ",t);}while(0)
-    #define WA_LINK_OPEN(k) do{if((k)->href[0]){fputs("<a ",stdout);if(!strncmp((k)->href,"https://",8)){fputs("rel=\"noopener\" href=\"",stdout);html((k)->href);}else{fputs("href=\"/o/",stdout);html((k)->href);}fputs("\">",stdout);}}while(0)
+    #define WA_AT(k) do{wa_clock((k)->start,t);if(play){ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","aw-at");printf(" data-seek=\"%lld\" aria-label=\"Play from %s\">%s",(k)->start,t,t);ui_close(stdout,"button");ui_copy(stdout," ");}else{ui_open(stdout,"span","aw-at");fputs(t,stdout);ui_close(stdout,"span");ui_copy(stdout," ");}}while(0)
+    #define WA_LINK_OPEN(k) do{if((k)->href[0]){ui_start(stdout,"a");if(!strncmp((k)->href,"https://",8)){ui_attr(stdout,"rel","noopener");ui_attr_open(stdout,"href");html((k)->href);}else{ui_attr_open(stdout,"href");ui_copy(stdout,"/o/");html((k)->href);}ui_attr_close(stdout);ui_gt(stdout);}}while(0)
     /* people */
     int first=1;for(int i=0;i<n;i++)if(!strcmp(m[i].kind,"person")){
         if(first){ui_open_a(stdout,"p","class","aw-people","data-episode-people",(const char *)NULL); fputs("With ",stdout);first=0;}else fputs(", ",stdout);
@@ -344,11 +344,11 @@ static void world_audio_episode(sqlite3 *db,const PhSite *site,sqlite3_int64 wor
     struct{const char *kind,*heading,*attr;}lists[]={{"chapter","Chapters","data-episode-chapters"},{"track","Tracklist","data-episode-tracks"},{"clip","Clips","data-episode-clips"},{"source","Sources cited","data-episode-sources"}};
     for(size_t L=0;L<4;L++){int open=0;
         for(int i=0;i<n;i++){Mark *k=&m[i];if(strcmp(k->kind,lists[L].kind))continue;if(!strcmp(k->kind,"clip")&&!k->checked)continue;
-            if(!open++){ui_open(stdout,"div","aw-marklist"); ui_open(stdout,"h3",NULL);fputs(lists[L].heading,stdout);printf("</h3><ol class=\"aw-marks\" %s>",lists[L].attr);}
+            if(!open++){ui_open(stdout,"div","aw-marklist"); ui_open(stdout,"h3",NULL);fputs(lists[L].heading,stdout);ui_close(stdout,"h3");ui_start(stdout,"ol");ui_attr(stdout,"class","aw-marks");ui_flag(stdout,lists[L].attr);ui_gt(stdout);}
             ui_open(stdout,"li",NULL);
             if(!strcmp(k->kind,"clip")){wa_clock(k->start,t);wa_clock(k->end,u);
-                if(play)printf("<button type=\"button\" class=\"aw-at\" data-seek=\"%lld\" data-until=\"%lld\" aria-label=\"Play the clip from %s to %s\">%s&ndash;%s</button> ",k->start,k->end,t,u,t,u);
-                else printf("<span class=\"aw-at\">%s&ndash;%s</span> ",t,u);html(k->title);}
+                if(play){ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","aw-at");printf(" data-seek=\"%lld\" data-until=\"%lld\" aria-label=\"Play the clip from %s to %s\">%s&ndash;%s",k->start,k->end,t,u,t,u);ui_close(stdout,"button");ui_copy(stdout," ");}
+                else{ui_open(stdout,"span","aw-at");printf("%s&ndash;%s",t,u);ui_close(stdout,"span");ui_copy(stdout," ");}html(k->title);}
             else{WA_AT(k);
                 if(!strcmp(k->kind,"track")){if(k->credit[0]){html(k->credit);fputs(" &mdash; ",stdout);}WA_LINK_OPEN(k);html(k->title);if(k->href[0])ui_close(stdout,"a");
                     if(!k->checked)fputs(" <span class=\"aw-flag\" data-unconfirmed>not yet confirmed</span>",stdout);}
@@ -358,10 +358,10 @@ static void world_audio_episode(sqlite3 *db,const PhSite *site,sqlite3_int64 wor
     int reviewed=0,pending=0;for(int i=0;i<n;i++)if(!strcmp(m[i].kind,"cue")){if(m[i].checked)reviewed++;else pending++;}
     if(reviewed){
         ui_open_a(stdout,"details","class","aw-transcript","data-episode-transcript",(const char *)NULL); ui_open(stdout,"summary",NULL); fputs("Transcript",stdout); ui_close(stdout,"summary"); ui_open(stdout,"label","aw-search"); fputs("Search the transcript ",stdout); ui_open_a(stdout,"input","type","search","data-cue-search",(const char *)NULL,"autocomplete","off"); ui_close(stdout,"label"); ui_open(stdout,"ol","aw-marks");
-        for(int i=0;i<n;i++){Mark *k=&m[i];if(strcmp(k->kind,"cue")||!k->checked)continue;printf("<li data-cue data-start=\"%lld\" data-end=\"%lld\">",k->start,k->end);WA_AT(k);
+        for(int i=0;i<n;i++){Mark *k=&m[i];if(strcmp(k->kind,"cue")||!k->checked)continue;ui_start(stdout,"li");ui_flag(stdout,"data-cue");printf(" data-start=\"%lld\" data-end=\"%lld\">",k->start,k->end);WA_AT(k);
             if(k->credit[0]){ui_open(stdout,"strong",NULL);html(k->credit);fputs(":</strong> ",stdout);}html(k->title);ui_close(stdout,"li");}
-        ui_close(stdout,"ol");if(pending)printf("<p class=\"aw-terms\">%d more line%s still being checked.</p>",pending,pending==1?" is":"s are");
-        printf("<p class=\"aw-terms\"><a href=\"/worlds/");html(space);printf("/transcript/%d.vtt\">Transcript file</a></p></details>",position);
+        ui_close(stdout,"ol");if(pending){ui_open(stdout,"p","aw-terms");printf("%d more line%s still being checked.",pending,pending==1?" is":"s are");ui_close(stdout,"p");}
+        ui_open(stdout,"p","aw-terms");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);printf("/transcript/%d.vtt",position);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Transcript file");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"details");
     }
     ui_close(stdout,"section");free(m);wa_page_scripted|=1;
     #undef WA_AT
@@ -369,7 +369,7 @@ static void world_audio_episode(sqlite3 *db,const PhSite *site,sqlite3_int64 wor
 }
 static void world_audio_script(void){
     if(!wa_page_scripted)return;wa_page_scripted=0;
-    fputs("<script>(()=>{const all=(s,r=document)=>[...r.querySelectorAll(s)];"
+    ui_script(stdout,"(()=>{const all=(s,r=document)=>[...r.querySelectorAll(s)];"
           "const audioFor=el=>{const box=el.closest('[data-episode-for]');return box&&document.querySelector('#'+box.dataset.episodeFor+' audio')};"
           "all('[data-seek]').forEach(b=>b.addEventListener('click',()=>{const a=audioFor(b);if(!a)return;a.currentTime=b.dataset.seek/1000;const until=+b.dataset.until||0;a.play();"
           "if(until){const stop=()=>{if(a.currentTime*1000>=until){a.pause();a.removeEventListener('timeupdate',stop)}};a.addEventListener('timeupdate',stop)}}));"
@@ -378,7 +378,7 @@ static void world_audio_script(void){
           "a.addEventListener('timeupdate',()=>{const ms=a.currentTime*1000;cues.forEach(c=>{const on=ms>=+c.dataset.start&&ms<+c.dataset.end;c.toggleAttribute('aria-current',on)})})});"
           "if('mediaSession' in navigator&&window.MediaMetadata)all('audio').forEach(a=>a.addEventListener('play',()=>{const art=a.closest('article,.aw-live');const h=art&&art.querySelector('h2,.aw-terms');"
           "const by=art&&art.querySelector('.by');navigator.mediaSession.metadata=new MediaMetadata({title:h?h.textContent:document.title,artist:by?by.textContent:'',album:document.title})}));"
-          "})()</script>",stdout);
+          "})()");
 }
 
 /* ------------------------------------------------------------- feeds */
@@ -453,7 +453,7 @@ static int serve_world_audio_public(const char *method,const char *target,const 
                 const char *h=wa_col(s,7);if(!strncmp(h,"https://",8)){bf_jsonw_key(&w,"url");bf_jsonw_str(&w,h);}bf_jsonw_obj_end(&w);}
             if(kind==4&&!strcmp(k,"cue")&&sqlite3_column_int(s,8)){any=1;long long a=sqlite3_column_int64(s,3),b=sqlite3_column_int64(s,4);
                 printf("\n%02lld:%02lld:%02lld.%03lld --> %02lld:%02lld:%02lld.%03lld\n",a/3600000,a/60000%60,a/1000%60,a%1000,b/3600000,b/60000%60,b/1000%60,b%1000);
-                const char *sp=wa_col(s,6);if(*sp){fputs("<v ",stdout);wa_xml(sp);fputs(">",stdout);}
+                const char *sp=wa_col(s,6);if(*sp){ui_start(stdout,"v");ui_copy(stdout," ");wa_xml(sp);ui_gt(stdout);}
                 for(const char *p=wa_col(s,5);*p;p++){if(*p=='&')fputs("&amp;",stdout);else if(*p=='<')fputs("&lt;",stdout);else if(*p=='>')fputs("&gt;",stdout);else fputc(*p,stdout);}fputs("\n",stdout);}
         }
         sqlite3_finalize(s);
@@ -464,10 +464,10 @@ static int serve_world_audio_public(const char *method,const char *target,const 
     /* RSS: one item per dated episode whose recording its source states open terms for */
     printf(hdr,"application/rss+xml; charset=utf-8");
     char base[400];snprintf(base,sizeof(base),"https://%s/worlds/%s",site.host,space);
-    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\" xmlns:itunes=\"http://www.itunes.com/dtds/podcast-1.0.dtd\" xmlns:podcast=\"https://podcastindex.org/namespace/1.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n<channel>\n",stdout);
-    ui_open(stdout,"title",NULL);wa_xml(title);ui_close(stdout,"title"); fputs("\n",stdout); ui_open(stdout,"link",NULL);wa_xml(base);fputs("</link>\n<atom:link rel=\"self\" type=\"application/rss+xml\" href=\"",stdout);wa_xml(base);fputs("/feed.xml\"/>\n<description>",stdout);
-    wa_xml(*lede?lede:title);ui_close(stdout,"description"); fputs("\n",stdout); ui_open(stdout,"language",NULL);wa_xml(snd.language);fputs("</language>\n<generator>Aurekai Worlds</generator>\n<itunes:author>",stdout);wa_xml(snd.author);
-    fputs("</itunes:author>\n<itunes:explicit>",stdout);fputs(snd.explicit_content?"true":"false",stdout);fputs("</itunes:explicit>\n<itunes:type>episodic</itunes:type>\n<itunes:category text=\"",stdout);wa_xml(snd.category);fputs("\"/>\n<podcast:medium>",stdout);
+    ui_copy(stdout,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");ui_start(stdout,"rss");ui_attr(stdout,"version","2.0");ui_attr(stdout,"xmlns:itunes","http://www.itunes.com/dtds/podcast-1.0.dtd");ui_attr(stdout,"xmlns:podcast","https://podcastindex.org/namespace/1.0");ui_attr(stdout,"xmlns:atom","http://www.w3.org/2005/Atom");ui_gt(stdout);ui_copy(stdout,"\n");ui_open(stdout,"channel",NULL);ui_copy(stdout,"\n");
+    ui_open(stdout,"title",NULL);wa_xml(title);ui_close(stdout,"title"); fputs("\n",stdout); ui_open(stdout,"link",NULL);wa_xml(base);ui_close(stdout,"link");ui_copy(stdout,"\n");ui_start(stdout,"atom:link");ui_attr(stdout,"rel","self");ui_attr(stdout,"type","application/rss+xml");ui_attr_open(stdout,"href");wa_xml(base);fputs("/feed.xml\"/>\n<description>",stdout);
+    wa_xml(*lede?lede:title);ui_close(stdout,"description"); fputs("\n",stdout); ui_open(stdout,"language",NULL);wa_xml(snd.language);ui_close(stdout,"language");ui_copy(stdout,"\n");ui_open(stdout,"generator",NULL);ui_copy(stdout,"Aurekai Worlds");ui_close(stdout,"generator");ui_copy(stdout,"\n");ui_open(stdout,"itunes:author",NULL);wa_xml(snd.author);
+    ui_close(stdout,"itunes:author");ui_copy(stdout,"\n");ui_open(stdout,"itunes:explicit",NULL);fputs(snd.explicit_content?"true":"false",stdout);ui_close(stdout,"itunes:explicit");ui_copy(stdout,"\n");ui_open(stdout,"itunes:type",NULL);ui_copy(stdout,"episodic");ui_close(stdout,"itunes:type");ui_copy(stdout,"\n");ui_start(stdout,"itunes:category");ui_attr_open(stdout,"text");wa_xml(snd.category);fputs("\"/>\n<podcast:medium>",stdout);
     fputs("podcast</podcast:medium>\n",stdout);
     typedef struct{int row;WaEpisode ep;} Pick;Pick picks[AW_ITEM_LIMIT];int np=0;
     for(int i=0;i<nr;i++){if(!strncmp(rows[i].ref,"space:",6))continue;WaEpisode ep=wa_episode(db,NULL,site.id,world,space,rows[i].ref);if(ep.found){picks[np].row=i;picks[np].ep=ep;np++;}}
@@ -476,25 +476,25 @@ static int serve_world_audio_public(const char *method,const char *target,const 
         Row *r=&rows[picks[p].row];WaEpisode *ep=&picks[p].ep;
         if(!world_web_resolve(db,r->ref,m,loaded,it)||!wa_open_audio(it))continue;
         char date[40];wa_rfc822(ep->published,date);
-        ui_open(stdout,"item",NULL); fputs("\n",stdout); ui_open(stdout,"title",NULL);wa_xml(it->title);printf("</title>\n<link>%s#piece-%d</link>\n<guid isPermaLink=\"false\">",base,r->position);wa_xml(site.host);fputs("/worlds/",stdout);wa_xml(space);fputs("/",stdout);wa_xml(r->ref);
-        printf("</guid>\n<pubDate>%s</pubDate>\n<description>",date);
+        ui_open(stdout,"item",NULL); fputs("\n",stdout); ui_open(stdout,"title",NULL);wa_xml(it->title);ui_copy(stdout,"</title>\n<link>");printf("%s#piece-%d",base,r->position);ui_close(stdout,"link");ui_copy(stdout,"\n");ui_start(stdout,"guid");ui_attr(stdout,"isPermaLink","false");ui_gt(stdout);wa_xml(site.host);fputs("/worlds/",stdout);wa_xml(space);fputs("/",stdout);wa_xml(r->ref);
+        ui_close(stdout,"guid");ui_copy(stdout,"\n");ui_open(stdout,"pubDate",NULL);printf("%s",date);ui_close(stdout,"pubDate");ui_copy(stdout,"\n");ui_open(stdout,"description",NULL);
         char desc[2400];snprintf(desc,sizeof(desc),"%s%s%s%s%s",r->note,*r->note&&it->body[0]?" ":"",it->body,it->rights[0]?" Terms: ":"",it->rights);wa_xml(desc);
-        fputs("</description>\n<enclosure url=\"",stdout);wa_xml(it->asset);fputs("\" length=\"0\" type=\"",stdout);fputs(wa_mime(it->asset),stdout);fputs("\"/>\n",stdout);
-        if(ep->season)printf("<itunes:season>%d</itunes:season>\n",ep->season);if(ep->number)printf("<itunes:episode>%d</itunes:episode>\n",ep->number);
-        if(it->duration_ms>0)printf("<itunes:duration>%ld</itunes:duration>\n",it->duration_ms/1000);
+        ui_close(stdout,"description");ui_copy(stdout,"\n");ui_start(stdout,"enclosure");ui_attr_open(stdout,"url");wa_xml(it->asset);fputs("\" length=\"0\" type=\"",stdout);fputs(wa_mime(it->asset),stdout);fputs("\"/>\n",stdout);
+        if(ep->season){ui_open(stdout,"itunes:season",NULL);printf("%d",ep->season);ui_close(stdout,"itunes:season");ui_copy(stdout,"\n");}if(ep->number){ui_open(stdout,"itunes:episode",NULL);printf("%d",ep->number);ui_close(stdout,"itunes:episode");ui_copy(stdout,"\n");}
+        if(it->duration_ms>0){ui_open(stdout,"itunes:duration",NULL);printf("%ld",it->duration_ms/1000);ui_close(stdout,"itunes:duration");ui_copy(stdout,"\n");}
         sqlite3_stmt *s=NULL;int chapters=0,cues=0;
         if(awa_rows(db,NULL,site.id,world,space,AWA_MARKS,r->ref,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){const char *k=wa_col(s,2);
             if(!strcmp(k,"chapter"))chapters++;
             else if(!strcmp(k,"cue")&&sqlite3_column_int(s,8))cues++;
-            else if(!strcmp(k,"person")){const char *role=wa_col(s,6),*h=wa_col(s,7);fputs("<podcast:person",stdout);
+            else if(!strcmp(k,"person")){const char *role=wa_col(s,6),*h=wa_col(s,7);ui_start(stdout,"podcast:person");
                 if(!strcasecmp(role,"guest")||!strcasecmp(role,"host")||!strcasecmp(role,"producer")||!strcasecmp(role,"editor")||!strcasecmp(role,"composer")||!strcasecmp(role,"narrator")){fputs(" role=\"",stdout);for(const char *q=role;*q;q++)fputc(tolower((unsigned char)*q),stdout);fputs("\"",stdout);}
-                if(!strncmp(h,"https://",8)){fputs(" href=\"",stdout);wa_xml(h);fputs("\"",stdout);}fputs(">",stdout);wa_xml(wa_col(s,5));fputs("</podcast:person>\n",stdout);}
+                if(!strncmp(h,"https://",8)){fputs(" href=\"",stdout);wa_xml(h);fputs("\"",stdout);}fputs(">",stdout);wa_xml(wa_col(s,5));ui_close(stdout,"podcast:person");ui_copy(stdout,"\n");}
             else if(!strcmp(k,"clip")&&sqlite3_column_int(s,8)){long long a=sqlite3_column_int64(s,3),b=sqlite3_column_int64(s,4);
-                printf("<podcast:soundbite startTime=\"%lld.%03lld\" duration=\"%lld.%03lld\">",a/1000,a%1000,(b-a)/1000,(b-a)%1000);wa_xml(wa_col(s,5));fputs("</podcast:soundbite>\n",stdout);}
+                ui_start(stdout,"podcast:soundbite");printf(" startTime=\"%lld.%03lld\" duration=\"%lld.%03lld\">",a/1000,a%1000,(b-a)/1000,(b-a)%1000);wa_xml(wa_col(s,5));ui_close(stdout,"podcast:soundbite");ui_copy(stdout,"\n");}
         }
         sqlite3_finalize(s);
-        if(chapters)printf("<podcast:chapters url=\"%s/chapters/%d.json\" type=\"application/json+chapters\"/>\n",base,r->position);
-        if(cues)printf("<podcast:transcript url=\"%s/transcript/%d.vtt\" type=\"text/vtt\"/>\n",base,r->position);
+        if(chapters){ui_start(stdout,"podcast:chapters");printf(" url=\"%s/chapters/%d.json\" type=\"application/json+chapters\"/>",base,r->position);ui_copy(stdout,"\n");}
+        if(cues){ui_start(stdout,"podcast:transcript");printf(" url=\"%s/transcript/%d.vtt\" type=\"text/vtt\"/>",base,r->position);ui_copy(stdout,"\n");}
         ui_close(stdout,"item"); fputs("\n",stdout);
     }
     ui_close(stdout,"channel"); fputs("\n",stdout); ui_close(stdout,"rss"); fputs("\n",stdout);

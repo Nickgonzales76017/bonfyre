@@ -69,6 +69,7 @@ const Composition = struct {
     scene_grammars: []SceneGrammar,
     nav: []NavItem,
     grammar_labels: []GrammarLabel,
+    timeless_families: [][]const u8,
 };
 
 fn cString(w: anytype, value: []const u8) !void {
@@ -272,5 +273,11 @@ pub fn main() !void {
     try w.writeAll("};\n#define BF_PAGE_SCENE_GRAMMAR_COUNT (sizeof(bf_page_scene_grammars)/sizeof(bf_page_scene_grammars[0]))\n");
     try w.writeAll("typedef struct { const char *route; const char *label; } BfPageNavItem;\nstatic const BfPageNavItem bf_page_nav[] = {\n");
     for (c.nav) |item| { try w.writeAll("  {"); try cString(w, item.route); try w.writeByte(','); try cString(w, item.label); try w.writeAll("},\n"); }
-    try w.writeAll("};\n#define BF_PAGE_NAV_COUNT (sizeof(bf_page_nav)/sizeof(bf_page_nav[0]))\n#endif\n");
+    try w.writeAll("};\n#define BF_PAGE_NAV_COUNT (sizeof(bf_page_nav)/sizeof(bf_page_nav[0]))\n");
+    // Families whose material does not date: a recipe or a public-domain film
+    // is shown without a publication date.
+    try w.writeAll("static const char *const bf_page_timeless_families[] = {");
+    for (c.timeless_families, 0..) |family, i| { if (i > 0) try w.writeByte(','); try cString(w, family); }
+    if (c.timeless_families.len == 0) try w.writeAll("NULL");
+    try w.print("}};\n#define BF_PAGE_TIMELESS_FAMILY_COUNT {d}u\n#endif\n", .{c.timeless_families.len});
 }

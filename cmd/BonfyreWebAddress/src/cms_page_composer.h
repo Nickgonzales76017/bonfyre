@@ -26,10 +26,17 @@ static int serve_cms_composer(const BfRequest *r) {
     }
     if((home||visual)&&!strcmp(method,"GET")&&(!session_valid(bearer,auth_db)||(!write_grant&&!self_site_scope))) {
         ak_app_http(403,1);ak_app_open("Compose a page","workbench","route-compose");
-        fputs("<div class=\"ak-wb-strip\"><span>Studio</span><span>Composer</span><span class=\"ak-live\">Signed out</span></div>"
-              "<section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\"><a href=\"/studio\">Studio</a> &middot; Page composition</p>"
-              "<h1>Shape a page people can use.</h1><p class=\"ak-lede\">The composer opens the pages of your own address. Sign in with an account that has a site, then open a page or start one.</p>"
-              "<div class=\"ak-actions\"><a class=\"ak-btn is-primary\" href=\"/login?next=/cms/compose\">Sign in</a><a class=\"ak-btn\" href=\"/studio\">Back to the studio</a></div></div></section>",stdout);
+        ui_open(stdout,"div","ak-wb-strip");ui_open(stdout,"span",NULL);ui_copy(stdout,"Studio");ui_close(stdout,"span");
+        ui_open(stdout,"span",NULL);ui_copy(stdout,"Composer");ui_close(stdout,"span");
+        ui_open(stdout,"span","ak-live");ui_copy(stdout,"Signed out");ui_close(stdout,"span");ui_close(stdout,"div");
+        ui_open(stdout,"section","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");
+        ui_open_a(stdout,"a","href","/studio");ui_copy(stdout,"Studio");ui_close(stdout,"a");ui_copy(stdout," &middot; Page composition");ui_close(stdout,"p");
+        ui_open(stdout,"h1",NULL);ui_copy(stdout,"Shape a page people can use.");ui_close(stdout,"h1");
+        ui_open(stdout,"p","ak-lede");ui_copy(stdout,"The composer opens the pages of your own address. Sign in with an account that has a site, then open a page or start one.");ui_close(stdout,"p");
+        ui_open(stdout,"div","ak-actions");
+        ui_open_a(stdout,"a","class","ak-btn is-primary","href","/login?next=/cms/compose");ui_copy(stdout,"Sign in");ui_close(stdout,"a");
+        ui_open_a(stdout,"a","class","ak-btn","href","/studio");ui_copy(stdout,"Back to the studio");ui_close(stdout,"a");
+        ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"section");
         ak_app_close();return 1;
     }
     if(!session_valid(bearer,auth_db)||(!write_grant&&!self_site_scope)||
@@ -108,10 +115,17 @@ static int serve_cms_composer(const BfRequest *r) {
     }
     if(self_site_scope&&!exact_owned_site&&(home||visual)&&!strcmp(method,"GET")){
         sqlite3_close(db);ak_app_http(200,1);ak_app_open("Compose a page","workbench","route-compose");
-        fputs("<div class=\"ak-wb-strip\"><span>Studio</span><span>Composer</span><span class=\"ak-live\">No address yet</span></div>"
-              "<section class=\"ak-wb-hero is-solo\"><div><p class=\"ak-kicker\"><a href=\"/studio\">Studio</a> &middot; Page composition</p>"
-              "<h1>Shape a page people can use.</h1><p class=\"ak-lede\">The composer writes the pages of an address you own. This account has none bound yet; claim one from your profile, then come back to compose.</p>"
-              "<div class=\"ak-actions\"><a class=\"ak-btn is-primary\" href=\"/profile\">Claim an address</a><a class=\"ak-btn\" href=\"/studio\">Back to the studio</a></div></div></section>",stdout);
+        ui_open(stdout,"div","ak-wb-strip");ui_open(stdout,"span",NULL);ui_copy(stdout,"Studio");ui_close(stdout,"span");
+        ui_open(stdout,"span",NULL);ui_copy(stdout,"Composer");ui_close(stdout,"span");
+        ui_open(stdout,"span","ak-live");ui_copy(stdout,"No address yet");ui_close(stdout,"span");ui_close(stdout,"div");
+        ui_open(stdout,"section","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");
+        ui_open_a(stdout,"a","href","/studio");ui_copy(stdout,"Studio");ui_close(stdout,"a");ui_copy(stdout," &middot; Page composition");ui_close(stdout,"p");
+        ui_open(stdout,"h1",NULL);ui_copy(stdout,"Shape a page people can use.");ui_close(stdout,"h1");
+        ui_open(stdout,"p","ak-lede");ui_copy(stdout,"The composer writes the pages of an address you own. This account has none bound yet; claim one from your profile, then come back to compose.");ui_close(stdout,"p");
+        ui_open(stdout,"div","ak-actions");
+        ui_open_a(stdout,"a","class","ak-btn is-primary","href","/profile");ui_copy(stdout,"Claim an address");ui_close(stdout,"a");
+        ui_open_a(stdout,"a","class","ak-btn","href","/studio");ui_copy(stdout,"Back to the studio");ui_close(stdout,"a");
+        ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"section");
         ak_app_close();return 1;
     }
     if(self_site_scope&&!exact_owned_site){sqlite3_close(db);cms_composer_reply(403,"application/json","{\"error\":\"A current, owned profile site is required. \"}");return 1;}

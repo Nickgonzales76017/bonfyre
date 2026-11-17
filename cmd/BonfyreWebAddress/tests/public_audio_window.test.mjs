@@ -142,7 +142,8 @@ test('article listening is wired to both independent sites and retained source p
  expect(item).toContain('bf_article_listen_emit(stdout)');
  expect(site.match(/bf_article_listen_emit\(out\)/g)).toHaveLength(1);
  expect(site.match(/site_article_listening\(out,db,site,/g)).toHaveLength(2);
- expect(site).toContain('data-article-listen-scope=');
+ expect(site).toContain('ui_start(out,"div");ui_attr(out,"data-article-listen-scope","site");ui_gt(out);');
+ expect(site).toContain('ui_close(out,"div");');
 });
 
 test('audio waveform is measured-data-only and has a bounded parser with a standard seek fallback',()=>{

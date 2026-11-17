@@ -32,6 +32,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 /* ── Utilities ────────────────────────────────────────────────────── */
 
@@ -116,6 +117,14 @@ static int write_manifest(const char *out_dir, const char *mode,
 
 /* ── Main ─────────────────────────────────────────────────────────── */
 
+/* Verb vocabulary, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+enum { SPL_NARRATE_BRIEF, SPL_TRANSFORM };
+static const BfCommandEntry speechloop_commands[] = {
+    {"narrate-brief", SPL_NARRATE_BRIEF, 0, NULL},
+    {"transform", SPL_TRANSFORM, 0, NULL},
+};
+
 static void print_usage(void) {
     fprintf(stderr,
         "bonfyre-speechloop — whisper → transform → piper speech engine\n\n"
@@ -177,7 +186,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (strcmp(mode, "narrate-brief") == 0) {
+    const int mode_id = bf_command_id(speechloop_commands,
+        BF_COMMAND_COUNT(speechloop_commands), mode, -1);
+    if (mode_id == SPL_NARRATE_BRIEF) {
         /* Shortcut: just narrate an existing brief */
         char brief_path[PATH_MAX], narrate_dir[PATH_MAX];
         snprintf(brief_path, sizeof(brief_path), "%s/brief.md", input);
@@ -222,7 +233,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (strcmp(mode, "transform") != 0) {
+    if (mode_id != SPL_TRANSFORM) {
         fprintf(stderr, "error: unknown mode '%s'\n", mode);
         print_usage();
         return 1;

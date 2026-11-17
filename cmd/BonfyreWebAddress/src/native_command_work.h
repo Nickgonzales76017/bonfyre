@@ -1,5 +1,6 @@
 #ifndef BONFYRE_NATIVE_COMMAND_WORK_H
 #define BONFYRE_NATIVE_COMMAND_WORK_H
+#include "web_request.h"
 /* Review-gated native command dispatch for an installed account. WebAddress
  * supplies the authenticated session; no browser field can confer authority,
  * select an executor, or turn the command into arbitrary shell execution. */

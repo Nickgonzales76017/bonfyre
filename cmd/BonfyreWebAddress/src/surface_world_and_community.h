@@ -257,14 +257,16 @@ static void surface_emit_reading_controls(const NativeSurfaceContext *ctx) {
     if (strcmp(ctx->program, "community") && strcmp(ctx->program, "discover") && strcmp(ctx->program, "stage")) return;
     if (!ctx->target || (strncmp(ctx->target, "/w/", 3) && !surface_reading_narrowed(ctx))) return;
     query_value(ctx->query, "q", q, sizeof(q));
-    fputs("<form class=\"bf-reading-controls\" method=\"get\" role=\"search\" action=\"", stdout);
-    html(ctx->target); fputs("\"><label>Search this view <input type=\"search\" name=\"q\" value=\"", stdout);
+    ui_start(stdout,"form");ui_attr(stdout,"class","bf-reading-controls");ui_attr(stdout,"method","get");ui_attr(stdout,"role","search");ui_attr_open(stdout,"action");
+    html(ctx->target); ui_attr_close(stdout);ui_gt(stdout);
+    ui_open(stdout,"label",NULL);ui_copy(stdout,"Search this view ");
+    ui_start(stdout,"input");ui_attr(stdout,"type","search");ui_attr(stdout,"name","q");ui_attr_open(stdout,"value");
     html(q); (ui_lit(stdout, "\">"), ui_close(stdout, "label"));
     for (i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
         char value[256] = {0};
         if (query_value(ctx->query, keys[i], value, sizeof(value)) && *value) {
-            fputs("<input type=\"hidden\" name=\"", stdout); html(keys[i]);
-            ui_lit(stdout, "\" value=\""); html(value); ui_lit(stdout, "\">");
+            ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr_open(stdout,"name"); html(keys[i]);
+            ui_attr_close(stdout);ui_attr_open(stdout,"value"); html(value); ui_attr_close(stdout);ui_gt(stdout);
         }
     }
     (ui_elem(stdout, "button", (const UiAttr[]){{"type", "submit"}}, 1, 0), ui_lit(stdout, "Search"), ui_close(stdout, "button"), ui_close(stdout, "form"));
@@ -317,13 +319,13 @@ static void surface_emit_territory_nav(const NativeSurfaceContext *ctx) {
     int i;
     for (i = 0; i < 4; i++) {
         if (ctx->presentation->territory_nav == BF_SURFACE_NAV_STREAM) {
-            fputs("<li class=\"nav-item\"><a class=\"nav-link", stdout);
-            if (!strcmp(ctx->territory, territories[i])) ui_lit(stdout, " font-weight-bold text-white");
-            ui_lit(stdout, "\" href=\"https://aurekai."); html(territories[i]);
-            ui_lit(stdout, "/discover\">."); html(territories[i]); ui_close_n(stdout, "a", "li", NULL);
+            ui_open(stdout,"li","nav-item");ui_start(stdout,"a");ui_attr_open(stdout,"class");ui_copy(stdout,"nav-link");
+            if (!strcmp(ctx->territory, territories[i])) ui_copy(stdout," font-weight-bold text-white");
+            ui_attr_close(stdout);ui_attr_open(stdout,"href");ui_copy(stdout,"https://aurekai."); html(territories[i]);
+            ui_copy(stdout,"/discover");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"."); html(territories[i]); ui_close_n(stdout, "a", "li", NULL);
         } else {
-            fputs("<a href=\"https://aurekai.", stdout); html(territories[i]);
-            ui_lit(stdout, "/stage\">."); html(territories[i]); ui_close(stdout, "a");
+            ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://aurekai."); html(territories[i]);
+            ui_copy(stdout,"/stage");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"."); html(territories[i]); ui_close(stdout, "a");
         }
     }
 }
@@ -331,11 +333,11 @@ static void surface_emit_territory_nav(const NativeSurfaceContext *ctx) {
 static void surface_emit_world_link(const NativeSurfaceContext *ctx, const BfSurfaceProgramOp *op) {
     const char *label = op->text;
     switch (ctx->presentation->world_link) {
-    case BF_SURFACE_LINK_BOARD: fputs("<a class=\"brand\" href=\"", stdout); break;
-    case BF_SURFACE_LINK_COMMUNITY: fputs("<a class=\"navbar-brand\" href=\"", stdout); break;
-    case BF_SURFACE_LINK_MARKET: fputs("<a href=\"", stdout); break;
-    case BF_SURFACE_LINK_STAGE: fputs("<a class=\"bg-primary text-white rounded px-4 py-2 font-semibold text-center\" href=\"", stdout); break;
-    default: fputs("<a class=\"btn btn-light btn-sm rounded-pill font-weight-bold\" href=\"", stdout); break;
+    case BF_SURFACE_LINK_BOARD: ui_start(stdout,"a");ui_attr(stdout,"class","brand");ui_attr_open(stdout,"href"); break;
+    case BF_SURFACE_LINK_COMMUNITY: ui_start(stdout,"a");ui_attr(stdout,"class","navbar-brand");ui_attr_open(stdout,"href"); break;
+    case BF_SURFACE_LINK_MARKET: ui_start(stdout,"a");ui_attr_open(stdout,"href"); break;
+    case BF_SURFACE_LINK_STAGE: ui_start(stdout,"a");ui_attr(stdout,"class","bg-primary text-white rounded px-4 py-2 font-semibold text-center");ui_attr_open(stdout,"href"); break;
+    default: ui_start(stdout,"a");ui_attr(stdout,"class","btn btn-light btn-sm rounded-pill font-weight-bold");ui_attr_open(stdout,"href"); break;
     }
     surface_world_href(ctx->world, op->cut); ui_lit(stdout, "\">"); html(label ? label : "World"); ui_close(stdout, "a");
 }
@@ -352,19 +354,19 @@ static void surface_emit_world_nav(const NativeSurfaceContext *ctx) {
          * a card cannot dead-link into an uncomposed application. */
         if (candidate->world_route && !world_fragment_route_published(ctx->world, cut)) continue;
         if (ctx->presentation->world_nav == BF_SURFACE_NAV_STREAM) {
-            fputs("<li class=\"nav-item\"><a class=\"nav-link px-2 font-weight-bold\" href=\"", stdout);
+            ui_open(stdout,"li","nav-item");ui_start(stdout,"a");ui_attr(stdout,"class","nav-link px-2 font-weight-bold");ui_attr_open(stdout,"href");
         } else if (ctx->presentation->world_nav == BF_SURFACE_NAV_COMMUNITY) {
-            fputs("<li class=\"nav-item\"><a class=\"nav-link", stdout);
-            if (!strcmp(cut, "community")) ui_lit(stdout, " active");
-            ui_lit(stdout, "\" href=\"");
+            ui_open(stdout,"li","nav-item");ui_start(stdout,"a");ui_attr_open(stdout,"class");ui_copy(stdout,"nav-link");
+            if (!strcmp(cut, "community")) ui_copy(stdout," active");
+            ui_attr_close(stdout);ui_attr_open(stdout,"href");
         } else if (ctx->presentation->world_nav == BF_SURFACE_NAV_MARKET) {
-            fputs("<li><a href=\"", stdout);
+            ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");
         } else if (ctx->presentation->world_nav == BF_SURFACE_NAV_BOARD) {
-            fputs("<a class=\"t\"", stdout);
-            if (!strcmp(cut, "board")) ui_lit(stdout, " aria-current=\"page\"");
-            ui_lit(stdout, " href=\"");
+            ui_start(stdout,"a");ui_attr(stdout,"class","t");
+            if (!strcmp(cut, "board")) ui_attr(stdout,"aria-current","page");
+            ui_attr_open(stdout,"href");
         } else {
-            fputs("<a href=\"", stdout);
+            ui_start(stdout,"a");ui_attr_open(stdout,"href");
         }
         if (candidate->world_route) surface_world_href(ctx->world, cut);
         else fputs(candidate->route, stdout);
@@ -428,7 +430,8 @@ static void surface_emit_world_catalogue(const NativeSurfaceContext *ctx) {
                 *character=(const char *)sqlite3_column_text(st,2), *lede=(const char *)sqlite3_column_text(st,3);
             if (!world || !studio_safe_slug_arg(world)) continue;
             /* The character dresses the page; it is not something to read. */
-            fputs("<article class=\"bf-program-row\" data-character=\"",stdout); html(character ? character : ""); fputs("\"><header><a href=\"/w/",stdout); html(world); (ui_lit(stdout, "\">"), ui_open(stdout, "strong", NULL)); html(title); ui_close_n(stdout, "strong", "a", "header", NULL);
+            ui_start(stdout,"article");ui_attr(stdout,"class","bf-program-row");ui_attr_open(stdout,"data-character"); html(character ? character : ""); ui_attr_close(stdout);ui_gt(stdout);
+            ui_open(stdout,"header",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/w/"); html(world); ui_lit(stdout, "\">"); ui_open(stdout, "strong", NULL); html(title); ui_close_n(stdout, "strong", "a", "header", NULL);
             if (lede && *lede) { ui_text(stdout, "p", NULL, lede); }
             ui_close(stdout, "article"); n++;
         }
@@ -444,7 +447,7 @@ static void surface_emit_subjects(const NativeSurfaceContext *ctx) {
         const NativeNightSubject *s = &ctx->subjects[i];
         if (!surface_reading_matches(ctx, s->name, s->summary, native_night_primary(s, ctx->territory))) continue;
         if (ctx->presentation->subjects == BF_SURFACE_SUBJECT_STAGE) {
-            fputs("<a class=\"mbz-card snap-center sm:max-w-xs w-[18rem] shrink-0 flex flex-col text-left p-3 rounded-lg\" href=\"", stdout);
+            ui_start(stdout,"a");ui_attr(stdout,"class","mbz-card snap-center sm:max-w-xs w-[18rem] shrink-0 flex flex-col text-left p-3 rounded-lg");ui_attr_open(stdout,"href");
             surface_world_href(ctx->world, NULL); (ui_lit(stdout, "\">"), ui_open(stdout, "span", "text-xs uppercase tracking-widest opacity-70")); html(s->kind);
             (ui_close(stdout, "span"), ui_open(stdout, "span", "font-semibold mt-1 truncate")); html(s->name);
             (ui_close(stdout, "span"), ui_open(stdout, "span", "text-sm opacity-90 mt-1")); html(s->tonight[0] ? s->tonight : s->summary); ui_close_n(stdout, "span", "a", NULL);
@@ -457,7 +460,7 @@ static void surface_emit_subjects(const NativeSurfaceContext *ctx) {
             if (s->capacity[0]) { ui_text(stdout, "span", "badge badge-light mr-1", s->capacity); }
             if (s->price[0]) { (ui_open(stdout, "span", "badge badge-light mr-1"), ui_lit(stdout, "$")); html(s->price); ui_close(stdout, "span"); }
             if (s->safety[0]) { ui_text(stdout, "p", "bf-cant", s->safety); }
-            fputs("<p class=\"mb-0 mt-3\"><a class=\"btn btn-light font-weight-bold rounded-pill\" href=\"", stdout); surface_world_href(ctx->world, NULL); (ui_lit(stdout, "\">Open this World"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "div"), ui_close(stdout, "div"), ui_close(stdout, "article"));
+            ui_open(stdout,"p","mb-0 mt-3");ui_start(stdout,"a");ui_attr(stdout,"class","btn btn-light font-weight-bold rounded-pill");ui_attr_open(stdout,"href"); surface_world_href(ctx->world, NULL); (ui_lit(stdout, "\">Open this World"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "div"), ui_close(stdout, "div"), ui_close(stdout, "article"));
         }
     }
 }
@@ -471,7 +474,7 @@ static void surface_emit_publications(const NativeSurfaceContext *ctx) {
         (ui_open(stdout, "article", "timeline-status-component mb-4"), ui_elem(stdout, "div", (const UiAttr[]){{"class", "card shadow-sm"}, {"style", "border-radius:15px"}}, 2, 0), ui_open(stdout, "div", "card-header border-0"), ui_open(stdout, "p", "font-weight-bold username mb-0")); html(p->attribution);
         (ui_close(stdout, "p"), ui_elem(stdout, "p", (const UiAttr[]){{"class", "text-lighter mb-0"}, {"style", "font-size:13px"}}, 2, 0), ui_lit(stdout, "observed publication")); if (p->when[0]) { ui_lit(stdout, " · "); html(p->when); }
         (ui_close(stdout, "p"), ui_close(stdout, "div"), ui_open(stdout, "div", "px-3 py-3"), ui_open(stdout, "p", "mb-0 font-weight-bold"));
-        if (p->href[0]) { fputs("<a href=\"", stdout); html(p->href); ui_lit(stdout, "\" rel=\"noopener\" target=\"_blank\">"); }
+        if (p->href[0]) { ui_open_a(stdout,"a",UI_DYN,"href","",p->href,"rel","noopener","target","_blank"); }
         html(p->title); if (p->href[0]) ui_close(stdout, "a"); ui_close_n(stdout, "p", "div", "div", "article", NULL);
     }
     if (!shown && surface_reading_narrowed(ctx))
@@ -484,7 +487,7 @@ static void surface_emit_world_fragments(const NativeSurfaceContext *ctx) {
         "SELECT fragment_id,surface_grammar,renderer_family,COALESCE(visible_sections,''),COALESCE(source_projection,'') FROM world_fragment WHERE world=?1 AND status='published' ORDER BY ordinal,id", -1, &st, NULL) == SQLITE_OK) {
         sqlite3_bind_text(st, 1, ctx->world, -1, SQLITE_TRANSIENT);
         while (sqlite3_step(st) == SQLITE_ROW) { const char *id=(const char *)sqlite3_column_text(st,0),*grammar=(const char *)sqlite3_column_text(st,1),*renderer=(const char *)sqlite3_column_text(st,2),*sections=(const char *)sqlite3_column_text(st,3),*projection=(const char *)sqlite3_column_text(st,4); if(!id||!grammar||!renderer)continue;
-            fputs("<article class=\"pin-card grid-item\"><a class=\"pin-preview-image\" href=\"",stdout);surface_world_href(ctx->world,grammar);page_emit_reading_query(ctx->query,NULL,NULL);(ui_lit(stdout, "\">"), ui_open(stdout, "span", "pin-shade"), ui_open(stdout, "b", NULL));html(grammar);(ui_close(stdout, "b"), ui_close(stdout, "span"), ui_open(stdout, "span", "pin-terr"));html(renderer);(ui_close(stdout, "span"), ui_open(stdout, "span", "pin-gen"), ui_lit(stdout, "world view"), ui_close(stdout, "span"), ui_close(stdout, "a"), ui_open(stdout, "div", "pin-footer"), ui_open(stdout, "p", "description"));html(sections&&*sections?sections:"Published World fragment");fputs("</p><p class=\"details\"><a href=\"",stdout);surface_world_href(ctx->world,grammar);page_emit_reading_query(ctx->query,NULL,NULL);ui_lit(stdout, "\">Open ");html(grammar);ui_close(stdout, "a");if(projection&&*projection)ui_lit(stdout, " · native projection");ui_close_n(stdout, "p", "div", "article", NULL);n++; }
+            ui_open(stdout,"article","pin-card grid-item");ui_start(stdout,"a");ui_attr(stdout,"class","pin-preview-image");ui_attr_open(stdout,"href");surface_world_href(ctx->world,grammar);page_emit_reading_query(ctx->query,NULL,NULL);(ui_lit(stdout, "\">"), ui_open(stdout, "span", "pin-shade"), ui_open(stdout, "b", NULL));html(grammar);(ui_close(stdout, "b"), ui_close(stdout, "span"), ui_open(stdout, "span", "pin-terr"));html(renderer);(ui_close(stdout, "span"), ui_open(stdout, "span", "pin-gen"), ui_lit(stdout, "world view"), ui_close(stdout, "span"), ui_close(stdout, "a"), ui_open(stdout, "div", "pin-footer"), ui_open(stdout, "p", "description"));html(sections&&*sections?sections:"Published World fragment");ui_close(stdout,"p");ui_open(stdout,"p","details");ui_start(stdout,"a");ui_attr_open(stdout,"href");surface_world_href(ctx->world,grammar);page_emit_reading_query(ctx->query,NULL,NULL);ui_lit(stdout, "\">Open ");html(grammar);ui_close(stdout, "a");if(projection&&*projection)ui_lit(stdout, " · native projection");ui_close_n(stdout, "p", "div", "article", NULL);n++; }
     }
     if (st) sqlite3_finalize(st);
     if (db) sqlite3_close(db);
@@ -586,7 +589,7 @@ static void surface_emit_community_limit(const NativeSurfaceContext *ctx,
 static void surface_emit_community_posts(const NativeSurfaceContext *ctx) {
     surface_emit_participation_nav();
     sqlite3 *db=cms_open_ro(); sqlite3_stmt *st=NULL; char community[128]={0}; int n=0;
-    if(db && surface_community_id(db,ctx,community,sizeof(community)) && cms_type_registered(db,"community_post")&&sqlite3_prepare_v2(db,"SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100",-1,&st,NULL)==SQLITE_OK) { sqlite3_bind_text(st,1,community,-1,SQLITE_TRANSIENT); while(sqlite3_step(st)==SQLITE_ROW){const char *author=(const char*)sqlite3_column_text(st,0),*title=(const char*)sqlite3_column_text(st,1),*body=(const char*)sqlite3_column_text(st,2),*at=(const char*)sqlite3_column_text(st,3),*reply=(const char*)sqlite3_column_text(st,4),*post=(const char*)sqlite3_column_text(st,5);int reactions;if(!surface_reading_matches(ctx,author,title,body))continue;reactions=community_post_reaction_count(db,post);(ui_open(stdout, "article", "post-listing my-2"), ui_open(stdout, "small", "text-muted"));html(author);ui_lit(stdout, " · ");html(at);if(reply&&*reply)ui_lit(stdout, " · reply");ui_close(stdout, "small");if(title&&*title){ui_text(stdout, "h2", "h6 mb-1", title);}ui_text(stdout, "div", "md-div", body);if(reactions)printf("<small class=\"text-muted\">%d accepted reactions</small>",reactions);ui_close(stdout, "article");n++;} }
+    if(db && surface_community_id(db,ctx,community,sizeof(community)) && cms_type_registered(db,"community_post")&&sqlite3_prepare_v2(db,"SELECT author_subject,COALESCE(title,''),body,published_at,COALESCE(reply_to,''),post FROM community_post WHERE community=?1 AND status='published' AND visibility='public' AND moderation_state IN ('accepted','visible','published') ORDER BY published_at DESC,id DESC LIMIT 100",-1,&st,NULL)==SQLITE_OK) { sqlite3_bind_text(st,1,community,-1,SQLITE_TRANSIENT); while(sqlite3_step(st)==SQLITE_ROW){const char *author=(const char*)sqlite3_column_text(st,0),*title=(const char*)sqlite3_column_text(st,1),*body=(const char*)sqlite3_column_text(st,2),*at=(const char*)sqlite3_column_text(st,3),*reply=(const char*)sqlite3_column_text(st,4),*post=(const char*)sqlite3_column_text(st,5);int reactions;if(!surface_reading_matches(ctx,author,title,body))continue;reactions=community_post_reaction_count(db,post);(ui_open(stdout, "article", "post-listing my-2"), ui_open(stdout, "small", "text-muted"));html(author);ui_lit(stdout, " · ");html(at);if(reply&&*reply)ui_lit(stdout, " · reply");ui_close(stdout, "small");if(title&&*title){ui_text(stdout, "h2", "h6 mb-1", title);}ui_text(stdout, "div", "md-div", body);if(reactions)do{ui_open(stdout,"small","text-muted");printf("%d",reactions);ui_copy(stdout," accepted reactions");ui_close(stdout,"small");}while(0);ui_close(stdout, "article");n++;} }
     if (st) sqlite3_finalize(st);
     if (db) sqlite3_close(db);
     if (!n) fputs(surface_reading_narrowed(ctx) ?
@@ -599,8 +602,8 @@ static int surface_offer_count(const char *world) {
     if(db&&cms_type_registered(db,"service_offer")&&sqlite3_prepare_v2(db,"SELECT count(*) FROM service_offer WHERE status='published' AND visibility='public' AND (world=?1 OR subject=?1)",-1,&st,NULL)==SQLITE_OK){sqlite3_bind_text(st,1,world,-1,SQLITE_TRANSIENT);if(sqlite3_step(st)==SQLITE_ROW)n=sqlite3_column_int(st,0);}if(st)sqlite3_finalize(st);if(db)sqlite3_close(db);return n;
 }
 
-static void surface_emit_offer_status(const NativeSurfaceContext *ctx) { printf("<li>Published: %d</li><li>Drafts: not shown</li>", surface_offer_count(ctx->world)); }
-static void surface_emit_offer_empty(const NativeSurfaceContext *ctx) { if(!surface_offer_count(ctx->world)) { fputs("<section class=\"rounded-lg border border-neutral-200 p-6 dark:border-neutral-700\"><h2 class=\"text-lg font-semibold\">Nothing is listed here yet.</h2><p class=\"mt-4\"><a class=\"underline\" href=\"",stdout);surface_world_href(ctx->world,"stage");(ui_lit(stdout, "\">See what is on"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "section")); } }
+static void surface_emit_offer_status(const NativeSurfaceContext *ctx) { int n=surface_offer_count(ctx->world); ui_open(stdout,"li",NULL);ui_copy(stdout,"Published: ");printf("%d",n);ui_close(stdout,"li");ui_open(stdout,"li",NULL);ui_copy(stdout,"Drafts: not shown");ui_close(stdout,"li"); }
+static void surface_emit_offer_empty(const NativeSurfaceContext *ctx) { if(!surface_offer_count(ctx->world)) { ui_open(stdout,"section","rounded-lg border border-neutral-200 p-6 dark:border-neutral-700");ui_open(stdout,"h2","text-lg font-semibold");ui_copy(stdout,"Nothing is listed here yet.");ui_close(stdout,"h2");ui_open(stdout,"p","mt-4");ui_start(stdout,"a");ui_attr(stdout,"class","underline");ui_attr_open(stdout,"href");surface_world_href(ctx->world,"stage");(ui_lit(stdout, "\">See what is on"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "section")); } }
 
 /* SurfaceProgram may ask for the lawful actions of the World it resolved, but
  * it cannot name an action, its authority, or an endpoint in its presentation
@@ -665,15 +668,15 @@ static void surface_emit_subject_apertures(const NativeSurfaceContext *ctx) {
             (requires && *requires && !surface_authority_satisfied(requires, ctx->bearer, ctx->auth_db)))
             continue;
         if (!offered) ui_elem(stdout, "nav", (const UiAttr[]){{"class", "bf-surface-apertures"}, {"aria-label", "Available actions"}}, 2, 0);
-        fputs("<a class=\"bf-surface-aperture\" hx-get=\"/_aperture/form?subject=", stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"class","bf-surface-aperture");ui_attr_open(stdout,"hx-get");ui_copy(stdout,"/_aperture/form?subject=");
         surface_query_value(subject);
-        ui_lit(stdout, "&amp;operation=");
+        ui_copy(stdout,"&amp;operation=");
         surface_query_value(operation);
-        ui_lit(stdout, "\" hx-target=\"#bf-aperture-result\" hx-swap=\"innerHTML\" href=\"/_aperture/form?subject=");
+        ui_attr_close(stdout);ui_attr(stdout,"hx-target","#bf-aperture-result");ui_attr(stdout,"hx-swap","innerHTML");ui_attr_open(stdout,"href");ui_copy(stdout,"/_aperture/form?subject=");
         surface_query_value(subject);
-        ui_lit(stdout, "&amp;operation=");
+        ui_copy(stdout,"&amp;operation=");
         surface_query_value(operation);
-        ui_lit(stdout, "\">");
+        ui_lit(stdout,"\">");
         page_glyph(page_operation_glyph(operation));
         html(label && *label ? label : operation);
         ui_close(stdout, "a");
@@ -722,11 +725,11 @@ static void bf_surface_render_program_slot(const BfSurfaceProgramSlot *slot, con
 static void bf_surface_render_native_document(const BfNativeSurfaceProgram *program,
                                               const NativeSurfaceContext *ctx) {
     unsigned short slot;
-    fputs("<body class=\"bf-native-surface renderer-", stdout); html(program->presentation->renderer);
-    ui_lit(stdout, " territory-"); html(ctx->territory);
-    ui_lit(stdout, "\"");
+    ui_start(stdout,"body");ui_attr_open(stdout,"class");ui_copy(stdout,"bf-native-surface renderer-"); html(program->presentation->renderer);
+    ui_copy(stdout," territory-"); html(ctx->territory);
+    ui_attr_close(stdout);
     bf_route_presentation_emit_body_attribute_for(stdout, ctx->territory, program->route, NULL, bf_route_presentation_native_pattern(ctx->territory, program->route));
-    fputs(">" BF_ESTATE_BAR "<main class=\"bf-native-layout\"><header class=\"bf-native-masthead\"><p class=\"bf-native-kicker\">AUREKAI · ", stdout);
+    ui_gt(stdout);fputs(BF_ESTATE_BAR,stdout);ui_open(stdout,"main","bf-native-layout");ui_open(stdout,"header","bf-native-masthead");ui_open(stdout,"p","bf-native-kicker");ui_copy(stdout,"AUREKAI · ");
     html(ctx->territory); (ui_close(stdout, "p"), ui_open(stdout, "h1", NULL));
     html(page_grammar_label(program->program) ? page_grammar_label(program->program) : program->program);
     ui_close_n(stdout, "h1", "header", NULL);
@@ -734,7 +737,7 @@ static void bf_surface_render_native_document(const BfNativeSurfaceProgram *prog
     for (slot = 0; slot < program->slot_count; slot++) {
         const BfSurfaceProgramSlot *compiled_slot = &program->slots[slot];
         if (!compiled_slot->count) continue;
-        printf("<section class=\"bf-native-slot bf-native-slot-%u\">", slot);
+        ui_start(stdout,"section");ui_attr_open(stdout,"class");ui_copy(stdout,"bf-native-slot bf-native-slot-");printf("%u",slot);ui_attr_close(stdout);ui_gt(stdout);
         bf_surface_render_program_slot(compiled_slot, program, ctx);
         ui_close(stdout, "section");
     }

@@ -642,8 +642,9 @@ static int serve_site_program_uncached(const char *method, const char *target, c
          * and nothing of the estate's: the estate's dress under a site's
          * palette gave a dark page with a title in dark ink. */
         site_program_own_render = own;
-        if (own) fputs("<link rel=\"stylesheet\" href=\"/assets/own-site.css?v=6\"><link rel=\"mcp\" href=\"/.well-known/mcp/server-card.json\">"
-                       "<script src=\"/assets/own-site-agent.js\" defer></script>", stdout);
+        if (own) do { ui_open_a(stdout,"link","rel","stylesheet","href","/assets/own-site.css?v=6");
+            ui_open_a(stdout,"link","rel","mcp","href","/.well-known/mcp/server-card.json");
+            ui_start(stdout,"script");ui_attr(stdout,"src","/assets/own-site-agent.js");ui_flag(stdout,"defer");ui_gt(stdout);ui_close(stdout,"script"); } while (0);
         else {
         ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/tailwind.css");ui_gt(stdout);ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/world.css");ui_gt(stdout);
         for (lowerer_index = 0; lowerer_index < BF_SITE_APPLICATION_LOWERER_COUNT; lowerer_index++) {
@@ -661,7 +662,7 @@ static int serve_site_program_uncached(const char *method, const char *target, c
         }
         ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=Instrument+Serif:ital@0;1&amp;display=swap");ui_gt(stdout);ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/aurekai-site-program.css?v=2");ui_gt(stdout);
         /* A member's world gets the same organs as everything else. */
-        fputs("<script src=\"/assets/client-organs.js\" defer></script>", stdout);
+        ui_start(stdout,"script");ui_attr(stdout,"src","/assets/client-organs.js");ui_flag(stdout,"defer");ui_gt(stdout);ui_close(stdout,"script");
         }
         site_program_emit_profile_tokens(db, profile);
         {
@@ -675,10 +676,10 @@ static int serve_site_program_uncached(const char *method, const char *target, c
         while (sqlite3_step(slots) == SQLITE_ROW) {
             const char *slot = (const char *)sqlite3_column_text(slots,0);
             int reading = slot && !strncmp(slot,"reading-",8);
-            if (more_reading_open && !reading) { fputs("</div></details>",stdout);more_reading_open=0; }
+            if (more_reading_open && !reading) { ui_close(stdout,"div");ui_section_close(stdout);more_reading_open=0; }
             if (reading && ++reading_seen > 10 && !more_reading_open) {
-                fputs("<details class=\"site-program-extra-reading\"><summary>",stdout);
-                page_glyph("discover");fputs("<span>Explore more source families</span></summary><div class=\"site-program-extra-grid\">",stdout);
+                ui_section_open(stdout, "site-program-extra-reading", "Explore more source families");
+                ui_open(stdout,"div","site-program-extra-grid");
                 more_reading_open=1;
             }
             const char *extent = (const char *)sqlite3_column_text(slots,1);
@@ -695,7 +696,7 @@ static int serve_site_program_uncached(const char *method, const char *target, c
             site_program_emit_binding(db, kind, collection, material_query, max_items, boundary, klass);
             ui_close(stdout,"section");
         }
-        if (more_reading_open) fputs("</div></details>",stdout);
+        if (more_reading_open) do { ui_close(stdout,"div");ui_section_close(stdout); } while (0);
         sqlite3_finalize(slots);
         /* What a subject's world is, and what standing on it does not mean. The
          * page carried this in its machine projection and never said it to a
@@ -1006,25 +1007,25 @@ static void world_material_item(const BfWorldMaterialRenderer *renderer, const c
     if (!title || !*title) return;
     switch (renderer->item_variant) {
     case BF_WORLD_MATERIAL_FLYER:
-        fputs("<a class=\"fl noimg\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><span class=\"stamp\">", stdout); html(when); ui_close(stdout,"span");ui_open(stdout,"div","t");ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(source); ui_close(stdout,"span");ui_close(stdout,"div");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"class","fl noimg"); if (linked) { ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(href); ui_attr_close(stdout); } ui_gt(stdout);ui_open(stdout,"span","stamp"); html(when); ui_close(stdout,"span");ui_open(stdout,"div","t");ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(source); ui_close(stdout,"span");ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_PIN:
-        fputs("<a class=\"pin noimg\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"cap\"><b>", stdout); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(source); if (meta && *meta) { fputs(" &middot; ", stdout); html(meta); } ui_close(stdout,"span");ui_close(stdout,"div");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"class","pin noimg"); if (linked) { ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(href); ui_attr_close(stdout); } ui_gt(stdout);ui_open(stdout,"div","cap");ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(source); if (meta && *meta) { fputs(" &middot; ", stdout); html(meta); } ui_close(stdout,"span");ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_CASE:
-        fputs("<a class=\"case\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"n\">", stdout); printf("%03d", ordinal); ui_close(stdout,"div");ui_open(stdout,"div","t");ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"i",NULL); html(source); ui_close(stdout,"i");ui_close(stdout,"div");ui_open(stdout,"div","w"); html(when); ui_close(stdout,"div");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"class","case"); if (linked) { ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(href); ui_attr_close(stdout); } ui_gt(stdout);ui_open(stdout,"div","n"); printf("%03d", ordinal); ui_close(stdout,"div");ui_open(stdout,"div","t");ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"i",NULL); html(source); ui_close(stdout,"i");ui_close(stdout,"div");ui_open(stdout,"div","w"); html(when); ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_TICK:
-        fputs("<a class=\"t\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"nm\">", stdout); html(title); ui_open(stdout,"em",NULL); html(source); ui_close(stdout,"em");ui_close(stdout,"div");ui_open(stdout,"div","v"); html(when); ui_close(stdout,"div");ui_open(stdout,"div","c");ui_close(stdout,"div");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"class","t"); if (linked) { ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(href); ui_attr_close(stdout); } ui_gt(stdout);ui_open(stdout,"div","nm"); html(title); ui_open(stdout,"em",NULL); html(source); ui_close(stdout,"em");ui_close(stdout,"div");ui_open(stdout,"div","v"); html(when); ui_close(stdout,"div");ui_open(stdout,"div","c");ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_READING:
-        fputs("<a class=\"r\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(when); ui_close(stdout,"span");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"class","r"); if (linked) { ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(href); ui_attr_close(stdout); } ui_gt(stdout);ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"span",NULL); html(when); ui_close(stdout,"span");ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_ARTICLE:
-        fputs("<a class=\"a\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><b>", stdout); html(title); ui_close(stdout,"b");ui_open(stdout,"span","au"); html(source); ui_close(stdout,"span"); if (meta && *meta) { ui_text(stdout, "span", "id", meta); } ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"class","a"); if (linked) { ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(href); ui_attr_close(stdout); } ui_gt(stdout);ui_open(stdout,"b",NULL); html(title); ui_close(stdout,"b");ui_open(stdout,"span","au"); html(source); ui_close(stdout,"span"); if (meta && *meta) { ui_text(stdout, "span", "id", meta); } ui_close(stdout,"a");
         break;
     case BF_WORLD_MATERIAL_ROW:
-        fputs("<a class=\"q\"", stdout); if (linked) { fputs(" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(href); fputs("\"", stdout); } fputs("><div class=\"mag\">&bull;</div><div class=\"place\">", stdout); html(title); ui_close(stdout,"div");ui_open(stdout,"div","when"); html(when); ui_close(stdout,"div");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"class","q"); if (linked) { ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(href); ui_attr_close(stdout); } ui_gt(stdout);ui_open(stdout,"div","mag");ui_copy(stdout,"&bull;");ui_close(stdout,"div");ui_open(stdout,"div","place"); html(title); ui_close(stdout,"div");ui_open(stdout,"div","when"); html(when); ui_close(stdout,"div");ui_close(stdout,"a");
         break;
     }
 }

@@ -39,6 +39,13 @@ export function admittedBinding({actor, subject, scope}) {
   return {actor,subject,scope};
 }
 export function derivedSite(binding) { return 'pws-' + digest([1, policy.namespace, binding.subject, binding.scope]).slice(0,32); }
+// A context selects private work, never authority over its referenced subject.
+function contextualSuffix(binding,ref='') {
+  if(ref==='')return '';
+  refuse(typeof ref==='string'&&ref.length<=192&&/^[a-z][a-z0-9_-]{0,31}:[a-z0-9][a-z0-9._:/-]{0,159}$/.test(ref)
+    &&!ref.includes('..')&&!ref.includes('//'),'invalid_context_ref','Choose a stable, bounded canonical context reference.');
+  return 'ctx-'+digest([1,policy.namespace,binding.subject,binding.scope,ref]).slice(0,24);
+}
 function rowsBounded(db,sql,args,limit=LIMIT) {
   const rows=db.query(sql).all(...args,limit+1);
   refuse(rows.length<=limit,'capacity_exceeded','This program listing exceeds its declared bound. Refine the selection before continuing.',6);
@@ -93,25 +100,27 @@ function requireNewDeclarations(db,view,id) {
     refuse(!db.query(`SELECT 1 AS present FROM ${table} WHERE namespace=? AND instance_id=? LIMIT 1`).get(policy.namespace,id),
       'identity_collision','Existing declarations name this missing program. Reconcile that owner state before preparing it.',4);
 }
-function reviewAt(db,binding,id) {
-  const {view}=exactTemplate(db,id),site=derivedSite(binding),slug=templateSlug(id);
+function reviewAt(db,binding,id,contextRef='') {
+  const {view}=exactTemplate(db,id),site=derivedSite(binding),slug=templateSlug(id),suffix=contextualSuffix(binding,contextRef);
   const subjectKind=binding.scope==='self'?'person':binding.scope;
   refuse(view.subject_kinds.includes(subjectKind),'subject_kind_unavailable','This template does not declare use by this kind of workspace.',4);
   refuse(!!slug,'invalid_template_id','The program template has no usable local identity.',4);
-  const instance=site+'-'+slug;
+  const instance=site+'-'+slug+(suffix?'-'+suffix:'');
   const prior=db.query('SELECT owner_subject,site_id,template_id,status FROM program_instance WHERE namespace=? AND instance_id=?').get(policy.namespace,instance);
   const retained=receipt(db,instance);
   if(prior) {
     refuse(prior.owner_subject===binding.subject&&prior.site_id===site&&prior.template_id===id,'identity_collision','This program identity belongs to different work. Nothing was transferred.',4);
     refuse(retained&&retained.subject===binding.subject&&retained.scope===binding.scope&&retained.template_id===id,
       'unreviewed_instance','This existing program needs its original owner to reconcile its preparation.',4);
+    refuse((retained.context_ref??'')===contextRef,'context_changed','This program belongs to another prepared context.',4);
     refuse(retained.template_digest===view.digest,'template_changed','This program was prepared from an earlier template. Its existing work is preserved; review it before updating.',4);
     refuse(prior.status==='draft','instance_changed','This program has changed lifecycle state. Open its existing work before preparing it again.',4);
   } else {
     refuse(!retained,'incomplete_preparation','A retained preparation no longer agrees with its program. Reconcile that work before continuing.',4);
     requireNewDeclarations(db,view,instance);
   }
-  return {template:view,instance_id:instance,review_digest:digest([1,policy.namespace,binding,site,view.digest]),existing:!!prior};
+  return {template:view,instance_id:instance,context_ref:contextRef,
+    review_digest:contextRef?digest([2,policy.namespace,binding,site,view.digest,contextRef,instance]):digest([1,policy.namespace,binding,site,view.digest]),existing:!!prior};
 }
 function storedObject(value) {
   let result;try { result=JSON.parse(value||'{}'); } catch { throw new ProgramRefusal('invalid_configuration','The stored program configuration could not be read.',6); }
@@ -153,6 +162,7 @@ function readInstance(db,binding,id) {
   const revision=digest([2,policy.namespace,binding.subject,binding.scope,row,bindingRows,requirementRows,fundingRows,source,links,template]);
   const instance={};
   for(const field of ['instance_id','template_id','owner_subject','site_id','archetype','opened_at','status','cannot_infer'])instance[field]=row[field]??'';
+  instance.context_ref=receipt(db,id)?.context_ref??'';
   instance.bindings=bindingRows.map(value=>Object.fromEntries(['binding_id','slot_id','program_role','lowered_by','continuity_key','status'].map(field=>[field,value[field]??''])));
   instance.requirements=requirementRows.map(value=>Object.fromEntries(['requirement_id','kind','statement','owner','state','status','deadline','evidence_ref','satisfied_by','cannot_infer'].map(field=>[field,value[field]??''])));
   instance.funding=fundingRows.map(value=>({...Object.fromEntries(['package_id','funding_program','distinctness_rule','status','cannot_infer'].map(field=>[field,value[field]??''])),scope:arrayField(value,'scope',256),cost_codes:arrayField(value,'cost_codes',256)}));
@@ -343,6 +353,7 @@ function requestFor(operation,body,binding) {
   const request=packet[1];
   const fields=operation==='review'?['expectedBinding','template_id']:operation==='prepare'?['expectedBinding','review_digest','template_id']
     :operation==='change'?['expectedBinding','instance_id','request_id','expected_revision','change']:['expectedBinding','instance_id','request_id'];
+  if((operation==='review'||operation==='prepare')&&Object.hasOwn(request,'context_ref'))fields.push('context_ref');
   exactFields(request,fields,'invalid_fields');
   refuse(sameBinding(request.expectedBinding,binding),'binding_changed','The account destination changed. Review the program in the current workspace.',4);
   if(operation==='prepare')refuse(typeof request.review_digest==='string'&&/^[a-f0-9]{64}$/.test(request.review_digest),'invalid_review','Review this program before preparing it.');
@@ -379,7 +390,7 @@ export function operate({operation,actor,subject,scope,db:dbPath,instance='',add
         const current=readInstance(db,binding,request.instance_id),prior=changeReceipt(db,binding,request.instance_id,request.request_id);
         result={found:!!prior,instance:current,receipt:prior?decodedReceipt(prior,binding):null};
       } else {
-        const review=reviewAt(db,binding,request.template_id);
+        const review=reviewAt(db,binding,request.template_id,request.context_ref??'');
         if(operation==='review')result=review;
         else {
           refuse(request.review_digest===review.review_digest,'review_changed','The template or destination changed. Review the current program before preparing it.',4);
@@ -387,13 +398,17 @@ export function operate({operation,actor,subject,scope,db:dbPath,instance='',add
             db.exec(`CREATE TABLE IF NOT EXISTS _program_workspace_preparation(
               namespace TEXT NOT NULL,instance_id TEXT NOT NULL,subject TEXT NOT NULL,scope TEXT NOT NULL,
               template_id TEXT NOT NULL,template_digest TEXT NOT NULL,actor TEXT NOT NULL,prepared_at TEXT NOT NULL,
+              context_ref TEXT NOT NULL DEFAULT '',
               PRIMARY KEY(namespace,instance_id))`);
+            if(!db.query('PRAGMA table_info(_program_workspace_preparation)').all().some(col=>col.name==='context_ref'))
+              db.exec("ALTER TABLE _program_workspace_preparation ADD COLUMN context_ref TEXT NOT NULL DEFAULT ''");
             const compiled=compilePrograms(db,{subject:binding.subject,siteId:derivedSite(binding),programs:[request.template_id],
-              addressIndex,newStatus:'draft',instanceBoundary:privateBoundary,addressRunFn});
+              addressIndex,newStatus:'draft',instanceBoundary:privateBoundary,addressRunFn,
+              instanceSuffix:contextualSuffix(binding,request.context_ref??'')||undefined});
             refuse(compiled.compiled.length===1&&compiled.no_such_template.length===0&&compiled.compiled[0].instance===review.instance_id,
               'compilation_incomplete','The program compiler did not confirm this exact preparation.',6);
-            db.query('INSERT INTO _program_workspace_preparation(namespace,instance_id,subject,scope,template_id,template_digest,actor,prepared_at) VALUES(?,?,?,?,?,?,?,?)')
-              .run(policy.namespace,review.instance_id,binding.subject,binding.scope,request.template_id,review.template.digest,binding.actor,new Date().toISOString());
+            db.query('INSERT INTO _program_workspace_preparation(namespace,instance_id,subject,scope,template_id,template_digest,actor,prepared_at,context_ref) VALUES(?,?,?,?,?,?,?,?,?)')
+              .run(policy.namespace,review.instance_id,binding.subject,binding.scope,request.template_id,review.template.digest,binding.actor,new Date().toISOString(),request.context_ref??'');
           }
           result={instance:readInstance(db,binding,review.instance_id),created:!review.existing};
         }

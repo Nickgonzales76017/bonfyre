@@ -2416,14 +2416,20 @@ static int site_export_posts(Site *s, const char *name, const char *host, const 
     out = fopen(out_path, "wb");
     if (!out) { sqlite3_finalize(st); sqlite3_close(db); fprintf(stderr, "site: cannot write %s\n", out_path); return 3; }
     if (wordpress) {
-        fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\" xmlns:excerpt=\"http://wordpress.org/export/1.2/excerpt/\" "
-              "xmlns:content=\"http://purl.org/rss/1.0/modules/content/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" "
-              "xmlns:wp=\"http://wordpress.org/export/1.2/\">\n<channel>\n<title>", out);
+        ui_lit(out,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        ui_start(out,"rss");ui_attr(out,"version","2.0");ui_attr(out,"xmlns:excerpt","http://wordpress.org/export/1.2/excerpt/");
+        ui_attr(out,"xmlns:content","http://purl.org/rss/1.0/modules/content/");ui_attr(out,"xmlns:dc","http://purl.org/dc/elements/1.1/");
+        ui_attr(out,"xmlns:wp","http://wordpress.org/export/1.2/");ui_gt(out);ui_copy(out,"\n");
+        ui_open(out,"channel",NULL);ui_copy(out,"\n");ui_open(out,"title",NULL);
         xml_text(out, site_title[0] ? site_title : name);
-        fprintf(out, "</title>\n<link>https://%s</link>\n<description></description>\n<language>en</language>\n"
-                     "<wp:wxr_version>1.2</wp:wxr_version>\n<wp:base_site_url>https://%s</wp:base_site_url>\n"
-                     "<wp:base_blog_url>https://%s</wp:base_blog_url>\n"
-                     "<wp:author><wp:author_login><![CDATA[%s]]></wp:author_login><wp:author_display_name><![CDATA[", host, host, host, name);
+        ui_close(out,"title");ui_copy(out,"\n");ui_open(out,"link",NULL);ui_copy(out,"https://");fprintf(out,"%s",host);ui_close(out,"link");ui_copy(out,"\n");
+        ui_open(out,"description",NULL);ui_close(out,"description");ui_copy(out,"\n");
+        ui_open(out,"language",NULL);ui_copy(out,"en");ui_close(out,"language");ui_copy(out,"\n");
+        ui_open(out,"wp:wxr_version",NULL);ui_copy(out,"1.2");ui_close(out,"wp:wxr_version");ui_copy(out,"\n");
+        ui_open(out,"wp:base_site_url",NULL);ui_copy(out,"https://");fprintf(out,"%s",host);ui_close(out,"wp:base_site_url");ui_copy(out,"\n");
+        ui_open(out,"wp:base_blog_url",NULL);ui_copy(out,"https://");fprintf(out,"%s",host);ui_close(out,"wp:base_blog_url");ui_copy(out,"\n");
+        ui_open(out,"wp:author",NULL);ui_open(out,"wp:author_login",NULL);ui_copy(out,"<![CDATA[");fprintf(out,"%s",name);ui_copy(out,"]]></wp:author_login>");
+        ui_open(out,"wp:author_display_name",NULL);ui_copy(out,"<![CDATA[");
         fputs(site_title[0] ? site_title : name, out);
         fputs("]]></wp:author_display_name></wp:author>\n", out);
     } else fputs("[\n", out);
@@ -2436,7 +2442,8 @@ static int site_export_posts(Site *s, const char *name, const char *host, const 
         count++;
         if (wordpress) {
             ui_open(out,"item",NULL);ui_copy(out,"\n");ui_open(out,"title",NULL); xml_text(out, title ? title : "");
-            fprintf(out, "</title>\n<dc:creator><![CDATA[%s]]></dc:creator>\n<content:encoded><![CDATA[", name);
+            ui_close(out,"title");ui_copy(out,"\n");ui_open(out,"dc:creator",NULL);ui_copy(out,"<![CDATA[");fprintf(out,"%s",name);
+            ui_copy(out,"]]></dc:creator>\n");ui_open(out,"content:encoded",NULL);ui_copy(out,"<![CDATA[");
             /* The one sequence a CDATA section cannot hold is split across two. */
             for (const char *p = markup; *p; p++) { if (!strncmp(p, "]]>", 3)) { fputs("]]]]><![CDATA[>", out); p += 2; } else fputc(*p, out); }
             fprintf(out, "]]></content:encoded>\n<excerpt:encoded><![CDATA[]]></excerpt:encoded>\n<wp:post_id>%ld</wp:post_id>\n"
@@ -2515,7 +2522,7 @@ static int site_export(Site *s, int argc, char **argv) {
             /* The server answers /assets/NAME from the asset root itself. */
             snprintf(path, sizeof(path), "%s%s", s->assets, !strncmp(rel, "/assets/", 8) ? rel + 7 : rel);
             css = strstr(rel, "..") ? NULL : slurp(path, &css_size);
-            if (css) { fprintf(out, "<style data-from=\"%s\">", rel); fwrite(css, 1, (size_t)css_size, out); fputs("</style>", out); sheets++; bytes += css_size; free(css); }
+            if (css) { ui_start(out,"style");ui_attr_open(out,"data-from");fputs(rel,out);ui_attr_close(out);ui_gt(out); fwrite(css, 1, (size_t)css_size, out); ui_close(out,"style"); sheets++; bytes += css_size; free(css); }
             else missing++;
             p = close + 1;
             continue;

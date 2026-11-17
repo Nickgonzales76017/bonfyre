@@ -153,7 +153,7 @@ static int bf_auth_form_document(FILE *out, const char *source, const char *next
                 if (end - q >= 10 && !strncmp(q, " novalidate", 11)) q += 10;
                 else fputc((unsigned char)*q, out);
             }
-            fputs("<input type=\"hidden\" name=\"next\" value=\"", out); bf_auth_html(out, next); fputs("\">", out);
+            ui_start(out,"input");ui_attr(out,"type","hidden");ui_attr(out,"name","next");ui_attr_open(out,"value");bf_auth_html(out, next);ui_attr_close(out);ui_gt(out);
             p = end + 1; continue;
         }
         if (!strncmp(p, "href=\"/login\"", 13) || !strncmp(p, "href=\"/signup\"", 14)) {

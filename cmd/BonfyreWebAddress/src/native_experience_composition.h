@@ -27,11 +27,11 @@ static void bf_native_experience_emit_head(FILE *out,const BfNativeExperiencePro
 }
 static void bf_native_experience_begin(FILE *out,const BfNativeExperienceProgram *program) {
     if (!program) return;
-    fprintf(out,"<div class=\"ak-experience\" data-ak-experience=\"%s\" data-exp-shell=\"%s\" data-exp-view=\"overview\">",
-            program->pattern,program->shell);
-    fputs("<nav class=\"ak-experience-controls\" data-exp-controls aria-label=\"Reading layouts\" hidden>"
-          "<div class=\"ak-exp-view-buttons\" role=\"group\" aria-label=\"Arrange sections\">"
-          "<button type=\"button\" data-exp-mode=\"overview\" aria-pressed=\"true\">Overview</button>",out);
+    ui_start(out,"div");ui_attr(out,"class","ak-experience");ui_attr_open(out,"data-ak-experience");fprintf(out,"%s",program->pattern);ui_attr_close(out);
+    ui_attr_open(out,"data-exp-shell");fprintf(out,"%s",program->shell);ui_attr_close(out);ui_attr(out,"data-exp-view","overview");ui_gt(out);
+    ui_start(out,"nav");ui_attr(out,"class","ak-experience-controls");ui_flag(out,"data-exp-controls");ui_attr(out,"aria-label","Reading layouts");ui_flag(out,"hidden");ui_gt(out);
+    ui_start(out,"div");ui_attr(out,"class","ak-exp-view-buttons");ui_attr(out,"role","group");ui_attr(out,"aria-label","Arrange sections");ui_gt(out);
+    ui_elem(out,"button",(const UiAttr[]){{"type","button"},{"data-exp-mode","overview"},{"aria-pressed","true"}},3,0);ui_copy(out,"Overview");ui_close(out,"button");
     if(program->views & BF_EXP_VIEW_FOCUS)
         (ui_elem(out, "button", (const UiAttr[]){{"type", "button"}, {"data-exp-mode", "focus"}, {"aria-pressed", "false"}}, 3, 0), ui_lit(out, "Focus"), ui_close(out, "button"));
     if(program->views & BF_EXP_VIEW_COMPARE)

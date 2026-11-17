@@ -17,6 +17,7 @@ architecture bonfyre-matrix
   consumes Evidence
   publishes AddressConstellation
   publishes PublicationPresence
+  publishes AddressClosure
   node_types MatrixSubject
   node_types AddressConstellation
   node_types StandingAddress

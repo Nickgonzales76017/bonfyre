@@ -79,7 +79,35 @@ stop
 eval "$(plutil -convert json -o - "$plist" | bun -e '
 const env=JSON.parse(await Bun.stdin.text()).EnvironmentVariables||{};
 for(const [k,v] of Object.entries(env))console.log("export "+k+"="+JSON.stringify(String(v)).replaceAll("$","\\$"));')"
+# The live environment names more than the four stores copied above (frontier,
+# detail depth, prices, account work sources ...). A preview holding any of the
+# live files open keeps a read snapshot there, and a live WAL cannot restart
+# past a reader: one forgotten preview grew the live CMS WAL to 5 GB. So no
+# variable may still name a file under the live estate: a single file is
+# replaced by an APFS clone in the preview home (no bytes until written), and
+# anything else -- a list of sources, a directory -- is dropped.
+mkdir -p "$home/clones"
+for name in $(env | sed -n 's/^\(BONFYRE_[A-Z0-9_]*\)=.*/\1/p'); do
+  eval "value=\${$name}"
+  case "$value" in *"$live"*) ;; *) continue ;; esac
+  if [ -f "$value" ] && case "$value" in *[,\;=]*) false ;; *) true ;; esac; then
+    clone="$home/clones/$(basename "$value")"
+    [ -f "$clone" ] || cp -c "$value" "$clone" 2>/dev/null || { unset "$name"; continue; }
+    export "$name=$clone"
+  else
+    unset "$name"
+  fi
+done
 export BONFYRE_CMS_DB="$home/cms.db" BONFYRE_PUBLIC_PROJECTION_DB="$home/projection.db"
+# The preview is the tree's own behaviour: the organs it calls are the tree's
+# builds where they exist, not the live release's (an October auth binary
+# could not sign anyone up against today's auth store).
+for organ in Auth:BONFYRE_AUTH_BINARY:bonfyre-auth CMS:BONFYRE_CMS_BINARY:bonfyre-cms CMS:BONFYRE_PROGRAM_CMS_BINARY:bonfyre-cms; do
+  organ_dir=${organ%%:*}; organ_rest=${organ#*:}; organ_var=${organ_rest%%:*}; organ_bin=${organ_rest#*:}
+  [ -x "$repo/cmd/Bonfyre$organ_dir/$organ_bin" ] && export "$organ_var=$repo/cmd/Bonfyre$organ_dir/$organ_bin"
+done
+# The reading archive copied above (and its text and meaning indexes beside it).
+export BONFYRE_ITEM_ARCHIVE_DB="$home/items.db"
 # Introductions keep their own private store; preview gets a separate one so a
 # test request or review never reaches the live participation database.
 export BONFYRE_PARTICIPATION_DB="$home/participation.db"; unset BONFYRE_DATING_DB

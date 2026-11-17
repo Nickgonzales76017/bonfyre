@@ -23,8 +23,9 @@ architecture account-world-binding
   source_path cmd/BonfyreWebAddress/tests/account_world_workspace_test.sh
   source_path cmd/BonfyreWebAddress/tests/account_world_spaces_test.sh
   source_path site/matrix/world.css
-  consumes PageComposition
+  consumes ComposedPublicPage
   consumes WorldPublication
+  publishes AccountWorldBinding
   internal_calculus A binding checks an existing draft World row against its exact namespace and subject; transactional space writes check that binding, apply an optimistic revision and cap each World at 32 spaces.
   invariant The owner accepts only an already authenticated subject and authorized namespace from a trusted caller; it does not authenticate caller arguments.
   invariant A bound World cannot be deleted or change identity, subject or namespace; a lifecycle owner is still needed.
@@ -97,7 +98,7 @@ architecture account-world-cinema
   source_path cmd/BonfyreWebAddress/tests/account_world_cinema_test.sh
   source_path site/matrix/world.css
   consumes AccountWorldBinding
-  consumes PageComposition
+  consumes ComposedPublicPage
   internal_calculus Additions to the AccountWorldBinding owner (account-world-cine tables created by aw_initialize): screenings keyed by world, space and a short name with an ISO minute, a venue, one PageComposition film reference and a draft, announced or cancelled state; a club per space with member rows (member, left, removed), member picks with one vote per member and member posts the host can hide and the author can retract; diary notes of the World's subject with an ISO day, a 0..10 half-star rating, a rewatch flag and private or public visibility. Every owner write rechecks the binding and draft World inside one immediate transaction; every member write rechecks that the space is released, public, its World bound and its club open.
   invariant A film is always "<source>/<24 hex key>"; no media URL, rights statement, availability claim or audience number is stored.
   invariant A new or edited screening is a draft; only announced and cancelled screenings of a public space reach the reader; cancelling a draft deletes it, cancelling an announced one keeps it marked cancelled.
@@ -152,7 +153,7 @@ architecture account-world-audio
   source_path schemas/control/account-world.cue
   source_path site/matrix/world.css
   consumes AccountWorldBinding
-  consumes PageComposition
+  consumes ComposedPublicPage
   internal_calculus Additions to the AccountWorldBinding owner (account-world-audio-1 tables created by awa_initialize): one programme row per space (station or show, IANA time zone, language, author, category, explicit flag, optional live-stream piece reference), up to 48 weekly slots (ISO weekday, start minute, length, programme, host, optional piece or sibling-space link), episode details keyed by an item reference the space already holds (season, number, ISO date), and up to 600 time marks per episode (track, chapter, cue, clip, person, source) with start and end milliseconds and a checked flag meaning a confirmed track or a reviewed cue or clip. Each table keeps a draft copy and a released copy; triggers on account_world_release copy the drafts inside the release transaction and drop the released copy on withdrawal. Every owner write rechecks the binding and draft World and advances the exact space revision in one immediate transaction.
   invariant Recordings and the live stream are always "<source>/<24 hex key>" references; a mark link is an https citation or profile address or a piece reference and is never played; no media URL, rights statement, listener count or availability claim is stored.
   invariant Audio plays (preload none, no autoplay) and enters the RSS feed as an enclosure only when the piece's own source, re-read on that request, states public domain, CC0, CC BY or CC BY-SA and gives an https file; otherwise the page links to where it is published and the feed leaves the episode out. A live stream with closed terms is linked, a missing one says it is not available.

@@ -9,7 +9,7 @@ architecture item-archive
   purpose A feed holds a page of recent items and a calendar holds a year; what either dropped last week is not thereby untrue, and a person who was sent its address should not meet an empty page. Every item the census produces is kept once here, with when it was first and last read, so an item page outlives its source's feed slot, a source's earlier publications remain reachable, and the estate can say what it read rather than only what a source currently shows. The archive is written by the standing automation from the same census items the pages read, and read by the page organ read-only.
   maturity implemented
   consumes InternetCensus
-  consumes StandingAutomation
+  consumes AutomationRun
   publishes KeptItem
   node_types KeptItem
   invariant an archived item is what this estate read at a time, never a claim that its source still publishes it: a page built from the archive says so in words, keeps the original link, and shows when it was read
@@ -27,6 +27,18 @@ architecture item-archive
   known_gap the vGPU adapter publishes no Dawn prebuild for linux/x64, so the estate runs the same kernel on its deterministic CPU path while a developer machine runs it on the GPU; the receipt always says which ran
   known_gap the neighbourhood is recomputed whole on each run rather than updated for what changed
   known_gap nothing prunes the archive; its growth is bounded only by how many items the census produces
+  forbidden_inference a full-text or meaning match -> the same story, a shared source, corroboration or a correction; it is a measurement of two texts under one index
+  forbidden_inference a meaning score -> a distance under any model but nomic-static-128; the .bfsi is bound to that .bfse's sha256 and refused under another
+  forbidden_inference an archive result on /search or under a Discover lead -> its source still publishing; each is shown with the date it was published
+  known_gap the meaning index is rebuilt whole (137,666 vectors in about 5 s) when missing or an hour behind, not updated per item; the text index is kept per row by triggers
+  known_gap the static model reads short named-entity headlines weakly (a James Bond casting lead tops out near 0.50), so such leads get no Earlier in the archive thread rather than a wrong one
+  source_path schemas/storage/stores/cmd-BonfyreWebAddress-item-archive.cue
+  source_path cmd/BonfyreWebAddress/src/page_routes_and_emitters.h
+  source_path cmd/BonfyreWebAddress/src/page_core_rendering.h
+  source_path cmd/BonfyreWebAddress/src/front_editorial.h
+  source_path schemas/control/page-composition.cue
+  source_path lib/libbonfyre/src/bf_static_embed.c
+  witness 2026-11-16 preview dogfood: archive-items built item_text over 140,307 kept items in 3.6 s; /search?q=tennis went from no result to 160 word matches across 19 sources, every result link answering 200; archive-index embedded 137,666 items (2,641 unreadable refused) in 5.5 s into an 18 MB .bfsi; the Discover lead's thread showed only pieces clearing both the 0.62 meaning floor and a shared distinct word, measured against real leads (earlier coverage 0.63-0.80, place-name noise 0.58 and below)
   source_path cmd/BonfyreWebAddress/src/main.c
   source_path cmd/BonfyreWebAddress/tests/page_events_test.sh
   source_path cmd/BonfyreSurfaceScene/runtime/stage-compute-vgpu.mjs
@@ -47,6 +59,7 @@ architecture item-archive
   known_gap the chart is a trigram hash of words, so it recognises the same story told twice and not two stories about one subject; nothing here finds topical kinship, and the floor is set where the measurement stops being honest
   witness 2026-09-18 on the estate the standing automation kept 1,633 items (995 stories, 212 videos, 192 recordings, 173 pictures, 61 events); an event page answered 200 and carried Earlier from this source
   witness 2026-09-18 on the estate 3,755 census items were kept (4,101 in the archive) and 260 placed things were given neighbourhoods in one run: 67,600 pairs in 136ms through the kernel's CPU path, 651 neighbour pairs kept within four kilometres; on a machine with a GPU backend the same kernel ran 190,608 pairs in 704ms as vgpu-node
+  witness 2026-11-16 the frontier's own freshness bookkeeping is unmaintained (1 of 2,590 live admitted channels carries a last_contributed), so page_frontier_sources orders candidates by what the archive proves (MAX(last_read), COUNT) when it answers: the real function against cloned live stores returned the deepest source per family (deccanchronicle 1,576, what-should-i-read-next 323) where the stale-first cursor returned 24-146-item sources, and Discover's window widened 8 to 32 in page-composition.cue
   source_lineage 2026-09-18 the page never dies: what the estate read stays reachable after its source moves on
 
 interaction item-archive-answers-after-a-source-moves-on

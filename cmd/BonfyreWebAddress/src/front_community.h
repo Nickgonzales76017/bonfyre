@@ -24,13 +24,14 @@ static void front_community_revision(char revision[65]) {
 static void front_community_emit(sqlite3 *db) {
     CjrDiscovery found;
     if(!db||!cjr_discover(db,&found)||!found.count)return;
-    fputs("<section class=\"community-front\" data-community-front "
-          "aria-labelledby=\"community-front-title\"><div class=\"community-front-head\">"
-          "<div><span class=\"community-front-kicker\">Community conversations</span>"
-          "<h2 id=\"community-front-title\">What people are discussing</h2>"
-          "<p>Real questions, shared work and replies from Aurekai communities.</p></div>"
-          "<a href=\"" BF_ORIGIN_LIFE "/communities\">Explore communities</a>"
-          "</div><div class=\"community-front-grid\">",stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","community-front");ui_flag(stdout,"data-community-front");
+    ui_attr(stdout,"aria-labelledby","community-front-title");ui_gt(stdout);
+    ui_open(stdout,"div","community-front-head");ui_open(stdout,"div",NULL);
+    ui_open(stdout,"span","community-front-kicker");ui_copy(stdout,"Community conversations");ui_close(stdout,"span");
+    ui_start(stdout,"h2");ui_attr(stdout,"id","community-front-title");ui_gt(stdout);ui_copy(stdout,"What people are discussing");ui_close(stdout,"h2");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"Real questions, shared work and replies from Aurekai communities.");ui_close(stdout,"p");ui_close(stdout,"div");
+    ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,BF_ORIGIN_LIFE);ui_copy(stdout,"/communities");ui_attr_close(stdout);ui_gt(stdout);
+    ui_copy(stdout,"Explore communities");ui_close(stdout,"a");ui_close(stdout,"div");ui_open(stdout,"div","community-front-grid");
     for(size_t i=0;i<found.count;i++) {
         const CjrDiscoveryItem *item=&found.items[i];
         const CjrCommunity *community=&item->community;
@@ -44,7 +45,7 @@ static void front_community_emit(sqlite3 *db) {
         (ui_open_a(stdout, "article", "class", "community-front-card", "data-community-discovery", community->key), ui_open(stdout, "p", "community-from"));html(community->title);
         (ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));html(post->title[0]?post->title:community->title);
         (ui_close(stdout, "h3"), ui_open(stdout, "p", "community-excerpt"));html(excerpt);
-        fputs("</p><a data-community-thread href=\"" BF_ORIGIN_LIFE "/community/",stdout);
+        ui_close(stdout,"p");ui_start(stdout,"a");ui_flag(stdout,"data-community-thread");ui_attr_open(stdout,"href");ui_copy(stdout,BF_ORIGIN_LIFE);ui_copy(stdout,"/community/");
         html(community->key);ui_lit(stdout, "/thread/");html(post->key);
         (ui_lit(stdout, "/\">Read the conversation"), ui_close(stdout, "a"), ui_close(stdout, "article"));
     }

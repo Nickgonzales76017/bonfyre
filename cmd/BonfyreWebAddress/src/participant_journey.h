@@ -47,7 +47,7 @@ static int pj_profile_login_redirect(const char *query){
     PjField fields[]={{"tab",tab,sizeof(tab)},{"site",site,sizeof(site)},
       {"q",q,sizeof(q)},{"cursor",cursor,sizeof(cursor)},{"item",item,sizeof(item)},{"kind",kind,sizeof(kind)},{"view",view,sizeof(view)},{"peer",peer,sizeof(peer)},{"facet",facet,sizeof(facet)}};
     if(!pj_fields(query,fields,9,2048))return 0;
-    const char *allowed[]={"overview","posts","saved","about","sites","edit","compose","activity","communities","dating","connections"};
+    const char *allowed[]={"overview","posts","saved","about","sites","edit","compose","activity","communities","dating","connections","organizations","gallery","artwork"};
     int found=0;for(size_t i=0;i<sizeof(allowed)/sizeof(allowed[0]);i++)if(!strcmp(tab,allowed[i]))found=1;
     if(!found||(*site&&!pj_key(site,sizeof(site)))||(*kind&&(!pj_kind(kind)||strcmp(tab,"activity")))||
  (*facet&&(strcmp(tab,"connections")||strlen(facet)>31||

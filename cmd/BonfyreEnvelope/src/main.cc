@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 using google::protobuf::FieldDescriptor;
 using google::protobuf::Message;
@@ -61,9 +62,20 @@ static std::string sha256_hex(const std::string &bytes) {
   return hex;
 }
 
+/* Verb vocabulary, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+enum { ENV_CHECK, ENV_DECODE, ENV_DIGEST, ENV_ENCODE };
+static const BfCommandEntry envelope_commands[] = {
+    {"check", ENV_CHECK, 0, nullptr},
+    {"decode", ENV_DECODE, 0, nullptr},
+    {"digest", ENV_DIGEST, 0, nullptr},
+    {"encode", ENV_ENCODE, 0, nullptr},
+};
+
 int main(int argc, char **argv) {
   if (argc != 3) { std::fprintf(stderr, "usage: bonfyre-envelope encode|decode|check|digest <Message>\n"); return 2; }
-  const std::string verb = argv[1];
+  const int verb_id = bf_command_id(envelope_commands,
+      BF_COMMAND_COUNT(envelope_commands), argv[1], -1);
   auto message = make(argv[2]);
   if (!message) { std::fprintf(stderr, "no message named %s\n", argv[2]); return 2; }
   std::string input((std::istreambuf_iterator<char>(std::cin)), std::istreambuf_iterator<char>());
@@ -94,16 +106,16 @@ int main(int argc, char **argv) {
     if (!status.ok()) { std::fprintf(stderr, "not a %s: %s\n", argv[2], std::string(status.message()).c_str()); return false; }
     return true;
   };
-  if (verb == "encode" || verb == "check") {
+  if (verb_id == ENV_ENCODE || verb_id == ENV_CHECK) {
     if (!from_json()) return 1;
-    if (verb == "encode") {
+    if (verb_id == ENV_ENCODE) {
       std::string bytes;
       if (!message->SerializeToString(&bytes)) return 1;
       std::cout.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
     }
     return 0;
   }
-  if (verb == "decode") {
+  if (verb_id == ENV_DECODE) {
     if (!message->ParseFromString(input)) { std::fprintf(stderr, "not a serialised %s\n", argv[2]); return 1; }
     google::protobuf::util::JsonPrintOptions options;
     options.always_print_fields_with_no_presence = true;
@@ -113,7 +125,7 @@ int main(int argc, char **argv) {
     std::cout << json << "\n";
     return 0;
   }
-  if (verb == "digest") {
+  if (verb_id == ENV_DIGEST) {
     // Either form is accepted; the identity is the same.
     const bool looks_json = !input.empty() && (input[0] == '{' || input[0] == ' ' || input[0] == '\n');
     if (looks_json ? !from_json() : !message->ParseFromString(input)) { if (!looks_json) std::fprintf(stderr, "not a serialised %s\n", argv[2]); return 1; }

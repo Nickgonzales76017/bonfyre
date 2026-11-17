@@ -8,8 +8,8 @@ architecture scene-compiler
   semantic_question Given whatever material a subject or route actually holds, which reading rhythms does that material itself argue for, in what order, and what should the page look like as a result?
   purpose The bridge between a large source estate and a page that feels like it. A route used to name its regions and a subject page used a fixed order, so adding thousands of sources and dozens of studied interaction grammars changed nothing a person saw. The compiler asks each declared rhythm whether the material argues for it -- one thing happening now makes a stage, several timed things make an agenda, three placed things make a map, pictures make a wall or a field, recordings that play make a tracklist, video makes a shelf, conversation makes threads -- and orders the ones that qualify by how strongly their own shape argues. The page is then dressed by the estate's own art direction: the material family its scene leads with chooses a family of Ghost presentation profile, and the subject's own address chooses which profile inside it, stably.
   maturity implemented
-  consumes PageComposition
-  consumes EventMaterial
+  consumes ComposedPublicPage
+  consumes EventItem
   consumes PresentationTemplate
   publishes SceneSequence
   node_types SceneGrammar

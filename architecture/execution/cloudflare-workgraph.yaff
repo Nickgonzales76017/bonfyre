@@ -10,7 +10,7 @@ architecture cloudflare-workgraph-transport
   semantic_question Can a retried source observation reach one durable native work item without an unfinished admission being acknowledged?
   purpose Transport pinned source-sync intents through Cloudflare Queue delivery to the existing native WorkGraph owner.
   consumes SourceDigest
-  consumes ScheduledOccurrence
+  consumes Occurrence
   publishes NativeAdmissionReceipt
   node_types TransportIntent
   node_types ReplayLease

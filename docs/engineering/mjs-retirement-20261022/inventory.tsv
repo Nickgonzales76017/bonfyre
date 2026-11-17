@@ -83,7 +83,7 @@ scripts/representation-manifold-zarr.mjs	native-wrapper	192	W1	YAFF command cont
 scripts/project-recurring-commerce-browser.mjs	logic	71	W5	triage: C organ, CUE/YAFF data, or keep	inventoried
 scripts/materialize_reference_repair.mjs	test	34	W4	golden vectors + native runner	inventoried
 scripts/recurring-commerce-load.mjs	native-wrapper	91	W1	YAFF command contract + C dispatcher	inventoried
-scripts/domain_mail.mjs	native-wrapper	53	W1	YAFF command contract + C dispatcher	inventoried
+scripts/domain_mail.mjs	native-wrapper	53	W1	YAFF command contract + C dispatcher	retired 2026-11-16: unreferenced; archive js-unreferenced-20261116
 scripts/program-source-work.mjs	logic	234	W5	triage: C organ, CUE/YAFF data, or keep	inventoried
 scripts/command-workload-binary-fixtures.mjs	logic	56	W5	triage: C organ, CUE/YAFF data, or keep	inventoried
 scripts/file-sought-family.mjs	native-wrapper	84	W1	YAFF command contract + C dispatcher	inventoried
@@ -864,7 +864,7 @@ scripts/release/publication_picker_upgrade.mjs	test	38	W4	golden vectors + nativ
 scripts/release/workspace_upgrade.mjs	test	243	W4	golden vectors + native runner	inventoried
 scripts/release/connection_studio_upgrade.mjs	logic	24	W5	triage: C organ, CUE/YAFF data, or keep	inventoried
 scripts/release/submodule-readiness.mjs	native-wrapper	70	W1	YAFF command contract + C dispatcher	inventoried
-scripts/release/reference_reader_rollout.mjs	test	62	W4	golden vectors + native runner	inventoried
+scripts/release/reference_reader_rollout.mjs	test	62	W4	golden vectors + native runner	retired 2026-11-16: one-shot Oct-22 rollout, docs-only ref; archive js-unreferenced-20261116
 scripts/release/research_workspace_upgrade.mjs	test	27	W4	golden vectors + native runner	inventoried
 scripts/release/connection_credential_registry.mjs	test	18	W4	golden vectors + native runner	inventoried
 scripts/release/connections_rollout.mjs	test	80	W4	golden vectors + native runner	inventoried

@@ -53,29 +53,29 @@ static void ph_dating_own_site(sqlite3 *cms,const char *actor){
  }
  ui_open(stdout,"div","ph-dating-editorial");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Your authored Life profile");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);
  html(life.name);ui_close(stdout,"h3");ui_open(stdout,"p",NULL);html(life.bio);ui_close(stdout,"p");ui_close(stdout,"div");ui_start(stdout,"nav");ui_attr(stdout,"aria-label","Your Life story tools");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose/advanced?site=");
- url_query_value(life.id);fputs("\">Compose your profile</a><a href=\"/cms/compose/advanced?site=",stdout);
- url_query_value(life.id);fputs("&amp;new=article\">Write your story</a><a href=\"",stdout);
- ph_url(&life,"gallery",1);fputs("\">Manage your gallery</a><a href=\"https://",stdout);
- html(life.host);fputs("/\">View published Life site</a></nav></div>",stdout);
+ url_query_value(life.id);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Compose your profile");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose/advanced?site=");
+ url_query_value(life.id);ui_copy(stdout,"&amp;new=article");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Write your story");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");
+ ph_url(&life,"gallery",1);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Manage your gallery");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
+ html(life.host);ui_copy(stdout,"/");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"View published Life site");ui_close(stdout,"a");ui_close(stdout,"nav");ui_close(stdout,"div");
 }
 static void ph_dating_messages(sqlite3 *date,const char *actor,const BfDatingCandidate *c,long long before_id){
  BfDatingMessage rows[25];size_t count=0;char nonce[33];
  ui_start(stdout,"section");ui_attr(stdout,"class","ph-dating-thread");ui_attr(stdout,"aria-label","Private conversation");ui_gt(stdout);ui_open(stdout,"h4",NULL);ui_copy(stdout,"Conversation");ui_close(stdout,"h4");
  if(bf_dating_messages(date,actor,c->subject,before_id,rows,25,&count)){
   if(before_id){ui_open(stdout,"p","ph-dating-page-link");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");
-   url_query_value(c->subject);fputs("\">Back to latest messages</a></p>",stdout);}
+   url_query_value(c->subject);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Back to latest messages");ui_close(stdout,"a");ui_close(stdout,"p");}
   ui_open(stdout,"ol","ph-dating-lines");
   size_t visible=count>24?24:count;for(size_t i=visible;i>0;i--){
    const BfDatingMessage *m=&rows[i-1];
-   ui_start(stdout,"li");if(!strcmp(m->sender,actor))fputs(" class=\"ph-dating-mine\"",stdout);
-   fputs("><span>",stdout);html(!strcmp(m->sender,actor)?"You":"Them");ui_close(stdout,"span");ui_open(stdout,"p",NULL);
+   ui_start(stdout,"li");if(!strcmp(m->sender,actor))ui_attr(stdout,"class","ph-dating-mine");
+   ui_gt(stdout);ui_open(stdout,"span",NULL);html(!strcmp(m->sender,actor)?"You":"Them");ui_close(stdout,"span");ui_open(stdout,"p",NULL);
    html(m->body);ui_close(stdout,"p");ui_close(stdout,"li");
   }
   if(!count)ui_text(stdout, "li", NULL, "Both of you have agreed to talk. Start with a thoughtful introduction.");
   ui_close(stdout,"ol");
   if(count>24&&rows[visible-1].id>0){
    ui_open(stdout,"p","ph-dating-page-link");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");
-   url_query_value(c->subject);printf("&amp;before=%lld\">Read earlier messages</a></p>",rows[visible-1].id);
+   url_query_value(c->subject);ui_copy(stdout,"&amp;before=");printf("%lld",rows[visible-1].id);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Read earlier messages");ui_close(stdout,"a");ui_close(stdout,"p");
   }
  }else{
   ui_open(stdout,"p",NULL);ui_copy(stdout,"The conversation is no longer authorized. No private messages were displayed.");ui_close(stdout,"p");ui_close(stdout,"section");
@@ -116,9 +116,9 @@ static void ph_dating_plans(sqlite3 *date,const char *actor,const char *partner)
   ui_open(stdout,"li",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"strong",NULL);html(*p->activity?p->activity:"Date idea");
   ui_close(stdout,"strong");ui_open(stdout,"p",NULL);html(p->meeting_context);
   ui_close(stdout,"p");ui_open(stdout,"small",NULL);ui_copy(stdout,"Estimated USD $");fprintf(stdout,"%llu",(unsigned long long)(p->estimated_cents/100));ui_copy(stdout,".");fprintf(stdout,"%02llu",(unsigned long long)(p->estimated_cents%100));ui_copy(stdout," · ");
-  if(p->approved_by_me&&p->approved_by_other)fputs("Both approved",stdout);
-  else if(p->approved_by_me)fputs("Awaiting their approval",stdout);
-  else fputs("Awaiting your approval",stdout);
+  if(p->approved_by_me&&p->approved_by_other)ui_copy(stdout,"Both approved");
+  else if(p->approved_by_me)ui_copy(stdout,"Awaiting their approval");
+  else ui_copy(stdout,"Awaiting your approval");
   ui_close(stdout,"small");ui_close(stdout,"div");
   if(!p->approved_by_me){
    char r[16];snprintf(r,sizeof(r),"%u",p->revision);
@@ -151,36 +151,34 @@ static void ph_dating_preferences_editor(sqlite3 *db,const char *actor){
  const char *plus[]={
   "A walk or outdoor adventure","Keep plans flexible","Longer conversations","Several things to explore"
  };
- fputs("<section class=\"ph-dating-preferences\" aria-labelledby=\"dating-preferences-heading\">"
- "<div><p class=\"ph-kicker\">Private preferences</p><h3 id=\"dating-preferences-heading\">How you like to spend time</h3>"
- "<p>Choose your own preferences. Only aggregate agreement across at least three mutually answered "
- "questions may inform your suggestions. No diagnosis, sensitive attribute, or hidden inference is created.</p></div>"
- "<form method=\"post\" action=\"/profile/dating/preferences\" class=\"ph-dating-preference-form\">",stdout);
- printf("<input type=\"hidden\" name=\"rev\" value=\"%u\">",revision);
+ ui_start(stdout,"section");ui_attr(stdout,"class","ph-dating-preferences");ui_attr(stdout,"aria-labelledby","dating-preferences-heading");ui_gt(stdout);
+ ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Private preferences");ui_close(stdout,"p");ui_start(stdout,"h3");ui_attr(stdout,"id","dating-preferences-heading");ui_gt(stdout);ui_copy(stdout,"How you like to spend time");ui_close(stdout,"h3");
+ ui_open(stdout,"p",NULL);ui_copy(stdout,"Choose your own preferences. Only aggregate agreement across at least three mutually answered questions may inform your suggestions. No diagnosis, sensitive attribute, or hidden inference is created.");ui_close(stdout,"p");ui_close(stdout,"div");
+ ui_start(stdout,"form");ui_attr(stdout,"method","post");ui_attr(stdout,"action","/profile/dating/preferences");ui_attr(stdout,"class","ph-dating-preference-form");ui_gt(stdout);
+ ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","rev");ui_attr_open(stdout,"value");printf("%u",revision);ui_attr_close(stdout);ui_gt(stdout);
  for(unsigned i=0;i<4;i++){
   ui_open(stdout,"fieldset","ph-dating-preference");ui_open(stdout,"legend",NULL);fprintf(stdout,"%u",i+1);ui_copy(stdout,". ");html(questions[i]);
-  fputs("</legend><label>Your choice<select name=\"p",stdout);printf("%u\">",i+1);
-  fputs("<option value=\"0\"",stdout);if(!prefs[i].answer)fputs(" selected",stdout);
-  fputs(">Prefer not to answer</option>",stdout);
-  fputs("<option value=\"-1\"",stdout);if(prefs[i].answer==-1)fputs(" selected",stdout);
-  fputs(">",stdout);html(minus[i]);fputs("</option><option value=\"1\"",stdout);
-  if(prefs[i].answer==1)fputs(" selected",stdout);
-  fputs(">",stdout);html(plus[i]);fputs("</option></select></label>",stdout);
-  printf("<label>Importance<select name=\"i%u\">",i+1);
+  ui_close(stdout,"legend");ui_open(stdout,"label",NULL);ui_copy(stdout,"Your choice");ui_start(stdout,"select");ui_attr_open(stdout,"name");ui_copy(stdout,"p");printf("%u",i+1);ui_attr_close(stdout);ui_gt(stdout);
+  ui_start(stdout,"option");ui_attr(stdout,"value","0");if(!prefs[i].answer)ui_flag(stdout,"selected");ui_gt(stdout);
+  ui_copy(stdout,"Prefer not to answer");ui_close(stdout,"option");
+  ui_start(stdout,"option");ui_attr(stdout,"value","-1");if(prefs[i].answer==-1)ui_flag(stdout,"selected");ui_gt(stdout);
+  html(minus[i]);ui_close(stdout,"option");ui_start(stdout,"option");ui_attr(stdout,"value","1");
+  if(prefs[i].answer==1)ui_flag(stdout,"selected");
+  ui_gt(stdout);html(plus[i]);ui_close(stdout,"option");ui_close(stdout,"select");ui_close(stdout,"label");
+  ui_open(stdout,"label",NULL);ui_copy(stdout,"Importance");ui_start(stdout,"select");ui_attr_open(stdout,"name");ui_copy(stdout,"i");printf("%u",i+1);ui_attr_close(stdout);ui_gt(stdout);
   for(unsigned weight=1;weight<=5;weight++){
-   printf("<option value=\"%u\"%s>%s</option>",weight,prefs[i].importance==weight?" selected":"",
-     weight==1?"1 · Low":weight==3?"3 · Medium":weight==5?"5 · High":weight==2?"2":"4");
+   ui_start(stdout,"option");ui_attr_open(stdout,"value");printf("%u",weight);ui_attr_close(stdout);if(prefs[i].importance==weight)ui_flag(stdout,"selected");ui_gt(stdout);ui_copy(stdout,weight==1?"1 · Low":weight==3?"3 · Medium":weight==5?"5 · High":weight==2?"2":"4");ui_close(stdout,"option");
   }
-  fputs("</select></label></fieldset>",stdout);
+  ui_close(stdout,"select");ui_close(stdout,"label");ui_close(stdout,"fieldset");
  }
- fputs("<button type=\"submit\">Save private preferences</button></form></section>",stdout);
+ ui_start(stdout,"button");ui_attr(stdout,"type","submit");ui_gt(stdout);ui_copy(stdout,"Save private preferences");ui_close(stdout,"button");ui_close(stdout,"form");ui_close(stdout,"section");
 }
 static void ph_dating_candidate_card(sqlite3 *cms,sqlite3 *date,
                                      const char *actor,const BfDatingCandidate *candidate,const char *view,long long before_id){
  PhSite life;if(!ph_dating_life_site(cms,candidate->subject,&life))return;
  ui_start(stdout,"article");ui_attr(stdout,"class","ph-dating-person");ui_flag(stdout,"data-dating-candidate");
- if(!strcmp(view,"chat"))fputs(" data-selected-peer",stdout);
- fputs(">",stdout);
+ if(!strcmp(view,"chat"))ui_flag(stdout,"data-selected-peer");
+ ui_gt(stdout);
  if(strcmp(view,"chat"))ph_dating_public_image(cms,&life);
  ui_open(stdout,"div","ph-dating-person-head");ui_open(stdout,"div",NULL);
  ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Life profile · Reviewed participation");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);
@@ -191,16 +189,16 @@ static void ph_dating_candidate_card(sqlite3 *cms,sqlite3 *date,
   ui_open(stdout,"p","ph-dating-similarity");ui_open(stdout,"strong",NULL);fprintf(stdout,"%u",candidate->agreement_percent);ui_copy(stdout,"% shared preference agreement");ui_close(stdout,"strong");ui_copy(stdout," across ");fprintf(stdout,"%u",candidate->shared_answers);ui_copy(stdout," opted-in answers · Not a personality assessment");ui_close(stdout,"p");
  }
  ui_close(stdout,"div");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
- html(life.host);fputs("/\" rel=\"noopener noreferrer\">Read their Life profile</a></div>",stdout);
+ html(life.host);ui_copy(stdout,"/");ui_attr_close(stdout);ui_attr(stdout,"rel","noopener noreferrer");ui_gt(stdout);ui_copy(stdout,"Read their Life profile");ui_close(stdout,"a");ui_close(stdout,"div");
  if(candidate->matched){
   ui_text(stdout, "p", "ph-dating-state", "You have both explicitly accepted the conversation.");
-  ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");url_query_value(candidate->subject);fputs("\">Open private conversation</a></p>",stdout);
+  ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");url_query_value(candidate->subject);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open private conversation");ui_close(stdout,"a");ui_close(stdout,"p");
   if(!strcmp(view,"matches")){
    BfDatingMessage latest[1];size_t latest_count=0;
    if(bf_dating_messages(date,actor,candidate->subject,0,latest,1,&latest_count)&&latest_count){
     ui_start(stdout,"a");ui_attr(stdout,"class","ph-date-message-preview");ui_flag(stdout,"data-dating-message-preview");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=dating&amp;view=chat&amp;peer=");
-    url_query_value(candidate->subject);fputs("\"><span>",stdout);
-    fputs(!strcmp(latest[0].sender,actor)?"Your latest message":"Their latest message",stdout);
+    url_query_value(candidate->subject);ui_attr_close(stdout);ui_gt(stdout);ui_open(stdout,"span",NULL);
+    ui_copy(stdout,!strcmp(latest[0].sender,actor)?"Your latest message":"Their latest message");
     ui_close(stdout,"span");ui_open(stdout,"p",NULL);html(latest[0].body);ui_close(stdout,"p");ui_open(stdout,"strong",NULL);ui_copy(stdout,"Continue conversation");ui_close(stdout,"strong");ui_close(stdout,"a");
    }
   }
@@ -242,7 +240,7 @@ static void ph_dating_view(sqlite3 *cms,const char *actor,const char *view,const
  ph_dating_shared_interaction_styles();
  PhDatingComposition copy=ph_dating_composition(cms,view);
  ui_start(stdout,"section");ui_attr(stdout,"class","ph-dating");ui_flag(stdout,"data-native-dating");ui_attr(stdout,"data-bf-stitch","dating-editorial");ui_attr_open(stdout,"data-dating-view");
- html(view);fputs("\"><header class=\"ph-dating-mast\"><div><p class=\"ph-kicker\">",stdout);
+ html(view);ui_attr_close(stdout);ui_gt(stdout);ui_open(stdout,"header","ph-dating-mast");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");
  html(copy.eyebrow);ui_close(stdout,"p");ui_open(stdout,"h2",NULL);html(copy.heading);
  ui_close(stdout,"h2");ui_open(stdout,"p",NULL);html(copy.lede);
  ui_close(stdout,"p");ui_close(stdout,"div");ui_start(stdout,"div");ui_attr(stdout,"class","ph-dating-count");ui_attr(stdout,"aria-label","Aurekai Life participation");ui_gt(stdout);ui_copy(stdout,"Life");ui_close(stdout,"div");ui_close(stdout,"header");

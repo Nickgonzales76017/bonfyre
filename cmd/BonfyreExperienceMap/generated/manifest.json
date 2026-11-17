@@ -1,7 +1,7 @@
 {
   "app_reference_records": 631,
-  "atlas_declaration_digest": "f470f6cfadb220b0bf578636232f2f051ff1e6ad2d357eaf7efe06df99c06598",
-  "build_digest": "94cdde9812773c429f1b5121400768cc93eba25e7bfba23fe9a100b3ae50ee3e",
+  "atlas_declaration_digest": "542f9ea1d5f681c10499f377ddfa84f3b3c5ca5936d3ef360162325da8420d21",
+  "build_digest": "d3be9d551bed66d1a8940af3436621db581303fc79d9a2e3fa4555b8fcf2e17b",
   "cannot_infer": [
     "experience binding -> provider admission",
     "home blueprint -> current publication",
@@ -42,10 +42,10 @@
   },
   "market_leader_count": 20,
   "owner_graph": {
-    "interactions": 586,
-    "owners": 571
+    "interactions": 783,
+    "owners": 572
   },
-  "owner_graph_digest": "91ca77489be431bd0d846921e4ba6f752ef3005e37fad7943abefae21fa739f5",
+  "owner_graph_digest": "a764300b97be5d9d0ad3cd8169b78fcf778542d0fff11a553ddc09c9b6d9c881",
   "partner_inventory": {
     "declared_shipped_repos": 41,
     "names_provable_in_checkout": 19,

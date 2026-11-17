@@ -162,20 +162,20 @@ static void ph_gallery_emit(sqlite3 *db, const PhSite *site, int owner, int limi
         if (!shown) {
             ph_gallery_style();
             ui_start(stdout,"section");ui_attr(stdout,"class","ph-gallery");ui_flag(stdout,"data-profile-gallery");ui_gt(stdout);ui_open(stdout,"div","ph-gallery-head");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Gallery");ui_close(stdout,"h2");
-            if (!full) { ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_url(site, "gallery", owner); fputs("\">See the whole gallery</a>", stdout); }
+            if (!full) { ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_url(site, "gallery", owner); ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"See the whole gallery");ui_close(stdout,"a"); }
             ui_close(stdout,"div");
             if (owner) ui_text(stdout, "p", "ph-privacy", "Pieces marked private are visible only to you. Visitors see a piece only after you choose to show it.");
             ui_open(stdout,"div","ph-gallery-grid");
         }
         const char *span = seen % 7 == 0 ? "wide" : (seen % 7 == 1 || seen % 7 == 4) ? "tall" : "normal";
         seen++; shown++;
-        ui_start(stdout,"figure");ui_attr(stdout,"class","ph-art");ui_flag(stdout,"data-gallery-item");ui_attr_open(stdout,"data-span"); fputs(span, stdout);
-        fputs("\" data-gallery-state=\"", stdout); fputs(published ? "public" : "private", stdout); fputs("\"", stdout);
-        if (!valid) fputs(" data-gallery-stale", stdout);
-        fputs(">", stdout);
+        ui_start(stdout,"figure");ui_attr(stdout,"class","ph-art");ui_flag(stdout,"data-gallery-item");ui_attr_open(stdout,"data-span"); ui_copy(stdout,span);
+        ui_attr_close(stdout);ui_attr_open(stdout,"data-gallery-state"); ui_copy(stdout,published ? "public" : "private"); ui_attr_close(stdout);
+        if (!valid) ui_flag(stdout,"data-gallery-stale");
+        ui_gt(stdout);
         if (valid) {
-            ui_start(stdout,"a");ui_attr(stdout,"class","ph-art-frame");ui_attr_open(stdout,"href"); ph_art_link(&ref); fputs("\"><img loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\" src=\"", stdout);
-            html(art.image); fputs("\" alt=\"", stdout); html(art.title); fputs("\"></a><figcaption><a href=\"", stdout); ph_art_link(&ref); fputs("\">", stdout);
+            ui_start(stdout,"a");ui_attr(stdout,"class","ph-art-frame");ui_attr_open(stdout,"href"); ph_art_link(&ref); ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"img");ui_attr(stdout,"loading","lazy");ui_attr(stdout,"decoding","async");ui_attr(stdout,"referrerpolicy","no-referrer");ui_attr_open(stdout,"src");
+            html(art.image); ui_attr_close(stdout);ui_attr_open(stdout,"alt"); html(art.title); ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"a");ui_open(stdout,"figcaption",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_art_link(&ref); ui_attr_close(stdout);ui_gt(stdout);
             html(art.title); ui_close(stdout,"a");
             if (art.by[0]) { ui_text(stdout, "span", NULL, art.by); }
             ui_text(stdout, "small", NULL, "Public domain (CC0)");
@@ -183,12 +183,12 @@ static void ph_gallery_emit(sqlite3 *db, const PhSite *site, int owner, int limi
             ui_start(stdout,"div");ui_attr(stdout,"class","ph-art-frame");ui_attr(stdout,"aria-hidden","true");ui_gt(stdout);ui_close(stdout,"div");ui_open(stdout,"figcaption",NULL);ui_open(stdout,"span","ph-art-state");ui_copy(stdout,"Hidden from visitors");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"The source for this piece changed or is no longer available, so it is not shown publicly. Remove it, or add it again from its page.");ui_close(stdout,"span");
         }
         if (owner) {
-            if (valid) { ui_open(stdout,"span","ph-art-state"); fputs(published ? "In your public gallery" : "Private, only you can see this", stdout); ui_close(stdout,"span"); }
+            if (valid) { ui_open(stdout,"span","ph-art-state"); ui_copy(stdout,published ? "In your public gallery" : "Private, only you can see this"); ui_close(stdout,"span"); }
             ui_open(stdout,"div","ph-art-owner");
             if (valid && !published) ph_gallery_form(site, "/profile/gallery/publish", &row, "Show in public gallery", 0);
             if (published) ph_gallery_form(site, "/profile/gallery/hide", &row, "Make private", 1);
             ph_gallery_form(site, "/profile/gallery/remove", &row, "Remove", 1);
-            if (valid) { ui_start(stdout,"a");ui_attr(stdout,"class","ph-button");ui_attr_open(stdout,"href"); ph_art_tab_url(site, row.ref); fputs("\">Use as header</a>", stdout); }
+            if (valid) { ui_start(stdout,"a");ui_attr(stdout,"class","ph-button");ui_attr_open(stdout,"href"); ph_art_tab_url(site, row.ref); ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Use as header");ui_close(stdout,"a"); }
             ui_close(stdout,"div");
         }
         ui_close(stdout,"figcaption");ui_close(stdout,"figure");
@@ -199,9 +199,9 @@ static void ph_gallery_emit(sqlite3 *db, const PhSite *site, int owner, int limi
         ui_close(stdout,"section");
     } else if (full) {
         ui_start(stdout,"div");ui_attr(stdout,"class","ph-empty");ui_flag(stdout,"data-profile-gallery-empty");ui_gt(stdout);ui_open(stdout,"h2",NULL);
-        fputs(owner ? "Your gallery is empty" : "Nothing in this gallery yet", stdout);
+        ui_copy(stdout,owner ? "Your gallery is empty" : "Nothing in this gallery yet");
         ui_close(stdout,"h2");ui_open(stdout,"p",NULL);
-        fputs(owner ? "Open a public-domain artwork anywhere on Aurekai and choose Use on my profile. It stays private here until you show it." : "This gallery will show the artwork its owner chooses to share.", stdout);
+        ui_copy(stdout,owner ? "Open a public-domain artwork anywhere on Aurekai and choose Use on my profile. It stays private here until you show it." : "This gallery will show the artwork its owner chooses to share.");
         ui_close(stdout,"p");ui_close(stdout,"div");
     }
 }
@@ -236,45 +236,47 @@ static void ph_artwork_view(sqlite3 *db, const PhSite *sites, int count, const P
     }
     ui_start(stdout,"nav");ui_attr(stdout,"class","ph-art-sites");ui_attr(stdout,"aria-label","Choose which site");ui_gt(stdout);
     for (int i = 0; i < count; i++) {
-        ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_art_tab_url(&sites[i], ref.ref); fputs("\"", stdout);
-        if (!strcmp(sites[i].id, site->id)) fputs(" aria-current=\"page\"", stdout);
-        fputs(">", stdout); html(ph_label(sites[i].territory)); fputs(" · ", stdout); html(sites[i].host); ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_art_tab_url(&sites[i], ref.ref); ui_attr_close(stdout);
+        if (!strcmp(sites[i].id, site->id)) ui_attr(stdout,"aria-current","page");
+        ui_gt(stdout); html(ph_label(sites[i].territory)); ui_copy(stdout," · "); html(sites[i].host); ui_close(stdout,"a");
     }
     ui_close(stdout,"nav");ui_start(stdout,"figure");ui_attr(stdout,"class","ph-art-preview");ui_flag(stdout,"data-artwork-review");ui_gt(stdout);ui_open(stdout,"div","ph-art-crop");ui_start(stdout,"img");ui_flag(stdout,"data-art-preview");ui_attr_open(stdout,"src");
-    html(art.image); fputs("\" alt=\"", stdout); html(art.title);
-    printf("\" style=\"object-position:%d%% %d%%\" referrerpolicy=\"no-referrer\"></div><figcaption><strong>", fx, fy);
+    html(art.image); ui_attr_close(stdout);ui_attr_open(stdout,"alt"); html(art.title);
+    ui_attr_close(stdout);ui_attr_open(stdout,"style");printf("object-position:%d%% %d%%",fx,fy);ui_attr_close(stdout);ui_attr(stdout,"referrerpolicy","no-referrer");ui_gt(stdout);ui_close(stdout,"div");ui_open(stdout,"figcaption",NULL);ui_open(stdout,"strong",NULL);
     html(art.title); ui_close(stdout,"strong");
     if (art.by[0]) { ui_text(stdout, "span", NULL, art.by); }
-    ui_open(stdout,"span",NULL);ui_copy(stdout,"Public domain (CC0)");ui_close(stdout,"span");ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_art_link(&ref); fputs("\">Artwork record</a>", stdout);
-    if (public_http_url(art.href)) { ui_start(stdout,"a");ui_attr(stdout,"rel","noopener noreferrer");ui_attr_open(stdout,"href"); html(art.href); fputs("\">Where it comes from ↗</a>", stdout); }
+    ui_open(stdout,"span",NULL);ui_copy(stdout,"Public domain (CC0)");ui_close(stdout,"span");ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_art_link(&ref); ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Artwork record");ui_close(stdout,"a");
+    if (public_http_url(art.href)) { ui_start(stdout,"a");ui_attr(stdout,"rel","noopener noreferrer");ui_attr_open(stdout,"href"); html(art.href); ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Where it comes from ↗");ui_close(stdout,"a"); }
     ui_close(stdout,"figcaption");ui_close(stdout,"figure");ui_open(stdout,"div","ph-art-choices");
 
     int current = have_cover == 1 && !strcmp(cover.status, "published") && !strcmp(cover.ref, ref.ref);
-    fputs("<form class=\"ph-form\" method=\"post\" action=\"/profile/cover/set\" data-cover-form><h3>Profile header</h3><p>", stdout);
-    if (current) { fputs("This is your header on ", stdout); html(site->host); fputs(". Move the focus point and save it.", stdout); }
-    else if (have_cover == 1 && !strcmp(cover.status, "published")) { fputs("This replaces the header you have now on ", stdout); html(site->host); fputs(".", stdout); }
-    else { fputs("It goes at the top of ", stdout); html(site->host); fputs(". Your profile picture stays the same.", stdout); }
+    ui_start(stdout,"form");ui_attr(stdout,"class","ph-form");ui_attr(stdout,"method","post");ui_attr(stdout,"action","/profile/cover/set");ui_flag(stdout,"data-cover-form");ui_gt(stdout);ui_open(stdout,"h3",NULL);ui_copy(stdout,"Profile header");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);
+    if (current) { ui_copy(stdout,"This is your header on "); html(site->host); ui_copy(stdout,". Move the focus point and save it."); }
+    else if (have_cover == 1 && !strcmp(cover.status, "published")) { ui_copy(stdout,"This replaces the header you have now on "); html(site->host); ui_copy(stdout,"."); }
+    else { ui_copy(stdout,"It goes at the top of "); html(site->host); ui_copy(stdout,". Your profile picture stays the same."); }
     ui_close(stdout,"p");
     ph_hidden("site", site->id); ph_hidden("art", ref.ref); ph_hidden("expected", have_cover == 1 ? cover.snapshot : "none");
-    printf("<label>Focus left to right<input type=\"range\" name=\"fx\" min=\"0\" max=\"100\" step=\"1\" value=\"%d\" data-art-focus=\"x\"></label>"
-           "<label>Focus top to bottom<input type=\"range\" name=\"fy\" min=\"0\" max=\"100\" step=\"1\" value=\"%d\" data-art-focus=\"y\"></label>", fx, fy);
-    fputs("<button type=\"submit\">", stdout); fputs(current ? "Save the focus point" : "Use as my header", stdout); fputs("</button></form>", stdout);
+    ui_open(stdout,"label",NULL);ui_copy(stdout,"Focus left to right");ui_start(stdout,"input");ui_attr(stdout,"type","range");ui_attr(stdout,"name","fx");ui_attr(stdout,"min","0");ui_attr(stdout,"max","100");ui_attr(stdout,"step","1");ui_attr_open(stdout,"value");printf("%d",fx);ui_attr_close(stdout);ui_attr(stdout,"data-art-focus","x");ui_gt(stdout);ui_close(stdout,"label");
+    ui_open(stdout,"label",NULL);ui_copy(stdout,"Focus top to bottom");ui_start(stdout,"input");ui_attr(stdout,"type","range");ui_attr(stdout,"name","fy");ui_attr(stdout,"min","0");ui_attr(stdout,"max","100");ui_attr(stdout,"step","1");ui_attr_open(stdout,"value");printf("%d",fy);ui_attr_close(stdout);ui_attr(stdout,"data-art-focus","y");ui_gt(stdout);ui_close(stdout,"label");
+    ui_start(stdout,"button");ui_attr(stdout,"type","submit");ui_gt(stdout); ui_copy(stdout,current ? "Save the focus point" : "Use as my header"); ui_close(stdout,"button");ui_close(stdout,"form");
 
     ph_gallery_coordinate(&ref, coordinate);
     int have_entry = ph_art_row(db, site->id, "profile-gallery", coordinate, 0, &entry);
     ui_start(stdout,"div");ui_attr(stdout,"class","ph-form");ui_flag(stdout,"data-gallery-choice");ui_gt(stdout);ui_open(stdout,"h3",NULL);ui_copy(stdout,"Gallery");ui_close(stdout,"h3");
     if (have_entry == 1 && !strcmp(entry.status, "published")) {
-        ui_open(stdout,"p",NULL);ui_copy(stdout,"This is in your public gallery on "); html(site->host); fputs(".</p>", stdout);
+        ui_open(stdout,"p",NULL);ui_copy(stdout,"This is in your public gallery on "); html(site->host); ui_copy(stdout,".");ui_close(stdout,"p");
     } else if (have_entry == 1 && !strcmp(entry.status, "draft")) {
-        ui_open(stdout,"p",NULL);ui_copy(stdout,"This is in your gallery on "); html(site->host); fputs(", private until you show it.</p>", stdout);
+        ui_open(stdout,"p",NULL);ui_copy(stdout,"This is in your gallery on "); html(site->host); ui_copy(stdout,", private until you show it.");ui_close(stdout,"p");
     } else {
-        ui_open(stdout,"p",NULL);ui_copy(stdout,"Add it to your gallery on "); html(site->host); fputs(". It stays private until you choose to show it.</p><form method=\"post\" action=\"/profile/gallery/add\">", stdout);
-        ph_hidden("site", site->id); ph_hidden("art", ref.ref);
-        fputs("<button type=\"submit\">Add to my gallery</button></form>", stdout);
+        ui_open(stdout,"p",NULL);ui_copy(stdout,"Add it to your gallery on "); html(site->host); ui_copy(stdout,". It stays private until you choose to show it.");ui_close(stdout,"p");
+        {const FtField hidden[]={{"site",site->id},{"art",ref.ref}};
+         const FtSubmit go[]={{.label="Add to my gallery"}};
+         const FtForm f={.id="ph-gallery",.action="/profile/gallery/add",.hidden=hidden,.nhidden=2,.submits=go,.nsubmits=1};
+         ft_form(stdout,&f);}
     }
-    ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_url(site, "gallery", 1); fputs("\">Review your gallery</a></p></div></div>", stdout);
-    fputs("<script>(function(){var i=document.querySelector('[data-art-preview]'),x=document.querySelector('[data-art-focus=x]'),y=document.querySelector('[data-art-focus=y]');"
-          "if(!i||!x||!y)return;function u(){i.style.objectPosition=x.value+'% '+y.value+'%';}x.addEventListener('input',u);y.addEventListener('input',u);})();</script>", stdout);
+    ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href"); ph_url(site, "gallery", 1); ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Review your gallery");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"div");
+    ui_script(stdout,"(function(){var i=document.querySelector('[data-art-preview]'),x=document.querySelector('[data-art-focus=x]'),y=document.querySelector('[data-art-focus=y]');"
+          "if(!i||!x||!y)return;function u(){i.style.objectPosition=x.value+'% '+y.value+'%';}x.addEventListener('input',u);y.addEventListener('input',u);})();");
 }
 
 static int ph_art_target(const char *t) {
@@ -288,7 +290,7 @@ static int ph_art_mutate(const char *target, const char *body, const char *raw, 
                         {"fy", fys, sizeof(fys), 0}, {"id", id, sizeof(id), 0}, {"expected", expected, sizeof(expected), 0}};
     if (!ph_origin(raw, host) || !ph_fields(body, fields, 6, 4096)) { ph_error(403, "Review and submit this form from its own profile page.\n"); return 1; }
     PhSite site;
-    if (!ph_site(db, NULL, siteid, &site) || strcmp(site.actor, actor)) { ph_error(404, "This profile site is not available to this account.\n"); return 1; }
+    if (!ph_owned_site(db, siteid, &site) || strcmp(site.actor, actor)) { ph_error(404, "This profile site is not available to this account.\n"); return 1; }
     PhArtRef ref; PhArt art; PhArtRow row; char coordinate[160];
     if (!strcmp(target, "/profile/cover/set")) {
         int fx = ph_focus_value(fxs, -1), fy = ph_focus_value(fys, -1);

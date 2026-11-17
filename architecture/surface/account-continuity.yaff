@@ -9,7 +9,7 @@ architecture account-device-keys
   semantic_question Which devices has this person named on their account, with which public key fingerprints, and which have they revoked?
   purpose Owns /account/devices: a signed-in person records a device by name and the public key fingerprint they type, and revokes it later. Rows are device_key CMS records keyed by the account subject (user:N), written only through the CMS binary. auth.db is not touched.
   maturity implemented
-  consumes BonfyreAuth
+  consumes Authority
   publishes DeviceKey
   node_types DeviceKey
   edge_types names_device
@@ -34,8 +34,8 @@ architecture account-device-move
   semantic_question Has this account offered a one-use code to take its own site export onto another device, and has a device signed in to the same account used it?
   purpose Owns /account/move (sender) and /account/move/receive (receiver). The sender's submit creates a device_pairing record holding only a digest of a six-digit code bound to the account subject and the offering session's digest, open for ten minutes; a new offer withdraws older open ones. The receiver, signed in to the same account, submits the code; a compare-and-set marks it received once and the page offers download links to that account's existing /cms/compose/export. Nothing is pushed.
   maturity implemented
-  consumes BonfyreAuth
-  consumes PageComposition
+  consumes Authority
+  consumes ComposedPublicPage
   publishes DevicePairing
   node_types DevicePairing
   edge_types offers_copy
@@ -61,7 +61,7 @@ architecture bluesky-sync-request
   semantic_question Has this person asked for the public repository behind a Bluesky handle they declared to be read, and has anything run?
   purpose Owns /connections/bluesky/sync: for each Bluesky link the person declared through BonfyreAuth external-link-claim, a submit records a carrier_sync_request with run_state requested. No AT Protocol reader exists, so the page states requested and not run.
   maturity implemented
-  consumes BonfyreAuth
+  consumes Authority
   publishes CarrierSyncRequest
   node_types CarrierSyncRequest
   edge_types requests_sync
@@ -85,7 +85,7 @@ architecture feed-agent-policy
   purpose Owns /account/agents: per saved_item collection the person keeps and per agent name they type, a feed_agent_policy row with access read, summary or none, updated in place. No MCP tool or /connect path serves saved feeds today, so the rule is recorded and the page says it is not enforced.
   maturity implemented
   consumes SavedItem
-  consumes BonfyreAuth
+  consumes Authority
   publishes FeedAgentPolicy
   node_types FeedAgentPolicy
   edge_types governs_agent_read
@@ -109,8 +109,8 @@ architecture field-dispatch
   semantic_question Who asked for a visit to which place at what time for what need, who was it offered to, and did they accept?
   purpose Owns /dispatch: a signed-in person records a field request (place, time, need); offers it to one published member address, resolved through site_presentation and the matrix to that member's person subject; the named member accepts or declines with their own submit; the requester may withdraw. Rows are field_dispatch CMS records.
   maturity implemented
-  consumes BonfyreAuth
-  consumes PageComposition
+  consumes Authority
+  consumes ComposedPublicPage
   publishes FieldDispatch
   node_types FieldDispatch
   edge_types offers_visit

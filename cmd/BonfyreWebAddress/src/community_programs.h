@@ -24,7 +24,7 @@ static int cjw_programme_note(sqlite3 *db,const CjrCommunity *guild,const char *
     char root[97];if(!cjr_thread(db,guild->key,&note,root,1))return 0;
     ui_start(stdout,"p");ui_flag(stdout,"data-requirement-source-note");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");
     cjw_href(guild->key,"thread",note.key);
-    fputs("\">Open the published workshop note</a> · This source is visible, but completion is not verified.</p>",stdout);
+    ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open the published workshop note");ui_close(stdout,"a");ui_copy(stdout," · This source is visible, but completion is not verified.");ui_close(stdout,"p");
     return 1;
 }
 static void cjw_programme_requirements(sqlite3 *db,const CjrCommunity *guild,const char *instance,int steward) {
@@ -55,13 +55,13 @@ static void cjw_programme_requirements(sqlite3 *db,const CjrCommunity *guild,con
         count++;
         ui_start(stdout,"li");ui_flag(stdout,"data-program-requirement");ui_gt(stdout);ui_open(stdout,"div",NULL);ui_open(stdout,"strong",NULL);html(statement);
         ui_close(stdout,"strong");ui_open(stdout,"p",NULL);ui_open(stdout,"small",NULL);html(kind?kind:"Requirement");
-        fputs(" · ",stdout);html(state);
-        if(deadline&&*deadline){fputs(" · Due ",stdout);html(deadline);}
+        ui_copy(stdout," · ");html(state);
+        if(deadline&&*deadline){ui_copy(stdout," · Due ");html(deadline);}
         ui_close(stdout,"small");ui_close(stdout,"p");ui_close(stdout,"div");
         if(steward&&((satisfied&&*satisfied)||(evidence&&*evidence))){
             ui_open(stdout,"p","cj-program-evidence");ui_copy(stdout,"Retained evidence reference is ");
-            fputs(evidence&&*evidence?"present":"not supplied",stdout);
-            fputs(". This view does not independently verify completion.</p>",stdout);
+            ui_copy(stdout,evidence&&*evidence?"present":"not supplied");
+            ui_copy(stdout,". This view does not independently verify completion.");ui_close(stdout,"p");
         }
         if(evidence&&*evidence)cjw_programme_note(db,guild,evidence);
         ui_close(stdout,"li");
@@ -110,17 +110,17 @@ static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward
         count++;
         ui_start(stdout,"li");ui_flag(stdout,"data-program-instance");ui_gt(stdout);ui_open(stdout,"h3",NULL);html(name);
         ui_close(stdout,"h3");ui_open(stdout,"p","cj-program-meta");
-        html(archetype?archetype:"Programme");fputs(" · Opened ",stdout);
+        html(archetype?archetype:"Programme");ui_copy(stdout," · Opened ");
         html(opened?opened:"Date unavailable");ui_close(stdout,"p");
         if(description&&*description){ui_open(stdout,"p",NULL);cjw_excerpt(description);ui_close(stdout,"p");}
-        fputs("<details><summary>Declared work and requirements</summary>",stdout);
+        ui_section_open(stdout,NULL,"Declared work and requirements");
         cjw_programme_requirements(db,community,instance,steward);
-        fputs("</details>",stdout);
+        ui_section_close(stdout);
         if(steward){
             ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/programs?context=self&amp;template=");
             url_query_value(template_id);
-            fputs("\">Open the programme owner</a> · ",stdout);
-            fputs("Programme edits require separate workspace authority.</p>",stdout);
+            ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open the programme owner");ui_close(stdout,"a");ui_copy(stdout," · ");
+            ui_copy(stdout,"Programme edits require separate workspace authority.");ui_close(stdout,"p");
         }
         (void)site;
         ui_close(stdout,"li");
@@ -132,9 +132,9 @@ static void cjw_programmes(sqlite3 *db,const CjrCommunity *community,int steward
         ui_text(stdout, "p", NULL, "Additional programmes exist in the owning programme workspace.");
     char role_scope[140];snprintf(role_scope,sizeof(role_scope),"community:%s",community->key);
     ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_flag(stdout,"data-guild-role-bridge");ui_attr_open(stdout,"href");ui_copy(stdout,"/roles?scope=");url_query_value(role_scope);
-    fputs("\">Choose a role for this guild</a>. Role postures organize your work; they do not enroll members, grant authority or execute guild operations.</p>",stdout);
+    ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Choose a role for this guild");ui_close(stdout,"a");ui_copy(stdout,". Role postures organize your work; they do not enroll members, grant authority or execute guild operations.");ui_close(stdout,"p");
     ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");cjw_href(community->key,"write",NULL);
-    fputs("\">Document a workshop observation</a>. A member's reviewed contribution "
-          "does not, by itself, satisfy a formal programme requirement.</p></section>",stdout);
+    ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Document a workshop observation");ui_close(stdout,"a");ui_copy(stdout,". A member's reviewed contribution "
+          "does not, by itself, satisfy a formal programme requirement.");ui_close(stdout,"p");ui_close(stdout,"section");
 }
 #endif

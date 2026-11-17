@@ -9,7 +9,7 @@ architecture domain-control
   owns DomainPublicationIntent
   owns DNSObservation
   owns DNSPublicationReceipt
-  consumes ExternalAuthority
+  consumes Authority
   consumes AddressConstellation
   publishes DNSObservation
   publishes DomainPublicationReceipt

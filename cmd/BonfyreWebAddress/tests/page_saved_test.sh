@@ -83,7 +83,11 @@ item = found.group(1)
 path = "/o/" + item
 
 code, _, landing = call("GET", "/discover")
-check(('data-item-keep href="' + path + '#item-keep"') in landing, "feed leads into the exact retained item Save action")
+# The front places its own save form on each item; generic regions link to
+# the item's Save action. Either way it is this exact item, never a lookalike.
+keep_link = ('data-item-keep href="' + path + '#item-keep"') in landing
+keep_form = re.search(r'<form class="ms-keep" method="post" action="/o/save"><input type="hidden" name="item" value="' + re.escape(item) + '"', landing) is not None
+check(keep_link or keep_form, "feed leads into the exact retained item Save action")
 code, head, anon = call("GET", path)
 check(code == "200" and 'href="/login?next=%2Fo%2F' not in anon and ('href="/login?next=' + path + '"') in anon, "anonymous item page offers sign in that returns here")
 entry = re.search(r'<a\b[^>]*id="session-link"[^>]*href="([^"]+)"', anon)
@@ -155,5 +159,7 @@ if problems:
     for p in problems: print("  -", p)
     sys.exit(1)
 PY
-grep -q 'if(/^\\/(?!\[\\/\\\\\])\[^\\s\]\*$/.test(candidate)) return candidate;' "$root/site/matrix/surfaces/login.html" || { echo 'page saved: FAIL: sign-in does not return to a same-site page'; exit 1; }
+# Sign-in is rendered by the server (one shell), so the same-site return is
+# the form it serves: an off-site next never reaches the page.
+curl -fsS -H 'Host: aurekai.life' -H 'Accept: text/html' "http://127.0.0.1:$port/login?next=%2F%2Fevil.test" | grep -q 'name="next" value="/account"' || { echo 'page saved: FAIL: sign-in does not return to a same-site page'; exit 1; }
 echo 'page saved: PASS'

@@ -130,9 +130,9 @@ static int serve_surface_catalogue(const char *accept) {
                        carries_actions ? "true" : "false", eff, req, lin,
                        sf ? sf : "", vw ? vw : "");
             } else {
-                printf("<li><a href=\"/_surface/%s\">", pat);
+                ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/_surface/");printf("%s",pat);ui_attr_close(stdout);ui_gt(stdout);
                 html(pat);
-                printf("</a> <span class=\"reads\">reads %s ", src);
+                ui_close(stdout,"a");ui_copy(stdout," ");ui_open(stdout,"span","reads");ui_copy(stdout,"reads ");printf("%s ",src);
                 html(rd ? rd : "");
                 (ui_close(stdout, "span"), ui_lit(stdout, " "), ui_open(stdout, "span", "effect"));
                 html(ef ? ef : "");
@@ -302,7 +302,7 @@ static void surface_json_tail(int rows, int withheld) {
 }
 
 static void surface_withheld_html(int withheld, const char *authored) {
-    printf("<p class=\"surface-withheld\">%d more at %s extent.</p>", withheld, authored);
+    ui_open(stdout,"p","surface-withheld");printf("%d",withheld);ui_copy(stdout," more at ");printf("%s",authored);ui_copy(stdout," extent.");ui_close(stdout,"p");
 }
 
 static int serve_surface_pattern(const char *target, const char *query, const char *accept,
@@ -428,8 +428,8 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                        "\"extents\":[\"chip\",\"card\",\"section\",\"page\",\"workspace\"]}\n",
                        studio_safe_ident(asked_extent) ? asked_extent : "");
             else
-                printf("<p class=\"surface-denied\">Extent must be one of chip, card, section, "
-                       "page or workspace.</p>");
+                ui_open(stdout,"p","surface-denied");
+                ui_copy(stdout,"Extent must be one of chip, card, section, page or workspace.");ui_close(stdout,"p");
             return 1;
         }
         if (r > authored_rank) {
@@ -447,9 +447,8 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                        "the pattern was not authored to carry\"}\n",
                        pattern, authored_extent, asked_extent);
             else
-                printf("<p class=\"surface-denied\">This pattern is authored at %s extent. "
-                       "Extent narrows a surface; it cannot grant it an action layer.</p>",
-                       authored_extent);
+                ui_open(stdout,"p","surface-denied");ui_copy(stdout,"This pattern is authored at ");printf("%s",authored_extent);
+                ui_copy(stdout," extent. Extent narrows a surface; it cannot grant it an action layer.");ui_close(stdout,"p");
             return 1;
         }
         served_rank = r;
@@ -582,7 +581,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                "Cache-Control: no-store\r\nConnection: close\r\n\r\n",
                as_json ? "application/json" : "text/html; charset=utf-8");
         if (as_json) printf("{\"error\":\"unsafe_pattern_descriptor\",\"pattern\":\"%s\"}\n", pattern);
-        else printf("<!-- pattern descriptor refused -->");
+        else ui_lit(stdout,"<!-- pattern descriptor refused -->");
         return 1;
     }
 
@@ -638,8 +637,8 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                     printf("{\"error\":\"organ_unavailable\",\"pattern\":\"%s\",\"organ\":\"%s\"}\n",
                            pattern, organ);
                 else
-                    printf("<p class=\"surface-denied\">%s is not answering; this panel is a real "
-                           "gap, not an empty list.</p>", organ);
+                    ui_open(stdout,"p","surface-denied");printf("%s",organ);
+                    ui_copy(stdout," is not answering; this panel is a real gap, not an empty list.");ui_close(stdout,"p");
                 return 1;
             }
         }
@@ -682,7 +681,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                 }
                 ui_lit(stdout, "}");
             } else if (!strcmp(shape, "link") && ncol > 1) {
-                printf("<a class=\"way\" href=\"");
+                ui_start(stdout,"a");ui_attr(stdout,"class","way");ui_attr_open(stdout,"href");
                 html(col[1]); ui_lit(stdout, "\">"); html(col[0]); ui_close(stdout, "a");
             } else {
                 ui_open(stdout, "dl", "surface-record");
@@ -695,7 +694,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
             rows++;
         }
         if (as_json) surface_json_tail(rows, withheld);
-        else if (!rows) printf("<!-- the organ answered with no rows -->");
+        else if (!rows) ui_lit(stdout,"<!-- the organ answered with no rows -->");
         else if (withheld) surface_withheld_html(withheld, authored_extent);
         fflush(stdout);
         return 1;
@@ -881,7 +880,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
             const char *label = (const char *)sqlite3_column_text(st, 0);
             const char *href  = nfields > 1 ? (const char *)sqlite3_column_text(st, 1) : NULL;
             if (!label || !href) continue;
-            printf("<a class=\"way\" href=\"");
+            ui_start(stdout,"a");ui_attr(stdout,"class","way");ui_attr_open(stdout,"href");
             html(href);
             ui_lit(stdout, "\">");
             html(label);
@@ -927,7 +926,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
                     p = end;
                 }
                 if (ok) {
-                    printf("<a class=\"surface-act\" href=\"");
+                    ui_start(stdout,"a");ui_attr(stdout,"class","surface-act");ui_attr_open(stdout,"href");
                     for (p = act_href; *p; p++) {
                         if (*p == '{') {
                             const char *end = strchr(p, '}');
@@ -955,7 +954,7 @@ static int serve_surface_pattern(const char *target, const char *query, const ch
     }
 
     if (as_json) surface_json_tail(rows, withheld);
-    else if (!rows) printf("<!-- no authored records for this pattern -->");
+    else if (!rows) ui_lit(stdout,"<!-- no authored records for this pattern -->");
     else if (withheld) surface_withheld_html(withheld, authored_extent);
 
     sqlite3_finalize(st);

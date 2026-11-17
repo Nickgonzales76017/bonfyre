@@ -14,6 +14,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define ST_ALPHA 128
 #define ST_CAP 8192
@@ -258,4 +262,61 @@ int bf_static_index_write(const char *path, const BfStaticModel *m, int count, c
     if (fclose(f) != 0) bad = 1;
     if (bad || rename(tmp, path) != 0) { remove(tmp); return -1; }
     return 0;
+}
+
+struct BfStaticIndex {
+    void *map; size_t size;
+    int dims, count;
+    const float *scales; const int8_t *rows;
+};
+
+static uint32_t get32(const unsigned char *p) { return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24; }
+
+BfStaticIndex *bf_static_index_map(const char *path, const BfStaticModel *m, char *err, size_t err_size) {
+    struct stat st; int fd; unsigned char *b; BfStaticIndex *x;
+    size_t head = 4 + 4 + 4 + 4 + 32, need;
+    uint32_t dims, count;
+    if (err && err_size) err[0] = 0;
+    if (!path || !m || (fd = open(path, O_RDONLY)) < 0) { if (err) snprintf(err, err_size, "index not readable"); return NULL; }
+    if (fstat(fd, &st) || (size_t)st.st_size < head) { close(fd); if (err) snprintf(err, err_size, "index too short"); return NULL; }
+    b = mmap(NULL, (size_t)st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+    if (b == MAP_FAILED) { if (err) snprintf(err, err_size, "index not mappable"); return NULL; }
+    dims = get32(b + 8); count = get32(b + 12);
+    need = head + (size_t)count * 4 + (size_t)count * dims;
+    if (memcmp(b, "BFSI", 4) || get32(b + 4) != 1 || (int)dims != m->dims || (size_t)st.st_size != need ||
+        memcmp(b + 16, m->sha256, 32)) {
+        munmap(b, (size_t)st.st_size);
+        if (err) snprintf(err, err_size, "index is not a version 1 index of this model");
+        return NULL;
+    }
+    if (!(x = calloc(1, sizeof(*x)))) { munmap(b, (size_t)st.st_size); return NULL; }
+    /* Every query scans every row: ask for the whole file now rather than
+     * faulting it in page by page under the first request. */
+    madvise(b, (size_t)st.st_size, MADV_WILLNEED);
+    x->map = b; x->size = (size_t)st.st_size; x->dims = (int)dims; x->count = (int)count;
+    x->scales = (const float *)(b + head);   /* head is 48 bytes: float-aligned */
+    x->rows = (const int8_t *)(b + head + (size_t)count * 4);
+    return x;
+}
+
+void bf_static_index_unmap(BfStaticIndex *x) { if (x) { munmap(x->map, x->size); free(x); } }
+int bf_static_index_count(const BfStaticIndex *x) { return x ? x->count : 0; }
+
+int bf_static_index_top(const BfStaticIndex *x, const float *q, int k, int (*accept)(int, void *), void *ctx, int *rows, float *scores) {
+    int n = 0;
+    if (!x || !q || k <= 0) return 0;
+    for (int i = 0; i < x->count; i++) {
+        const int8_t *r = x->rows + (size_t)i * x->dims;
+        float dot = 0, s;
+        int j;
+        for (int d = 0; d < x->dims; d++) dot += q[d] * (float)r[d];
+        s = dot * x->scales[i];
+        if (n == k && s <= scores[n - 1]) continue;
+        if (accept && !accept(i, ctx)) continue;
+        for (j = n < k ? n : k - 1; j > 0 && scores[j - 1] < s; j--) { scores[j] = scores[j - 1]; rows[j] = rows[j - 1]; }
+        scores[j] = s; rows[j] = i;
+        if (n < k) n++;
+    }
+    return n;
 }

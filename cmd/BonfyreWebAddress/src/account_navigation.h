@@ -52,21 +52,29 @@ static int account_public_profile(long user_id,const char *auth_db,char *out,siz
 static void account_navigation_emit(const char *bearer,const char *auth_db) {
     StudioViewer who={0};
     int signed_in=session_identity(bearer,auth_db,&who) && who.id>0;
-    fputs("<div class=\"ak-session\" data-session-state=\"",stdout);
-    fputs(signed_in?"signed-in":"anonymous",stdout);fputs("\">",stdout);
+    ui_start(stdout,"div");ui_attr(stdout,"class","ak-session");ui_attr_open(stdout,"data-session-state");
+    fputs(signed_in?"signed-in":"anonymous",stdout);ui_attr_close(stdout);ui_gt(stdout);
     if(!signed_in) {
-        fputs("<a class=\"ak-account\" id=\"session-link\" href=\"",stdout);fputs(account_signin_path,stdout);fputs("?next=",stdout);bf_auth_query(stdout,account_return_path);fputs("\">" BF_ICON_LOGIN "<span>Sign in</span></a>",stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"class","ak-account");ui_attr(stdout,"id","session-link");ui_attr_open(stdout,"href");fputs(account_signin_path,stdout);fputs("?next=",stdout);bf_auth_query(stdout,account_return_path);ui_attr_close(stdout);ui_gt(stdout);fputs(BF_ICON_LOGIN "<span>Sign in</span></a>",stdout);
     } else {
         char profile[512]={0};
         account_public_profile(who.id,auth_db,profile,sizeof(profile));
-        fputs("<a class=\"ak-account\" data-profile-home href=\"/profile\">" BF_ICON_USER "<span>Profile</span></a>",stdout);
-        fputs("<a class=\"ak-account\" data-your-work href=\"/apps?context=self\">" BF_ICON_BRIEFCASE "<span>Your work</span></a><a class=\"ak-account\" data-account-review href=\"/account/review\">" BF_ICON_BOARD "<span>Review</span></a><details class=\"ak-user\"><summary aria-label=\"Your account menu\"><span class=\"ak-avatar\" aria-hidden=\"true\">",stdout);
+        ui_open_a(stdout,"a","class","ak-account","data-profile-home",(const char *)NULL,"href","/profile");fputs(BF_ICON_USER "<span>Profile</span></a>",stdout);
+        ui_open_a(stdout,"a","class","ak-account","data-your-work",(const char *)NULL,"href","/apps?context=self");fputs(BF_ICON_BRIEFCASE "<span>Your work</span></a>",stdout);ui_open_a(stdout,"a","class","ak-account","data-account-review",(const char *)NULL,"href","/account/review");fputs(BF_ICON_BOARD "<span>Review</span></a>",stdout);ui_open_a(stdout,"details","class","ak-user");ui_open_a(stdout,"summary","aria-label","Your account menu");ui_open_a(stdout,"span","class","ak-avatar","aria-hidden","true");
         /* A decorative initial is text, never an image URL or an identity claim. */
         char initial[2]={'A',0};if(who.name[0]>='A'&&who.name[0]<='Z')initial[0]=who.name[0];else if(who.name[0]>='a'&&who.name[0]<='z')initial[0]=who.name[0]-'a'+'A';html(initial);
         ui_close(stdout,"span"); ui_open(stdout,"span","ak-user-name");html(*who.name?who.name:"Your account");
-        fputs("</span><span aria-hidden=\"true\">⌄</span></summary><nav class=\"ak-user-links\" aria-label=\"Your account\"><a data-profile-home-menu href=\"/profile\">" BF_ICON_USER "Your profile</a>",stdout);
-        if(profile[0]){fputs("<a data-public-profile data-public-profile-menu href=\"",stdout);html(profile);fputs("\">" BF_ICON_WORLD "View public profile</a>",stdout);}
-        fputs("<a data-account-profile href=\"/profile?tab=sites\">" BF_ICON_WORLD_WWW "Your profile sites</a><a href=\"/account/review\">" BF_ICON_BOARD "Review drafts and held work</a><a href=\"/account\">" BF_ICON_LINK "Account &amp; connections</a><a href=\"/apps?context=self\">" BF_ICON_APPS "Your tools &amp; saved work</a><a href=\"/saved\">" BF_ICON_BOOKMARK "Saved material</a><a href=\"/organizations\">" BF_ICON_GROUP "Organizations &amp; people</a><a href=\"/packs/setup?context=self\">" BF_ICON_SPARKLES "Explore tools</a><a href=\"/account#logout\">" BF_ICON_LOGOUT "Sign out</a></nav></details>",stdout);
+        ui_close(stdout,"span");ui_open_a(stdout,"span","aria-hidden","true");ui_copy(stdout,"⌄");ui_close(stdout,"span");ui_close(stdout,"summary");ui_open_a(stdout,"nav","class","ak-user-links","aria-label","Your account");ui_open_a(stdout,"a","data-profile-home-menu",(const char *)NULL,"href","/profile");fputs(BF_ICON_USER "Your profile</a>",stdout);
+        if(profile[0]){ui_start(stdout,"a");ui_flag(stdout,"data-public-profile");ui_flag(stdout,"data-public-profile-menu");ui_attr_open(stdout,"href");html(profile);ui_attr_close(stdout);ui_gt(stdout);fputs(BF_ICON_WORLD "View public profile</a>",stdout);}
+        ui_start(stdout,"a");ui_flag(stdout,"data-account-profile");ui_attr(stdout,"href","/profile?tab=sites");ui_gt(stdout);fputs(BF_ICON_WORLD_WWW "Your profile sites</a>",stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"href","/account/review");ui_gt(stdout);fputs(BF_ICON_BOARD "Review drafts and held work</a>",stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"href","/account");ui_gt(stdout);fputs(BF_ICON_LINK,stdout);ui_copy(stdout,"Account &amp; connections");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"href","/apps?context=self");ui_gt(stdout);fputs(BF_ICON_APPS,stdout);ui_copy(stdout,"Your tools &amp; saved work");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"href","/saved");ui_gt(stdout);fputs(BF_ICON_BOOKMARK "Saved material</a>",stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"href","/organizations");ui_gt(stdout);fputs(BF_ICON_GROUP,stdout);ui_copy(stdout,"Organizations &amp; people");ui_close(stdout,"a");
+        ui_start(stdout,"a");ui_attr(stdout,"href","/packs/setup?context=self");ui_gt(stdout);fputs(BF_ICON_SPARKLES "Explore tools</a>",stdout);
+        ui_start(stdout,"a");ui_attr(stdout,"href","/account#logout");ui_gt(stdout);fputs(BF_ICON_LOGOUT "Sign out</a>",stdout);
+        ui_close(stdout,"nav");ui_close(stdout,"details");
     }
     ui_close(stdout,"div");
 }

@@ -111,7 +111,6 @@ architecture agent-session
   canonical_name AgentSession
   owns AgentSession
   consumes WorkState
-  consumes ContextCut
   consumes CapabilityBid
   publishes AgentEvent
   family execution

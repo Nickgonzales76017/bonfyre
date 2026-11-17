@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdint.h>
 #include <string.h>
+#include "ui_tree.h"
 
 static int code_host(const char *host) {
     if(!host||!*host||strlen(host)>253)return 0;
@@ -55,10 +56,16 @@ int bf_public_code_emit_svg(FILE *out,const char *url) {
     uint8_t work[qrcodegen_BUFFER_LEN_FOR_VERSION(20)],qr[qrcodegen_BUFFER_LEN_FOR_VERSION(20)];
     if(!out||!code_url_valid(url)||!qrcodegen_encodeText(url,work,qr,qrcodegen_Ecc_MEDIUM,1,20,qrcodegen_Mask_AUTO,true))return 0;
     int size=qrcodegen_getSize(qr),edge=size+8;
-    fprintf(out,"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 %d %d\" width=\"%d\" height=\"%d\" role=\"img\" aria-label=\"QR code for this public page\" shape-rendering=\"crispEdges\">",edge,edge,edge*6,edge*6);
-    fputs("<title>Open this public page</title><desc>",out);
+    ui_start(out,"svg");ui_attr(out,"xmlns","http://www.w3.org/2000/svg");
+    ui_attr_open(out,"viewBox");fprintf(out,"0 0 %d %d",edge,edge);ui_attr_close(out);
+    ui_attr_open(out,"width");fprintf(out,"%d",edge*6);ui_attr_close(out);
+    ui_attr_open(out,"height");fprintf(out,"%d",edge*6);ui_attr_close(out);
+    ui_attr(out,"role","img");ui_attr(out,"aria-label","QR code for this public page");ui_attr(out,"shape-rendering","crispEdges");ui_gt(out);
+    ui_open(out,"title",NULL);ui_copy(out,"Open this public page");ui_close(out,"title");ui_open(out,"desc",NULL);
     /* code_url_valid admits no XML metacharacters. */
-    fputs(url,out);fputs("</desc><rect width=\"100%\" height=\"100%\" fill=\"#fff\"/><path fill=\"#000\" d=\"",out);
+    fputs(url,out);ui_close(out,"desc");
+    ui_elem(out,"rect",(const UiAttr[]){{"width","100%"},{"height","100%"},{"fill","#fff"}},3,1);
+    ui_start(out,"path");ui_attr(out,"fill","#000");ui_attr_open(out,"d");
     for(int y=0;y<size;y++) {
         for(int x=0;x<size;) {
             if(!qrcodegen_getModule(qr,x,y)){x++;continue;}
@@ -72,11 +79,15 @@ int bf_public_code_emit_svg(FILE *out,const char *url) {
 int bf_public_code_emit_details(FILE *out,const char *host,const char *path) {
     char url[BF_PUBLIC_CODE_URI_MAX+1];
     if(!out||!bf_public_code_url(host,path,url,sizeof(url)))return 0;
-    fputs("<details class=\"bf-public-code\" id=\"open-on-device\" data-bf-carrier=\"public-page-uri\"><summary>Open on another device</summary><div class=\"bf-public-code-body\">",out);
-    fputs("<img loading=\"lazy\" decoding=\"async\" width=\"280\" height=\"280\" src=\"",out);fputs(path,out);
-    fputs(".qr.svg\" alt=\"Scan this QR code to open the same public page\"><div><p>Scan to open this page. Your saved notes and account access are not included.</p><p><a href=\"",out);
-    fputs(path,out);fputs(".qr.svg\" download=\"aurekai-page-code.svg\">Download QR code</a></p><p><a href=\"",out);
-    fputs(url,out);fputs("\">Open the page link</a></p></div></div></details>",out);
-    fputs("<style>.bf-public-code{margin:1.2rem 0;border:1px solid var(--w-rule,#aeb9b2);border-radius:12px;max-width:100%;overflow:hidden}.bf-public-code>summary{padding:14px 18px;cursor:pointer;font:600 15px/1.4 var(--w-face-body,system-ui)}.bf-public-code>summary:focus-visible,.bf-public-code a:focus-visible{outline:3px solid var(--w-accent,#345dd0);outline-offset:3px}.bf-public-code-body{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:20px;padding:18px;align-items:center}.bf-public-code-body>img{display:block;max-width:100%;height:auto;background:#fff;border-radius:0;filter:none;mix-blend-mode:normal;image-rendering:pixelated}.bf-public-code-body p{font:400 14px/1.6 var(--w-face-body,system-ui);overflow-wrap:anywhere}.bf-public-code-body a{text-decoration:underline;text-underline-offset:3px}@media(max-width:650px){.bf-public-code-body{grid-template-columns:minmax(0,1fr)}.bf-public-code-body>img{width:min(100%,280px);margin:auto}}</style>",out);
+    ui_section_open(out, "bf-public-code", "Open on another device");ui_open(out,"div","bf-public-code-body");
+    ui_start(out,"img");ui_attr(out,"loading","lazy");ui_attr(out,"decoding","async");ui_attr(out,"width","280");ui_attr(out,"height","280");
+    ui_attr_open(out,"src");fputs(path,out);ui_copy(out,".qr.svg");ui_attr_close(out);
+    ui_attr(out,"alt","Scan this QR code to open the same public page");ui_gt(out);
+    ui_open(out,"div",NULL);ui_open(out,"p",NULL);ui_copy(out,"Scan to open this page. Your saved notes and account access are not included.");ui_close(out,"p");
+    ui_open(out,"p",NULL);ui_start(out,"a");ui_attr_open(out,"href");fputs(path,out);ui_copy(out,".qr.svg");ui_attr_close(out);
+    ui_attr(out,"download","aurekai-page-code.svg");ui_gt(out);ui_copy(out,"Download QR code");ui_close(out,"a");ui_close(out,"p");
+    ui_open(out,"p",NULL);ui_start(out,"a");ui_attr_open(out,"href");fputs(url,out);ui_attr_close(out);ui_gt(out);
+    ui_copy(out,"Open the page link");ui_close(out,"a");ui_close(out,"p");
+    ui_close(out,"div");ui_close(out,"div");ui_section_close(out);
     return !ferror(out);
 }

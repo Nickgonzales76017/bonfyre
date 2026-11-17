@@ -83,7 +83,7 @@ static void ai_release(const char *context,const AcPersonGoal *g){
     ui_open(stdout,"div","ak-inbox-acts");
     if(approved)do{ ui_open_a(stdout,"p","class","ak-inbox-status","role","status"); fputs("Going live now. This updates when the release reports back.",stdout); ui_close(stdout,"p"); }while(0);
     else{ai_act(context,g->id,"approve","Approve and put live",1);ai_act(context,g->id,"later","Not now",0);}
-    fputs("<a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(g->id);fputs("\">Read the full release note</a></div></div></li>",stdout);
+    ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_copy(stdout,"&amp;task=");url_query_value(g->id);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Read the full release note");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"li");
 }
 static void ai_provider(const char *context,const AcPersonGoal *g){
     char first[400],url[400]="";const char *u=strstr(g->details,"https://");
@@ -94,7 +94,7 @@ static void ai_provider(const char *context,const AcPersonGoal *g){
     if(ai_line(g->details,NULL,first,sizeof(first))){ui_text(stdout, "p", "ak-inbox-text", first);}
     if(*g->error){ui_text(stdout, "p", "ak-inbox-note", g->error);}
     ui_open(stdout,"div","ak-inbox-acts");
-    if(*url){fputs("<a class=\"ak-inbox-signin\" data-inbox-signin href=\"",stdout);ai_href(url);fputs(ai_external(url)?"\" target=\"_blank\" rel=\"noopener noreferrer\">Sign in and make the key</a>":"\">Connect</a>",stdout);}
+    if(*url){ui_start(stdout,"a");ui_attr(stdout,"class","ak-inbox-signin");ui_flag(stdout,"data-inbox-signin");ui_attr_open(stdout,"href");ai_href(url);if(ai_external(url)){ui_attr_close(stdout);ui_attr(stdout,"target","_blank");ui_attr(stdout,"rel","noopener noreferrer");ui_gt(stdout);ui_copy(stdout,"Sign in and make the key");}else{ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Connect");}ui_close(stdout,"a");}
     ai_act(context,g->id,"done","Done, it's set up",!*url);ai_act(context,g->id,"email","Waiting on email or phone",0);ai_act(context,g->id,"review","Waiting on the provider",0);ai_act(context,g->id,"later","Not now",0);
     ui_close(stdout,"div"); ui_close(stdout,"div"); ui_close(stdout,"li");
 }
@@ -113,13 +113,13 @@ static void ai_checklist(const char *context,const AcPersonGoal *g){
             q++;const char *end=strchr(q,'\n');size_t n=end?(size_t)(end-q):strlen(q);if(!n)break;char line[600];if(n>=sizeof(line)){q=end;continue;}
             memcpy(line,q,n);line[n]=0;q=end;char *link=strstr(line,": https://");if(!link)continue;*link=0;link+=2;
             char *gives=strstr(line," (gives customers ");if(gives){*gives=0;gives+=18;size_t m=strlen(gives);if(m&&gives[m-1]==')')gives[m-1]=0;}
-            if(shown==6&&total>6){printf("</ul><details class=\"ak-inbox-more\"><summary>%u more providers to sign in to</summary><ul class=\"ak-inbox-signins\">",total-6);}
+            if(shown==6&&total>6){ui_close(stdout,"ul");ui_open_a(stdout,"details","class","ak-inbox-more");ui_open(stdout,"summary",NULL);printf("%u more providers to sign in to",total-6);ui_close(stdout,"summary");ui_open(stdout,"ul","ak-inbox-signins");}
             ui_open(stdout,"li",NULL); ui_open(stdout,"span",NULL); ui_open(stdout,"strong",NULL);html(line);ui_close(stdout,"strong");if(gives){ui_open(stdout,"small",NULL); fputs("Customers get: ",stdout);html(gives);ui_close(stdout,"small");}
-            fputs("</span><a data-inbox-signin href=\"",stdout);ai_href(link);fputs(ai_external(link)?"\" target=\"_blank\" rel=\"noopener noreferrer\">Sign in</a></li>":"\">Connect</a></li>",stdout);shown++;
+            ui_close(stdout,"span");ui_start(stdout,"a");ui_flag(stdout,"data-inbox-signin");ui_attr_open(stdout,"href");ai_href(link);if(ai_external(link)){ui_attr_close(stdout);ui_attr(stdout,"target","_blank");ui_attr(stdout,"rel","noopener noreferrer");ui_gt(stdout);ui_copy(stdout,"Sign in");}else{ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Connect");}ui_close(stdout,"a");ui_close(stdout,"li");shown++;
         }
         fputs(shown>6?"</ul></details>":"</ul>",stdout);
     }
-    fputs("<div class=\"ak-inbox-acts\"><a href=\"/connect/github-app\">Connect GitHub</a><a href=\"/apps/connections?context=",stdout);url_query_value(context);fputs("\">Your connections</a><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(g->id);fputs("\">Full checklist</a></div></div></li>",stdout);
+    ui_open(stdout,"div","ak-inbox-acts");ui_open_a(stdout,"a","href","/connect/github-app");ui_copy(stdout,"Connect GitHub");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps/connections?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Your connections");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_copy(stdout,"&amp;task=");url_query_value(g->id);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Full checklist");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"li");
 }
 static int ai_column(sqlite3 *db,const char *table,const char *column){
     sqlite3_stmt *s=NULL;char *query=sqlite3_mprintf("PRAGMA table_info(%Q)",table);int found=0;if(!query)return 0;
@@ -153,13 +153,13 @@ static int ai_agent_work(const char *subject,const char *scope,AiWork *rows,size
 static const char *ai_origin(const char *id){return !strncmp(id,"account-operator-",17)?"Assistant":!strncmp(id,"account-fabric-",15)?"Agent":!strncmp(id,"account-workgraph-",18)?"Pipeline":"Work";}
 static void ai_execution_credit(const char *context,const AiWork *w){
     ui_open_a(stdout,"li","class","ak-inbox-item","data-needs","you","data-inbox-kind","legacy-api-hold",UI_DYN,"id","",(w->id)); ui_open_a(stdout,"span","class","ak-inbox-mark","aria-hidden","true");page_glyph("warning");ui_close(stdout,"span"); ui_open(stdout,"div","ak-inbox-body");
-    ai_meta("Needs review","Discontinued API",w->updated);ui_open(stdout,"h3",NULL);html(*w->title?w->title:"Stopped legacy API work");ui_close(stdout,"h3"); ui_open(stdout,"p","ak-inbox-warn");html(w->attention);fputs("</p><div class=\"ak-inbox-acts\"><a href=\"/programs?context=",stdout);url_query_value(context);fputs("\">Open native programs</a><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(w->id);fputs("\">Review retained work</a></div></div></li>",stdout);
+    ai_meta("Needs review","Discontinued API",w->updated);ui_open(stdout,"h3",NULL);html(*w->title?w->title:"Stopped legacy API work");ui_close(stdout,"h3"); ui_open(stdout,"p","ak-inbox-warn");html(w->attention);ui_close(stdout,"p");ui_open(stdout,"div","ak-inbox-acts");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/programs?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open native programs");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_copy(stdout,"&amp;task=");url_query_value(w->id);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Review retained work");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"li");
 }
 static void ai_agent_row(const char *context,const AiWork *w,int halted){
-    fputs("<li class=\"ak-inbox-agent\" data-needs=\"agent\" data-state=\"",stdout);html(w->state);fputs("\"><span class=\"ak-inbox-pulse\" aria-hidden=\"true\"></span><div><p class=\"ak-inbox-meta\"><span class=\"ak-inbox-who\" data-who=\"",stdout);
+    ui_start(stdout,"li");ui_attr(stdout,"class","ak-inbox-agent");ui_attr(stdout,"data-needs","agent");ui_attr_open(stdout,"data-state");html(w->state);ui_attr_close(stdout);ui_gt(stdout);ui_open_a(stdout,"span","class","ak-inbox-pulse","aria-hidden","true");ui_close(stdout,"span");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-inbox-meta");ui_start(stdout,"span");ui_attr(stdout,"class","ak-inbox-who");ui_attr_open(stdout,"data-who");
     fputs(halted?"stopped\">Agent stopped":!strcmp(w->state,"retry_wait")?"agent\">Agent retrying":"agent\">Agent working",stdout);ui_close(stdout,"span"); ui_open(stdout,"span",NULL);
     html(*w->worker&&strcmp(w->worker,"fabric")&&strcmp(w->worker,"workgraph")?w->worker:ai_origin(w->id));ui_close(stdout,"span");if(w->updated>0){ui_open(stdout,"time",NULL);ai_ago(w->updated);ui_close(stdout,"time");}
-    fputs("</p><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(w->id);fputs("\">",stdout);html(*w->title?w->title:"Untitled work");ui_close(stdout,"a"); ui_close(stdout,"div"); ui_close(stdout,"li");
+    ui_close(stdout,"p");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_copy(stdout,"&amp;task=");url_query_value(w->id);ui_attr_close(stdout);ui_gt(stdout);html(*w->title?w->title:"Untitled work");ui_close(stdout,"a"); ui_close(stdout,"div"); ui_close(stdout,"li");
 }
 typedef struct {char institution[96],label[161],role[16],expires[32];int pending;} AiOrg;
 static int ai_table(sqlite3 *db,const char *name){sqlite3_stmt *q=NULL;int found=0;if(sqlite3_prepare_v2(db,"SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1",-1,&q,NULL)==SQLITE_OK){sqlite3_bind_text(q,1,name,-1,SQLITE_STATIC);found=sqlite3_step(q)==SQLITE_ROW;}sqlite3_finalize(q);return found;}
@@ -251,9 +251,9 @@ static void ai_native_head(void *unused){(void)unused;ui_open_a(stdout,"link","r
 static void ai_signed_out(const char *context){
  fputs("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: private, no-store\r\nVary: Host, Cookie, Authorization\r\nReferrer-Policy: same-origin\r\nX-Bonfyre-Surface-Program: native-source-workspace\r\nConnection: close\r\n\r\n",stdout);
  ak_app_open_with_head("Inbox","feed","sx-page route-inbox",ai_native_head,NULL);
- fputs("<div class=\"sx\"><nav class=\"sx-crumbs\" aria-label=\"Breadcrumb\"><a href=\"/\">Aurekai</a><span>/</span><span>Inbox</span><em>signed out</em></nav>"
-       "<header class=\"sx-hero\"><div><p class=\"sx-kicker\">What needs you</p><h1>Inbox</h1><p>Approvals, invitations, introductions and the work your tools are waiting on, for your own account and the organisations you belong to.</p></div>"
-       "<nav class=\"sx-actions\"><a class=\"sx-btn sx-primary\" href=\"/login?next=",stdout);
+ ui_open(stdout,"div","sx");ui_open_a(stdout,"nav","class","sx-crumbs","aria-label","Breadcrumb");ui_open_a(stdout,"a","href","/");ui_copy(stdout,"Aurekai");ui_close(stdout,"a");ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"Inbox");ui_close(stdout,"span");ui_open(stdout,"em",NULL);ui_copy(stdout,"signed out");ui_close(stdout,"em");ui_close(stdout,"nav");
+ ui_open(stdout,"header","sx-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","sx-kicker");ui_copy(stdout,"What needs you");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Inbox");ui_close(stdout,"h1");ui_open(stdout,"p",NULL);ui_copy(stdout,"Approvals, invitations, introductions and the work your tools are waiting on, for your own account and the organisations you belong to.");ui_close(stdout,"p");ui_close(stdout,"div");
+ ui_open(stdout,"nav","sx-actions");ui_start(stdout,"a");ui_attr(stdout,"class","sx-btn sx-primary");ui_attr_open(stdout,"href");ui_copy(stdout,"/login?next=");
  {char next[200];snprintf(next,sizeof next,"/inbox?context=%s",context&&*context?context:"self");url_query_value(next);}
  fputs("\">Sign in to open it</a><a class=\"sx-btn\" href=\"/signup\">Make an account</a></nav></header>"
        "<div class=\"sx-split sx-three ai-out\"><section class=\"sx-register\" aria-labelledby=\"ai-q\"><h2 id=\"ai-q\">Arrives here <span>once you are signed in</span></h2><ol>"
@@ -317,14 +317,12 @@ static void ai_dating_inbox(const char *auth_db,long uid,const char *context){
  if(plans_pending){
   ui_open_a(stdout,"li","class","ak-inbox-item","data-inbox-kind","dating-plan","data-needs","you"); ui_open_a(stdout,"span","class","ak-inbox-mark","aria-hidden","true");
   page_glyph("calendar");
-  printf("</span><div class=\"ak-inbox-body\"><p class=\"ak-inbox-meta\">Your approval</p><h3>%d proposed date plan%s</h3><p class=\"ak-inbox-text\">Review the activity and budget before agreeing. No booking or payment is implied.</p><div class=\"ak-inbox-acts\"><a href=\"/profile?tab=dating\">Review date plans</a></div></div></li>",
-    plans_pending,plans_pending==1?"":"s");
+  ui_close(stdout,"span");ui_open(stdout,"div","ak-inbox-body");ui_open(stdout,"p","ak-inbox-meta");ui_copy(stdout,"Your approval");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);printf("%d proposed date plan%s",plans_pending,plans_pending==1?"":"s");ui_close(stdout,"h3");ui_open(stdout,"p","ak-inbox-text");ui_copy(stdout,"Review the activity and budget before agreeing. No booking or payment is implied.");ui_close(stdout,"p");ui_open(stdout,"div","ak-inbox-acts");ui_open_a(stdout,"a","href","/profile?tab=dating");ui_copy(stdout,"Review date plans");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"li");
  }
  if(conversations){
   ui_open_a(stdout,"li","class","ak-inbox-item","data-inbox-kind","dating-conversation"); ui_open_a(stdout,"span","class","ak-inbox-mark","aria-hidden","true");
   page_glyph("relationship");
-  printf("</span><div class=\"ak-inbox-body\"><p class=\"ak-inbox-meta\">Mutually accepted</p><h3>%d private conversation%s</h3><p class=\"ak-inbox-text\">Read and reply within your authenticated Life profile.</p><div class=\"ak-inbox-acts\"><a href=\"/profile?tab=dating\">Open conversations</a></div></div></li>",
-   conversations,conversations==1?"":"s");
+  ui_close(stdout,"span");ui_open(stdout,"div","ak-inbox-body");ui_open(stdout,"p","ak-inbox-meta");ui_copy(stdout,"Mutually accepted");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);printf("%d private conversation%s",conversations,conversations==1?"":"s");ui_close(stdout,"h3");ui_open(stdout,"p","ak-inbox-text");ui_copy(stdout,"Read and reply within your authenticated Life profile.");ui_close(stdout,"p");ui_open(stdout,"div","ak-inbox-acts");ui_open_a(stdout,"a","href","/profile?tab=dating");ui_copy(stdout,"Open conversations");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"li");
  }
  ui_close(stdout,"ol"); ui_close(stdout,"section");
 }
@@ -365,14 +363,14 @@ static void ai_peer_inbox(const char *auth_db,long uid,const char *context){
    printf(" · Needs your decision</p><h3>%u private introduction%s",incoming,incoming==1?"":"s");
    ui_close(stdout,"h3");
   }else{
-   printf("</p><h3>%u mutually accepted connection%s",connected,connected==1?"":"s");
+   ui_close(stdout,"p");ui_open(stdout,"h3",NULL);printf("%u mutually accepted connection%s",connected,connected==1?"":"s");
    ui_close(stdout,"h3");
   }
-  fputs("<p class=\"ak-inbox-text\">Participation is limited to the chosen context. "
-   "No civic authority or publication permission is implied.</p>"
-   "<div class=\"ak-inbox-acts\"><a href=\"/profile?tab=connections&amp;facet=",stdout);
+  ui_open(stdout,"p","ak-inbox-text");ui_copy(stdout,"Participation is limited to the chosen context. ");
+  ui_copy(stdout,"No civic authority or publication permission is implied.");ui_close(stdout,"p");
+  ui_open(stdout,"div","ak-inbox-acts");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=connections&amp;facet=");
   url_query_value(facets[f].id);
-  fputs("\">Review this context",stdout); ui_close(stdout,"a"); ui_close(stdout,"div"); ui_close(stdout,"div"); ui_close(stdout,"li");
+  ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Review this context"); ui_close(stdout,"a"); ui_close(stdout,"div"); ui_close(stdout,"div"); ui_close(stdout,"li");
  }
  if(opened)do{ ui_close(stdout,"ol"); ui_close(stdout,"section"); }while(0);
  sqlite3_close(db);
@@ -395,10 +393,10 @@ static int serve_account_inbox(const BfRequest *r) {
     int dating_pending=scope&&!strcmp(scope,"self")?ai_dating_pending(auth_db,user):0;int needs=(person_count>0?person_count:0)+credit_n+ni+(dating_pending>0?1:0),direct=credit_n+(dating_pending>0?1:0),checklists=0;for(int i=0;i<person_count;i++){if(!strcmp(people[i].source,"provider-estate-checklist"))checklists++;else direct++;}
     char label[160]="My personal workspace";{PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;if(psetup_destinations(bearer,auth_db,rows,&count)>0)for(size_t i=0;i<count;i++)if(!strcmp(rows[i].context,context)){snprintf(label,sizeof(label),"%s",rows[i].label);break;}}
     psetup_open_with_style(200,"Inbox","pack-workspace","/assets/account-inbox.css");
-    fputs("<section class=\"ak-inbox\" data-account-inbox data-context=\"",stdout);html(context);printf("\" data-needs-count=\"%d\" data-agent-count=\"%d\"><header class=\"ak-inbox-mast\"><div><p class=\"ak-inbox-kicker\">",needs,running);page_glyph("bell");fputs("Inbox · ",stdout);html(label);ui_close(stdout,"p"); ui_open(stdout,"h1",NULL);
-    if(needs)printf("<em>%d</em> %s you",needs,needs==1?"thing needs":"things need");else if(person_count<0||agent_count<0)fputs("Inbox needs a source connection",stdout);else fputs("Nothing needs you right now",stdout);
-    fputs("</h1><p>Approvals, sign-ins and account steps only you can take are here, each with its one next step. Everything the agents are doing stays on the right, so you can tell the two apart at a glance.</p></div><nav class=\"ak-inbox-nav\" aria-label=\"Related pages\"><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("board");fputs("Work board</a><a href=\"/organizations\">",stdout);page_glyph("group");fputs("Organizations</a><a href=\"/apps/connections?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("link");fputs("Connections</a></nav>",stdout);
-    printf("<p class=\"ak-inbox-tally\"><a href=\"#needs-you\" data-tally=\"you\"><strong>%d</strong><span>Needs you</span></a><a href=\"#agents\" data-tally=\"agents\"><strong>%d</strong><span>Agents working</span></a><a href=\"#agents-stopped\" data-tally=\"stopped\"><strong>%d</strong><span>Agent work stopped</span></a><a href=\"/work-board?context=",needs,running,stopped);url_query_value(context);printf("\" data-tally=\"waiting\"><strong>%d</strong><span>Waiting its turn</span></a></p></header>",waiting);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-inbox");ui_flag(stdout,"data-account-inbox");ui_attr_open(stdout,"data-context");html(context);printf("\" data-needs-count=\"%d\" data-agent-count=\"%d\">",needs,running);ui_open(stdout,"header","ak-inbox-mast");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-inbox-kicker");page_glyph("bell");fputs("Inbox · ",stdout);html(label);ui_close(stdout,"p"); ui_open(stdout,"h1",NULL);
+    if(needs){ui_open(stdout,"em",NULL);printf("%d",needs);ui_close(stdout,"em");fputs(needs==1?" thing needs you":" things need you",stdout);}else if(person_count<0||agent_count<0)fputs("Inbox needs a source connection",stdout);else fputs("Nothing needs you right now",stdout);
+    ui_close(stdout,"h1");ui_open(stdout,"p",NULL);ui_copy(stdout,"Approvals, sign-ins and account steps only you can take are here, each with its one next step. Everything the agents are doing stays on the right, so you can tell the two apart at a glance.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open_a(stdout,"nav","class","ak-inbox-nav","aria-label","Related pages");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);page_glyph("board");ui_copy(stdout,"Work board");ui_close(stdout,"a");ui_open_a(stdout,"a","href","/organizations");page_glyph("group");ui_copy(stdout,"Organizations");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps/connections?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);page_glyph("link");ui_copy(stdout,"Connections");ui_close(stdout,"a");ui_close(stdout,"nav");
+    ui_open(stdout,"p","ak-inbox-tally");ui_open_a(stdout,"a","href","#needs-you","data-tally","you");ui_open(stdout,"strong",NULL);printf("%d",needs);ui_close(stdout,"strong");ui_open(stdout,"span",NULL);ui_copy(stdout,"Needs you");ui_close(stdout,"span");ui_close(stdout,"a");ui_open_a(stdout,"a","href","#agents","data-tally","agents");ui_open(stdout,"strong",NULL);printf("%d",running);ui_close(stdout,"strong");ui_open(stdout,"span",NULL);ui_copy(stdout,"Agents working");ui_close(stdout,"span");ui_close(stdout,"a");ui_open_a(stdout,"a","href","#agents-stopped","data-tally","stopped");ui_open(stdout,"strong",NULL);printf("%d",stopped);ui_close(stdout,"strong");ui_open(stdout,"span",NULL);ui_copy(stdout,"Agent work stopped");ui_close(stdout,"span");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_attr_close(stdout);ui_attr(stdout,"data-tally","waiting");ui_gt(stdout);ui_open(stdout,"strong",NULL);printf("%d",waiting);ui_close(stdout,"strong");ui_open(stdout,"span",NULL);ui_copy(stdout,"Waiting its turn");ui_close(stdout,"span");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"header");
     if(person_count<0||agent_count<0)do{ ui_open_a(stdout,"p","role","alert","data-inbox-source-unavailable",(const char *)NULL); fputs("The account Inbox cannot read all native work owners on this service. It has not verified that your work is empty. ",stdout); ui_open_a(stdout,"a","href","/work-board?context=self"); fputs("Check the Workboard",stdout); ui_close(stdout,"a"); fputs(" and its account connection.",stdout); ui_close(stdout,"p"); }while(0);
     if(*done){ui_open_a(stdout,"p","class","ak-inbox-receipt","role","status","data-inbox-receipt",(const char *)NULL);
         fputs(!strcmp(done,"approve")?"Approved. The release is being put live; its item below shows how that goes.":!strcmp(done,"later")?"Set aside. It stays on the work board and comes back when you want it.":!strcmp(done,"done")?"Marked as set up. Thank you.":"Recorded. The item keeps where it stands.",stdout);ui_close(stdout,"p");}
@@ -409,7 +407,7 @@ static int serve_account_inbox(const BfRequest *r) {
       ui_open_a(stdout,"li","class","ak-inbox-item","id","dating:introductions","data-needs","you","data-inbox-kind","dating-introduction"); ui_open_a(stdout,"span","class","ak-inbox-mark","aria-hidden","true");page_glyph("user");
       ui_close(stdout,"span"); ui_open(stdout,"div","ak-inbox-body");ai_meta("Needs you","Private introduction",0);
       ui_open(stdout,"h3",NULL);printf("%d %s to review",dating_pending,dating_pending==1?"introduction":"introductions");
-      fputs("</h3><p class=\"ak-inbox-text\">Someone has requested an introduction. Nothing becomes a conversation without your current, explicit agreement. Names and messages stay inside your private Life account.</p><div class=\"ak-inbox-acts\"><a class=\"ak-inbox-signin\" href=\"/profile?tab=dating&amp;view=matches\">Review introductions</a></div></div></li>",stdout);
+      ui_close(stdout,"h3");ui_open(stdout,"p","ak-inbox-text");ui_copy(stdout,"Someone has requested an introduction. Nothing becomes a conversation without your current, explicit agreement. Names and messages stay inside your private Life account.");ui_close(stdout,"p");ui_open(stdout,"div","ak-inbox-acts");ui_start(stdout,"a");ui_attr(stdout,"class","ak-inbox-signin");ui_attr(stdout,"href","/profile?tab=dating&amp;view=matches");ui_gt(stdout);ui_copy(stdout,"Review introductions");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"li");
     }
     if(!direct){ui_open(stdout,"li","ak-inbox-empty");fputs(person_count<0?"Approvals are not connected on this site.":(ni||checklists)?"No approvals are waiting. Your sub-account steps are just below.":"No approvals or sign-ins are waiting on you.",stdout);ui_close(stdout,"li");}
     ui_close(stdout,"ol"); ui_close(stdout,"section");
@@ -426,17 +424,17 @@ static int serve_account_inbox(const BfRequest *r) {
     if(na){ui_open(stdout,"h3","ak-inbox-subhead"); fputs("Organizations you run",stdout); ui_close(stdout,"h3"); ui_open_a(stdout,"ul","class","ak-inbox-orgs","data-inbox-orgs",(const char *)NULL);
         for(int i=0;i<na;i++){ui_open(stdout,"li",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"strong",NULL);html(admin[i].label);ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);
             if(admin[i].pending)printf("%d invitation%s not accepted yet",admin[i].pending,admin[i].pending==1?"":"s");else fputs("Nobody is waiting on an invitation",stdout);
-            fputs("</small></div><div class=\"ak-inbox-acts\"><a href=\"/organizations?organization=",stdout);url_query_value(admin[i].institution);fputs("\">People and provider accounts</a><a href=\"/apps?context=institution%3A",stdout);url_query_value(admin[i].institution);fputs("\">Shared work</a></div></li>",stdout);}
+            ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div","ak-inbox-acts");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/organizations?organization=");url_query_value(admin[i].institution);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"People and provider accounts");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps?context=institution%3A");url_query_value(admin[i].institution);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Shared work");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"li");}
         ui_close(stdout,"ul");}
     ui_open(stdout,"div","ak-inbox-acts"); ui_open_a(stdout,"a","href","/organizations");
     if(members)printf("All your organizations (%d more)",members);else fputs(na?"All your organizations":"Start or join an organization",stdout);ui_close(stdout,"a"); ui_close(stdout,"div"); ui_close(stdout,"section"); ui_close(stdout,"div");
     ui_open_a(stdout,"aside","class","ak-inbox-side","id","agents","data-inbox-group","agents","aria-labelledby","ak-inbox-agents"); ui_open_a(stdout,"h2","id","ak-inbox-agents"); fputs("Agents working",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("The assistant, your agents and site checks. Nothing here is waiting on you.",stdout); ui_close(stdout,"p"); ui_open(stdout,"ol",NULL);
     for(int i=0;i<agent_count;i++)ai_agent_row(context,&agents[i],0);
     if(agent_count<=0){ui_open(stdout,"li","ak-inbox-empty");fputs(agent_count<0?"Agent work is not connected on this site.":"No agent is working right now.",stdout);ui_close(stdout,"li");}
-    if(running>agent_count&&agent_count>0)printf("<li class=\"ak-inbox-empty\">%d more on the work board.</li>",running-agent_count);
+    if(running>agent_count&&agent_count>0){ui_open(stdout,"li","ak-inbox-empty");printf("%d more on the work board.",running-agent_count);ui_close(stdout,"li");}
     ui_close(stdout,"ol"); ui_open_a(stdout,"h3","id","agents-stopped"); fputs("Agent work that stopped",stdout);if(stopped)printf(" · %d",stopped);ui_close(stdout,"h3"); ui_open_a(stdout,"ol","data-inbox-group","agents-stopped");
     for(int i=0;i<halted_n;i++)ai_agent_row(context,&halted[i],1);if(!halted_n)ui_text(stdout, "li", "ak-inbox-empty", "None.");
-    fputs("</ol><a class=\"ak-inbox-side-link\" href=\"/work-board?context=",stdout);url_query_value(context);fputs("\">Everything on the work board</a></aside></div></section>",stdout);
+    ui_close(stdout,"ol");ui_start(stdout,"a");ui_attr(stdout,"class","ak-inbox-side-link");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Everything on the work board");ui_close(stdout,"a");ui_close(stdout,"aside");ui_close(stdout,"div");ui_close(stdout,"section");
     psetup_end();
     ac_person_free(people,person_count>0?(size_t)person_count:0);free(people);free(agents);free(halted);free(credit);free(invites);free(admin);return 1;
 }

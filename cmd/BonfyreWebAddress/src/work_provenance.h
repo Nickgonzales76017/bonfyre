@@ -35,7 +35,7 @@ static void wp_wall(long long ms){
 }
 static void wp_when(long long ms){
     time_t t=(time_t)(ms/1000);struct tm tm;char day[40];if(ms<=0||!gmtime_r(&t,&tm))return;
-    strftime(day,sizeof(day),"%d %b %Y, %H:%M UTC",&tm);printf("<time datetime=\"%lld\">",ms);html(day);ui_close(stdout,"time");
+    strftime(day,sizeof(day),"%d %b %Y, %H:%M UTC",&tm);ui_start(stdout,"time");printf(" datetime=\"%lld\">",ms);html(day);ui_close(stdout,"time");
 }
 /* Agent names as people say them; anything else is shown as the owner wrote it. */
 static void wp_agent(const char *agent){
@@ -182,9 +182,9 @@ static void ac_work_provenance(const char *context,const char *task,const char *
     html(wp_task_words(state));if(updated>0){fputs(" · last change ",stdout);wp_when(updated);}ui_close(stdout,"p"); ui_open_a(stdout,"h2","id","wp-title");
     /* Assistant goals already carry their own heading in the focus above. */
     if(strncmp(task,"account-operator-",17)&&*title){html(title);}else fputs("How this work was done",stdout);
-    ui_close(stdout,"h2"); ui_open(stdout,"dl","wp-sum"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Runs",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","runs");wp_num(total_runs);fputs("</dd></div><div><dt>Failed runs</dt><dd data-sum=\"failed-runs\"",stdout);if(failed_runs)fputs(" data-tone=\"failed\"",stdout);fputs(">",stdout);wp_num(failed_runs);
+    ui_close(stdout,"h2"); ui_open(stdout,"dl","wp-sum"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Runs",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","runs");wp_num(total_runs);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Failed runs");ui_close(stdout,"dt");ui_start(stdout,"dd");ui_attr(stdout,"data-sum","failed-runs");if(failed_runs)ui_attr(stdout,"data-tone","failed");ui_gt(stdout);wp_num(failed_runs);
     ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Agent time",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","wall");if(walls)wp_wall(wall);else fputs("not recorded",stdout);
-    ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Verified steps",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","verified");wp_num(steps[0]);fputs("</dd></div><div><dt>Failed steps</dt><dd data-sum=\"failed-steps\"",stdout);if(steps[1])fputs(" data-tone=\"failed\"",stdout);fputs(">",stdout);wp_num(steps[1]);
+    ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Verified steps",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","verified");wp_num(steps[0]);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Failed steps");ui_close(stdout,"dt");ui_start(stdout,"dd");ui_attr(stdout,"data-sum","failed-steps");if(steps[1])ui_attr(stdout,"data-tone","failed");ui_gt(stdout);wp_num(steps[1]);
     ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Outputs kept",stdout); ui_close(stdout,"dt"); ui_open_a(stdout,"dd","data-sum","outputs");wp_num(outputs);ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl"); ui_close(stdout,"header");
 
     /* Who worked on it. */
@@ -200,7 +200,7 @@ static void ac_work_provenance(const char *context,const char *task,const char *
             const char *agent=(const char*)sqlite3_column_text(s,1),*worker=(const char*)sqlite3_column_text(s,2),*role=(const char*)sqlite3_column_text(s,3),*kind=(const char*)sqlite3_column_text(s,4),*rs=(const char*)sqlite3_column_text(s,5),*session=(const char*)sqlite3_column_text(s,9);
             int unconfirmed=sqlite3_column_int(s,10),reported=sqlite3_column_int(s,11);if(!rs)continue;
             if(!shown)ui_open_a(stdout,"ol","class","wp-list","data-runs",(const char *)NULL);shown++;
-            fputs("<li class=\"wp-run\" data-state=\"",stdout);html(rs);fputs("\"",stdout);if(unconfirmed)fputs(" data-unconfirmed",stdout);fputs("><div><strong>",stdout);wp_agent(agent&&*agent?agent:worker);ui_close(stdout,"strong");
+            ui_start(stdout,"li");ui_attr(stdout,"class","wp-run");ui_attr_open(stdout,"data-state");html(rs);ui_attr_close(stdout);if(unconfirmed)ui_flag(stdout,"data-unconfirmed");ui_gt(stdout);ui_open(stdout,"div",NULL);ui_open(stdout,"strong",NULL);wp_agent(agent&&*agent?agent:worker);ui_close(stdout,"strong");
             if((role&&*role)||(kind&&*kind)){ui_open(stdout,"small",NULL);if(role&&*role)wp_words(role);if(role&&*role&&kind&&*kind)fputs(" · ",stdout);if(kind&&*kind){wp_words(kind);fputs(" session",stdout);}ui_close(stdout,"small");}
             /* The session id is a Meter join key only; the page says it exists, never what it is. */
             if(session&&*session)do{ ui_open_a(stdout,"small","data-session",(const char *)NULL); fputs("Session recorded for token matching",stdout); ui_close(stdout,"small"); }while(0);
@@ -226,7 +226,7 @@ static void ac_work_provenance(const char *context,const char *task,const char *
         int shown=0;sqlite3_bind_text(s,1,task,-1,SQLITE_STATIC);sqlite3_bind_int(s,2,WP_STEPS);
         while(sqlite3_step(s)==SQLITE_ROW){const char *op=(const char*)sqlite3_column_text(s,1),*st=(const char*)sqlite3_column_text(s,2);int attempt=sqlite3_column_int(s,3);if(!st)continue;
             if(!shown){ui_open(stdout,"p","wp-note"); fputs("Verified means the step's owner recorded it as done. A failed step names what to look at first.",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"ul","class","wp-steps","data-steps",(const char *)NULL);}shown++;
-            int k=wp_step_kind(st);fputs("<li data-step=\"",stdout);fputs(k==0?"verified":k==1?"failed":"open",stdout);fputs("\"><span>",stdout);wp_words(op&&*op?op:(const char*)sqlite3_column_text(s,0));
+            int k=wp_step_kind(st);ui_start(stdout,"li");ui_attr_open(stdout,"data-step");fputs(k==0?"verified":k==1?"failed":"open",stdout);ui_attr_close(stdout);ui_gt(stdout);ui_open(stdout,"span",NULL);wp_words(op&&*op?op:(const char*)sqlite3_column_text(s,0));
             if(attempt>1)printf(" <small>(try %d)</small>",attempt);ui_close(stdout,"span"); ui_open(stdout,"span",NULL);fputs(wp_step_words(st),stdout);ui_close(stdout,"span"); ui_close(stdout,"li");}
         if(shown){ui_close(stdout,"ul");long long all=steps[0]+steps[1]+steps[2];if(all>shown){ui_open(stdout,"p","wp-note"); fputs("Showing ",stdout);wp_num(shown);fputs(" of ",stdout);wp_num(all);fputs(" steps.</p>",stdout);}}
         else do{ ui_open_a(stdout,"p","class","wp-empty","data-steps","none"); fputs("No steps are recorded for this work.",stdout); ui_close(stdout,"p"); }while(0);
@@ -255,8 +255,8 @@ static void ac_work_provenance(const char *context,const char *task,const char *
     else if(!strcmp(state,"complete"))fputs("It finished. What it kept stays with its owner and is listed with the rest of this account's outputs.",stdout);
     else fputs("It is still open. This page updates when its owner records the next run.",stdout);
     (void)source;ui_close(stdout,"p"); ui_open_a(stdout,"nav","class","wp-next","aria-label","Continue this work");
-    if(stopped){fputs("<a href=\"/inbox?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("bell");fputs("See what needs you</a>",stdout);}
-    fputs("<a href=\"/work-board/outputs?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("receipt");fputs("All outputs</a><a href=\"/s/models/all?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("robot");fputs("Try another model</a><a href=\"/programs?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("apps");fputs("Programs</a></nav></section>",stdout);
+    if(stopped){ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/inbox?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);page_glyph("bell");ui_copy(stdout,"See what needs you");ui_close(stdout,"a");}
+    ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board/outputs?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);page_glyph("receipt");ui_copy(stdout,"All outputs");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/s/models/all?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);page_glyph("robot");ui_copy(stdout,"Try another model");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/programs?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);page_glyph("apps");ui_copy(stdout,"Programs");ui_close(stdout,"a");ui_close(stdout,"nav");ui_close(stdout,"section");
 }
 
 /* ---------- /work-board/outputs ---------- */
@@ -275,17 +275,17 @@ static int ac_work_outputs(const char *method,const char *query,const char *bear
     sqlite3 *db=wp_index();sqlite3_stmt *s=NULL;int shown=0;
     if(!db||sqlite3_prepare_v2(db,"SELECT a.id,a.title,s.operator_id,s.output_ref,s.updated_ms FROM account_work_step s JOIN account_work a ON a.id=s.work_id "
         "WHERE a.subject=?1 AND a.scope=?2 AND s.state='complete' AND s.output_ref<>'' ORDER BY s.updated_ms DESC,a.id,s.node_id LIMIT ?3",-1,&s,NULL)!=SQLITE_OK){
-        fputs("<p class=\"wp-empty\" data-outputs=\"unavailable\" role=\"status\">The account output index is not connected here, so this is not an empty list. <a href=\"/work-board?context=",stdout);url_query_value(context);fputs("\">Open the work board</a>.</p>",stdout);
+        ui_open_a(stdout,"p","class","wp-empty","data-outputs","unavailable","role","status");ui_copy(stdout,"The account output index is not connected here, so this is not an empty list. ");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open the work board");ui_close(stdout,"a");ui_copy(stdout,".");ui_close(stdout,"p");
     }else{
         sqlite3_bind_text(s,1,destination,-1,SQLITE_STATIC);sqlite3_bind_text(s,2,scope?scope:"",-1,SQLITE_STATIC);sqlite3_bind_int(s,3,WP_OUTPUTS);
         while(sqlite3_step(s)==SQLITE_ROW){const char *id=(const char*)sqlite3_column_text(s,0),*title=(const char*)sqlite3_column_text(s,1),*op=(const char*)sqlite3_column_text(s,2),*ref=(const char*)sqlite3_column_text(s,3);char hex[65];
             if(!id||!ref||!ac_word(id))continue;if(!shown)ui_open_a(stdout,"ol","class","wp-list","data-outputs",(const char *)NULL);shown++;wp_digest(ref,hex);
-            fputs("<li class=\"wp-out\"><div><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("&amp;task=",stdout);url_query_value(id);fputs("#provenance\">",stdout);html(title&&*title?title:"Untitled work");ui_close(stdout,"a"); ui_open(stdout,"small",NULL);wp_words(op);ui_close(stdout,"small"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL);
+            ui_open(stdout,"li","wp-out");ui_open(stdout,"div",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_copy(stdout,"&amp;task=");url_query_value(id);ui_copy(stdout,"#provenance");ui_attr_close(stdout);ui_gt(stdout);html(title&&*title?title:"Untitled work");ui_close(stdout,"a"); ui_open(stdout,"small",NULL);wp_words(op);ui_close(stdout,"small"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL);
             wp_fingerprint(hex);ui_close(stdout,"div"); ui_open(stdout,"div",NULL);wp_when(sqlite3_column_int64(s,4));ui_close(stdout,"div"); ui_close(stdout,"li");}
         if(shown)ui_close(stdout,"ol");else do{ ui_open_a(stdout,"p","class","wp-empty","data-outputs","none"); fputs("No work on this account has kept an output yet.",stdout); ui_close(stdout,"p"); }while(0);
     }
     sqlite3_finalize(s);sqlite3_close(db);
-    fputs("<nav class=\"wp-next\" aria-label=\"Account work\"><a href=\"/work-board?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("board");fputs("Work board</a><a href=\"/inbox?context=",stdout);url_query_value(context);fputs("\">",stdout);page_glyph("bell");fputs("Inbox</a></nav></section>",stdout);
+    ui_open_a(stdout,"nav","class","wp-next","aria-label","Account work");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/work-board?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);page_glyph("board");ui_copy(stdout,"Work board");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/inbox?context=");url_query_value(context);ui_attr_close(stdout);ui_gt(stdout);page_glyph("bell");ui_copy(stdout,"Inbox");ui_close(stdout,"a");ui_close(stdout,"nav");ui_close(stdout,"section");
     psetup_end();return 1;
 }
 #endif

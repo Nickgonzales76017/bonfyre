@@ -104,9 +104,9 @@ static void cmc_settings_panel(sqlite3 *db, const char *ns, const char *route, i
     if (!v[0][0]) snprintf(v[0], sizeof(v[0]), "Untitled page");
     if (!v[1][0]) snprintf(v[1], sizeof(v[1]), "%s", v[0]);
     ui_section_open(stdout, "authoring-page-settings", "This page");
-    fputs("<p class=\"authoring-page-visibility\" data-status=\"", stdout);
+    ui_start(stdout,"p");ui_attr(stdout,"class","authoring-page-visibility");ui_attr_open(stdout,"data-status");
     bf_lex_html_emit(stdout, found ? v[9] : "new");
-    fputs("\">", stdout);
+    ui_attr_close(stdout);ui_gt(stdout);
     fputs(!found ? "New page \xc2\xb7 nothing saved yet" : !strcmp(v[9], "published") ? "Published \xc2\xb7 changes are reviewed before they replace it"
                                                        : "Private draft \xc2\xb7 not published", stdout);
     ui_close(stdout, "p");
@@ -136,9 +136,11 @@ static void cmc_settings_panel(sqlite3 *db, const char *ns, const char *route, i
 }
 
 static void cms_page_composer_visual_emit(sqlite3 *db, const char *ns, const char *route, int new_article, const char *site) {
-    fputs("<link rel=\"stylesheet\" href=\"/assets/authoring-shell.css\">"
-          "<link rel=\"stylesheet\" href=\"/assets/authoring-grapes.css\">", stdout);
-    fputs("<div class=\"ak-wb-strip\"><span>Studio</span><span>Visual editor</span><span class=\"ak-live\">Same saved page as the composer</span></div>", stdout);
+    ui_open_a(stdout,"link","rel","stylesheet","href","/assets/authoring-shell.css");
+    ui_open_a(stdout,"link","rel","stylesheet","href","/assets/authoring-grapes.css");
+    ui_open(stdout,"div","ak-wb-strip");ui_open(stdout,"span",NULL);ui_copy(stdout,"Studio");ui_close(stdout,"span");
+    ui_open(stdout,"span",NULL);ui_copy(stdout,"Visual editor");ui_close(stdout,"span");
+    ui_open(stdout,"span","ak-live");ui_copy(stdout,"Same saved page as the composer");ui_close(stdout,"span");ui_close(stdout,"div");
     static const UiLayoutValue head_desktop[] = {{BF_NP_LAYOUT, 0 /* stack */}, {BF_NP_GAP, 12}};
     static const UiLayoutValue head_phone[] = {{BF_NP_GAP, 8}};
     static const UiLayout head = {{[BF_NP_VP_DESKTOP] = {head_desktop, 2}, [BF_NP_VP_PHONE] = {head_phone, 1}}};
@@ -150,15 +152,17 @@ static void cms_page_composer_visual_emit(sqlite3 *db, const char *ns, const cha
     ui_text(stdout, "h1", NULL, "Arrange it by eye.");
     ui_text(stdout, "p", "ak-lede", "Pick a page on the left, shape it on the canvas, and set the selected part on the right. Saving keeps a private draft; publishing is a separate review.");
     ui_close(stdout, "div"); ui_close(stdout, "section");
-    fputs("<div class=\"authoring-page cmc-visual\" data-aurekai-authoring><div class=\"authoring-site-workspace\">"
-          "<aside class=\"authoring-page-navigation\" aria-label=\"Pages and page settings\" data-authoring-rail=\"", stdout);
+    ui_start(stdout,"div");ui_attr(stdout,"class","authoring-page cmc-visual");ui_flag(stdout,"data-aurekai-authoring");ui_gt(stdout);
+    ui_open(stdout,"div","authoring-site-workspace");
+    ui_start(stdout,"aside");ui_attr(stdout,"class","authoring-page-navigation");ui_attr(stdout,"aria-label","Pages and page settings");ui_attr_open(stdout,"data-authoring-rail");
     bf_lex_html_emit(stdout, route);
-    fputs("\">", stdout);
+    ui_attr_close(stdout);ui_gt(stdout);
     cmc_pages_panel(db, ns, route, site);
     cmc_settings_panel(db, ns, route, new_article, site);
     ui_close(stdout, "aside");
-    fputs("<div class=\"authoring-page-editor\" data-authoring-editor>", stdout);
+    ui_start(stdout,"div");ui_attr(stdout,"class","authoring-page-editor");ui_flag(stdout,"data-authoring-editor");ui_gt(stdout);
     ui_text(stdout, "p", "ak-empty", "Opening the visual workspace\xe2\x80\xa6");
-    fputs("</div></div></div><script type=\"module\" src=\"/assets/authoring-editor.js\"></script>", stdout);
+    ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"div");
+    ui_start(stdout,"script");ui_attr(stdout,"type","module");ui_attr(stdout,"src","/assets/authoring-editor.js");ui_gt(stdout);ui_close(stdout,"script");
 }
 #endif

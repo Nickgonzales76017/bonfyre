@@ -8,8 +8,8 @@ architecture repository-fabric
   semantic_question Can this estate connect to, provision on, resolve, view, check out, change, observe and hook a real git-hosting provider through one verb surface, backed by a sealed credential and nothing typed again?
   purpose A unified repository.connect|provision|resolve|view|checkout|change|observe|service verb surface over the estate's self-hosted Forgejo instance. connect checks a provider is reachable and its sealed credential is accepted; provision creates the owning organization and repository idempotently; resolve reads one repository's metadata; view reads a path's contents at a ref; checkout clones through an ephemeral, shredded git-credentials file, or, given --filter, clones through the real josh binary instead so the checkout is re-rooted at a JOSH filter spec's subtree; change reads, base64-encodes, and PUTs or POSTs a file through the contents API with correct create-vs-update sha handling; observe lists commits; service lists or adds a webhook. JOSH (josh-proxy/josh, filtered monorepo views) is registered under connect for readiness and is the real backend for checkout --filter.
   maturity implemented
-  consumes credential-boundary
-  consumes provider-estate
+  consumes CredentialedRequest
+  consumes ProviderEstate
   publishes RepositoryFabric
   node_types RepositoryConnection
   node_types RepositoryProvisioning

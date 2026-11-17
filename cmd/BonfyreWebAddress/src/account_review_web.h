@@ -93,12 +93,12 @@ static int serve_account_review(const char *method,const char *query,const char 
         BfReviewRow *item=&rows[i];
         ui_open_a(stdout,"li","class","br-row","data-review-row",(const char *)NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"small",NULL);html(item->type);
         fputs(" · ",stdout);html(item->status);ui_close(stdout,"small"); ui_open(stdout,"h3",NULL);
-        html(item->title);fputs("</h3></div><a href=\"",stdout);
+        html(item->title);ui_close(stdout,"h3");ui_close(stdout,"div");ui_start(stdout,"a");ui_attr_open(stdout,"href");
         if(!strcmp(item->type,"site_page")&&item->route[0]=='/'){
             fputs("/cms/compose/advanced?route=",stdout);url_query_value(item->route);
         }else if(!strcmp(item->type,"site_fragment"))fputs("/cms/compose/advanced",stdout);
         else fputs("/cms/",stdout);
-        fputs("\">Open in editor",stdout); ui_close(stdout,"a"); ui_close(stdout,"li");
+        ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open in editor"); ui_close(stdout,"a"); ui_close(stdout,"li");
     }
     ui_close(stdout,"ol");
     if(!shown)ui_text(stdout,"p","br-note","No draft records were found in this account's accessible CMS namespace. Another publisher or installed editor may still have work waiting.");

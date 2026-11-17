@@ -22,10 +22,18 @@
  * masthead H1; the front's own head then titles itself as an H2. */
 static int page_front_brand_opened = 0;
 
-#define FRONT_BEATS 10
+#define FRONT_BEATS 13
+/* At most this many picks from one source in any one run of the front;
+ * the rest of a run goes to other publishers before a source repeats. */
+#define FRONT_PER_SOURCE 2
 #define FRONT_PER_KIND 14
 #define FRONT_POOL_MAX (FRONT_BEATS * 6 * FRONT_PER_KIND)
 #define FRONT_DAY 86400
+/* Sources one beat reads into the front's pool. The route lengths still walk
+ * program->source_limit at a time; the front is a mosaic over all its beats,
+ * and eight sources a beat collapsed every region onto the same ~10 weakest
+ * publishers. Thirty-two fills the regions' ~25 places at FRONT_PER_SOURCE. */
+#define FRONT_BEAT_SOURCES 32
 
 typedef struct { PageItem item; int beat; int used; } FrontPick;
 typedef struct {
@@ -33,6 +41,7 @@ typedef struct {
     const BfPageProgram *beat[FRONT_BEATS]; int beats;
     char sources[64][96]; int source_count;
     time_t now, newest;
+    const char *back;
 } FrontPool;
 
 static int front_is_apex(const PageDocument *doc, const char **territory_out) {
@@ -54,8 +63,8 @@ static void front_beat_material(sqlite3 *db, PageProjectionRead *projection, con
     PageProjectionRead local = {0}; PageDocument cut = {0}; char sources[4096];
     if (!projection || !projection->db) { page_projection_read_open(&local, db, page_render_host); projection = &local; }
     if (page_subject_projection_material(projection, program->route, material) < 0) {
-        if (page_subject_fabric_sources(projection->db, projection->subject, program, 8, sources, sizeof(sources)) < 0)
-            page_program_sources(db, program, 8, sources, sizeof(sources));
+        if (page_subject_fabric_sources(projection->db, projection->subject, program, FRONT_BEAT_SOURCES, sources, sizeof(sources)) < 0)
+            page_program_sources(db, program, FRONT_BEAT_SOURCES, sources, sizeof(sources));
         page_collect_stories(db, sources, material);
     }
     cut.route = program->route; cut.program = program;
@@ -63,7 +72,7 @@ static void front_beat_material(sqlite3 *db, PageProjectionRead *projection, con
     {
         size_t k; int held = 0;
         for (k = 0; k < BF_PAGE_MATERIAL_COUNT; k++) held += material->stream[k].count - material->stream[k].cursor;
-        if (!held && page_program_sources(db, program, 8, sources, sizeof(sources))) {
+        if (!held && page_program_sources(db, program, FRONT_BEAT_SOURCES, sources, sizeof(sources))) {
             memset(material, 0, sizeof(*material));
             page_collect_stories(db, sources, material);
             page_filter_route_contract(db, &cut, material);
@@ -130,20 +139,37 @@ static void front_pool_take(FrontPool *pool, PageMaterial *material, int beat) {
     size_t k; int i, j, n;
     for (k = 0; k < sizeof(kinds) / sizeof(kinds[0]); k++) {
         PageStream *stream = &material->stream[kinds[k]];
-        PageItem *best[FRONT_PER_KIND];
+        PageItem *best[FRONT_PER_KIND], **ranked; unsigned char *taken; int total = 0, distinct = 0, share, pass;
         n = 0;
+        if (stream->count <= stream->cursor) continue;
+        ranked = calloc((size_t)(stream->count - stream->cursor), sizeof(*ranked));
+        taken = calloc((size_t)(stream->count - stream->cursor), 1);
+        if (!ranked || !taken) { free(ranked); free(taken); continue; }
+        /* Every current item, newest first, once. */
         for (i = stream->cursor; i < stream->count; i++) {
             PageItem *item = &stream->item[i];
             item->kind = (int)kinds[k];
             if (!front_current(item, pool->now)) continue;
-            for (j = 0; j < n && !front_same(best[j], item); j++) {}
-            if (j < n) continue;
-            for (j = 0; j < n && !front_before(item, best[j]); j++) {}
-            if (j >= FRONT_PER_KIND) continue;
-            if (n < FRONT_PER_KIND) n++;
-            for (int m = n - 1; m > j; m--) best[m] = best[m - 1];
-            best[j] = item;
+            for (j = 0; j < total && !front_same(ranked[j], item); j++) {}
+            if (j < total) continue;
+            for (j = 0; j < total && !front_before(item, ranked[j]); j++) {}
+            for (int m = total; m > j; m--) ranked[m] = ranked[m - 1];
+            ranked[j] = item; total++;
         }
+        /* A beat's places are shared among its sources: each takes an even
+         * share of them, newest first, before any source takes another. The
+         * more sources a beat reads, the more of them reach the front. */
+        for (i = 0; i < total; i++) { for (j = 0; j < i && strcmp(ranked[j]->source, ranked[i]->source); j++) {} if (j == i) distinct++; }
+        share = distinct ? (FRONT_PER_KIND + distinct - 1) / distinct : FRONT_PER_KIND;
+        for (pass = 0; pass < 2 && n < FRONT_PER_KIND; pass++)
+            for (i = 0; i < total && n < FRONT_PER_KIND; i++) {
+                int same = 0;
+                if (taken[i]) continue;
+                for (j = 0; j < n; j++) same += !strcmp(best[j]->source, ranked[i]->source);
+                if (pass == 0 && same >= share) continue;
+                taken[i] = 1; best[n++] = ranked[i];
+            }
+        free(ranked); free(taken);
         for (i = 0; i < n && pool->count < FRONT_POOL_MAX; i++) {
             for (j = 0; j < pool->count && !front_same(&pool->pick[j].item, best[i]); j++) {}
             if (j < pool->count) continue;
@@ -160,7 +186,7 @@ static void front_pool_take(FrontPool *pool, PageMaterial *material, int beat) {
 /* Choose up to cap unused picks of the kinds in mask.  max_age bounds how old
  * a published item may be (0: no bound); pictured puts items with a picture
  * first among those of the last week. */
-static int front_choose(FrontPool *pool, unsigned mask, time_t max_age, int pictured, FrontPick **out, int cap) {
+static int front_rank(FrontPool *pool, unsigned mask, time_t max_age, int pictured, FrontPick **out, int cap) {
     int n = 0, i, j;
     for (i = 0; i < pool->count; i++) {
         FrontPick *p = &pool->pick[i];
@@ -183,6 +209,40 @@ static int front_choose(FrontPool *pool, unsigned mask, time_t max_age, int pict
     return n;
 }
 
+/* Choose up to cap picks in rank order, no source taking more than
+ * FRONT_PER_SOURCE of them while another publisher still has one to offer.
+ * A front that only one source can fill still fills: the second pass hands
+ * the remaining places back in rank order. */
+#define FRONT_RANK_MAX 160
+static int front_choose(FrontPool *pool, unsigned mask, time_t max_age, int pictured, FrontPick **out, int cap) {
+    FrontPick *ranked[FRONT_RANK_MAX]; unsigned char taken[FRONT_RANK_MAX] = {0};
+    int n = 0, total, i, j, pass;
+    if (cap <= 0) return 0;
+    total = front_rank(pool, mask, max_age, pictured, ranked, FRONT_RANK_MAX);
+    for (pass = 0; pass < 2 && n < cap; pass++)
+        for (i = 0; i < total && n < cap; i++) {
+            int same = 0;
+            if (taken[i]) continue;
+            if (pass == 0 && ranked[i]->item.source[0]) {
+                for (j = 0; j < n; j++) same += !strcmp(out[j]->item.source, ranked[i]->item.source);
+                if (same >= FRONT_PER_SOURCE) continue;
+            }
+            taken[i] = 1; out[n++] = ranked[i];
+        }
+    /* Places keep rank order on the page: newest (or pictured) first. */
+    for (i = 1; i < n; i++) {
+        FrontPick *p = out[i]; int a = 0;
+        while (a < total && ranked[a] != p) a++;
+        for (j = i; j > 0; j--) {
+            int b = 0; while (b < total && ranked[b] != out[j - 1]) b++;
+            if (b <= a) break;
+            out[j] = out[j - 1];
+        }
+        out[j] = p;
+    }
+    return n;
+}
+
 static void front_use(FrontPick *p) { p->used = 1; page_front_use(&p->item); }
 
 #define FRONT_KIND(k) (1u << (k))
@@ -193,6 +253,12 @@ static const char *front_beat_title(const FrontPool *pool, const FrontPick *p) {
     return p->beat >= 0 && p->beat < pool->beats && pool->beat[p->beat] ? pool->beat[p->beat]->title : "";
 }
 
+static void front_time(time_t at, time_t now);
+/* A pick's date, unless its beat reads only material that does not date. */
+static void front_pick_time(const FrontPool *pool, const FrontPick *p) {
+    if (p->beat >= 0 && p->beat < pool->beats && page_program_timeless(pool->beat[p->beat])) return;
+    front_time(p->item.at, pool->now);
+}
 static void front_time(time_t at, time_t now) {
     char when[48], iso[32]; struct tm tm;
     page_when(at, now, when, sizeof(when));
@@ -228,7 +294,7 @@ static const char *front_publisher(const PageItem *item) {
  * has one, otherwise its own words read aloud. */
 static void front_listen(const PageItem *item, const char *text_id, int is_default, const char *klass) {
     int recording = item->kind == BF_PAGE_MATERIAL_AUDIO && item->asset[0] && public_http_url(item->asset);
-    fputs("<button type=\"button\" class=\"", stdout); html(klass); ui_lit(stdout, "\" data-ak-track data-title=\""); html(item->title);
+    ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr_open(stdout,"class");html(klass);ui_attr_close(stdout);ui_flag(stdout,"data-ak-track");ui_attr_open(stdout,"data-title");html(item->title);
     ui_lit(stdout, "\" data-by=\""); html(front_publisher(item));
     if (recording) { ui_lit(stdout, "\" data-src=\""); html(item->asset); }
     else { ui_lit(stdout, "\" data-narrate=\"#"); html(text_id); }
@@ -260,22 +326,21 @@ static void front_strip(const FrontPool *pool, int shown) {
     (ui_elem(stdout, "div", (const UiAttr[]){{"class", "fd-strip"}, {"role", "note"}}, 2, 0), ui_open(stdout, "p", NULL), ui_elem(stdout, "span", (const UiAttr[]){{"class", "fd-dot"}, {"aria-hidden", "true"}}, 2, 0), ui_close(stdout, "span"), ui_lit(stdout, "Today&#039;s edition"));
     if (day[0]) { ui_lit(stdout, " &middot; "); html(day); }
     (ui_close(stdout, "p"), ui_open(stdout, "p", "fd-strip-facts"));
-    printf("<span>%d sources read</span>", pool->source_count);
+    ui_open(stdout,"span",NULL);printf("%d",pool->source_count);ui_lit(stdout," sources read</span>");
     if (pool->newest) { (ui_open(stdout, "span", NULL), ui_lit(stdout, "Updated ")); front_time(pool->newest, pool->now); ui_close(stdout, "span"); }
-    printf("<span class=\"fd-strip-count\">%d items today</span></p></div>", shown);
+    ui_open(stdout,"span","fd-strip-count");printf("%d",shown);ui_lit(stdout," items today</span></p></div>");
 }
 
 static void front_head(const PageDocument *doc, const FrontPool *pool, const char *kinds_present[][2], int kinds_n) {
     int i;
-    fputs(page_front_brand_opened ? "<header class=\"fd-head\"><div class=\"fd-head-words\"><h2>"
-                                  : "<header class=\"fd-head\"><div class=\"fd-head-words\"><h1>", stdout);
-    html(doc->title); fputs(page_front_brand_opened ? "</h2>" : "</h1>", stdout);
+    ui_open(stdout,"header","fd-head");ui_open(stdout,"div","fd-head-words");ui_open(stdout,page_front_brand_opened?"h2":"h1",NULL);
+    html(doc->title); ui_close(stdout,page_front_brand_opened?"h2":"h1");
     if (doc->lede && *doc->lede) { ui_text(stdout, "p", "fd-lede", doc->lede); }
     (ui_close(stdout, "div"), ui_elem(stdout, "form", (const UiAttr[]){{"class", "fd-find"}, {"action", "/search"}, {"method", "get"}, {"role", "search"}}, 4, 0), ui_open(stdout, "label", NULL));
     page_glyph("search");
-    fputs("<span class=\"fd-sr\">Search</span><input type=\"search\" name=\"q\" placeholder=\"Search stories, sources, makers\"></label></form>"
-          "<nav class=\"fd-chips\" aria-label=\"Beats\"><a href=\"", stdout);
-    html(doc->route); (ui_lit(stdout, "\" aria-current=\"page\">All"), ui_close(stdout, "a"));
+    ui_text(stdout,"span","fd-sr","Search");ui_elem(stdout,"input",(const UiAttr[]){{"type","search"},{"name","q"},{"placeholder","Search stories, sources, makers"}},3,0);ui_close(stdout,"label");ui_close(stdout,"form");
+    ui_start(stdout,"nav");ui_attr(stdout,"class","fd-chips");ui_attr(stdout,"aria-label","Beats");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");
+    html(doc->route); (ui_attr_close(stdout),ui_lit(stdout, " aria-current=\"page\""),ui_gt(stdout),ui_lit(stdout,"All"), ui_close(stdout, "a"));
     for (i = 0; i < pool->beats; i++) {
         if (!pool->beat[i] || !strcmp(pool->beat[i]->route, doc->route)) continue;
         ui_link(stdout, pool->beat[i]->route, NULL, pool->beat[i]->title);
@@ -289,8 +354,8 @@ static void front_head(const PageDocument *doc, const FrontPool *pool, const cha
 static void front_lead(const FrontPool *pool, FrontPick *lead) {
     const PageItem *item = &lead->item; const char *close;
     int pictured = page_image_url_safe(item->image);
-    fputs("<section class=\"fd-lead", stdout); if (!pictured) ui_lit(stdout, " fd-lead-plain");
-    ui_lit(stdout, "\" aria-label=\"Lead story\">");
+    ui_start(stdout,"section");ui_attr_open(stdout,"class");ui_lit(stdout,"fd-lead"); if (!pictured) ui_lit(stdout, " fd-lead-plain");
+    ui_attr_close(stdout);ui_attr(stdout,"aria-label","Lead story");ui_gt(stdout);
     if (pictured) {
         close = page_emit_item_open(item, "fd-lead-picture");
         page_emit_picture(item->image, "fd-lead-img");
@@ -298,7 +363,7 @@ static void front_lead(const FrontPool *pool, FrontPick *lead) {
     }
     (ui_open(stdout, "div", "fd-lead-words"), ui_open(stdout, "p", "fd-kicker"), ui_open(stdout, "span", NULL));
     html(front_beat_title(pool, lead)[0] ? front_beat_title(pool, lead) : "Lead story");
-    (ui_close(stdout, "span"), ui_open(stdout, "span", NULL)); front_time(item->at, pool->now); ui_close_n(stdout, "span", "p", NULL);
+    (ui_close(stdout, "span"), ui_open(stdout, "span", NULL)); front_pick_time(pool, lead); ui_close_n(stdout, "span", "p", NULL);
     (ui_elem(stdout, "div", (const UiAttr[]){{"id", "fd-lead-text"}}, 1, 0), ui_open(stdout, "h2", NULL));
     close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
     ui_close(stdout, "h2");
@@ -308,11 +373,12 @@ static void front_lead(const FrontPool *pool, FrontPick *lead) {
     if (item->note[0] && strcmp(item->note, item->by)) { ui_lit(stdout, " &middot; "); html(item->note); }
     (ui_close(stdout, "p"), ui_open(stdout, "div", "fd-lead-actions"));
     if (public_http_url(item->href)) {
-        fputs("<a class=\"fd-primary\" rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(item->href); ui_lit(stdout, "\">Open on ");
+        ui_start(stdout,"a");ui_attr(stdout,"class","fd-primary");ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(item->href); ui_attr_close(stdout);ui_gt(stdout);ui_lit(stdout,"Open on ");
         html(front_publisher(item)[0] ? front_publisher(item) : "the source"); (ui_lit(stdout, " "), ui_elem(stdout, "span", (const UiAttr[]){{"aria-hidden", "true"}}, 1, 0), ui_lit(stdout, "&nearr;"), ui_close(stdout, "span"), ui_close(stdout, "a"));
     }
     front_listen(item, "fd-lead-text", 1, "fd-ghost");
     if (page_item_has_page(item)) front_open(item, "Read here");
+    ms_keep(item, pool->back, 0);
     ui_close_n(stdout, "div", "div", "section", NULL);
 }
 
@@ -329,8 +395,9 @@ static void front_card(const FrontPool *pool, FrontPick *p, int n) {
     if (item->body[0] && strcmp(item->body, item->title)) { ui_text(stdout, "p", "fd-dek", item->body); }
     (ui_close(stdout, "div"), ui_open(stdout, "footer", NULL));
     front_listen(item, id, 0, "fd-act");
-    ui_open(stdout, "span", "fd-when"); front_time(item->at, pool->now); ui_close(stdout, "span");
+    ui_open(stdout, "span", "fd-when"); front_pick_time(pool, p); ui_close(stdout, "span");
     front_open(item, NULL);
+    ms_keep(item, pool->back, 1);
     ui_close_n(stdout, "footer", "article", NULL);
 }
 
@@ -378,7 +445,7 @@ static int front_hear(FrontPool *pool) {
     }
     if (!n) return 0;
     (ui_elem(stdout, "section", (const UiAttr[]){{"class", "fd-hear"}, {"id", "fd-listen"}, {"aria-labelledby", "fd-listen-h"}}, 3, 0), ui_open(stdout, "div", "fd-section-head"), ui_elem(stdout, "h2", (const UiAttr[]){{"id", "fd-listen-h"}}, 1, 0), ui_lit(stdout, "Listen"), ui_close(stdout, "h2"));
-    printf("<p>%d new episodes</p></div><ol class=\"fd-tracks\">", n);
+    ui_open(stdout,"p",NULL);printf("%d",n);ui_lit(stdout," new episodes</p></div>");ui_open(stdout,"ol","fd-tracks");
     for (i = 0; i < n; i++) {
         const PageItem *item = &picks[i]->item; char id[24]; const char *close;
         snprintf(id, sizeof(id), "fd-h%d", i);
@@ -390,6 +457,7 @@ static int front_hear(FrontPool *pool) {
         (ui_close(stdout, "h3"), ui_open(stdout, "p", "fd-show")); html(front_publisher(item)); ui_close_n(stdout, "p", "div", NULL);
         ui_open(stdout, "span", "fd-when"); front_time(item->at, pool->now); ui_close(stdout, "span");
         front_listen(item, id, 0, "fd-act");
+        ms_keep(item, pool->back, 1);
         ui_close(stdout, "li");
         front_use(picks[i]);
     }
@@ -410,10 +478,10 @@ static int front_reading(FrontPool *pool, const char *heading, int cap) {
         ui_open(stdout, "article", "fd-read");
         if (page_image_url_safe(item->image)) { close = page_emit_item_open(item, "fd-read-picture"); page_emit_picture(item->image, "fd-read-img"); fputs(close, stdout); }
         (ui_open(stdout, "p", "fd-card-top"), ui_open(stdout, "span", "fd-beat")); html(front_publisher(item));
-        (ui_close(stdout, "span"), ui_open(stdout, "span", NULL)); front_time(item->at, pool->now); fputs("</span></p><div class=\"fd-card-text\" id=\"", stdout); html(id); (ui_lit(stdout, "\">"), ui_open(stdout, "h3", NULL));
+        (ui_close(stdout, "span"), ui_open(stdout, "span", NULL)); front_pick_time(pool, picks[i]); ui_close(stdout,"span");ui_close(stdout,"p");ui_start(stdout,"div");ui_attr(stdout,"class","fd-card-text");ui_attr_open(stdout,"id"); html(id); (ui_attr_close(stdout),ui_gt(stdout), ui_open(stdout, "h3", NULL));
         close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout); ui_close(stdout, "h3");
         if (item->body[0] && strcmp(item->body, item->title)) { ui_text(stdout, "p", "fd-dek", item->body); }
-        (ui_close(stdout, "div"), ui_open(stdout, "footer", NULL)); front_listen(item, id, 0, "fd-act"); front_open(item, NULL); ui_close_n(stdout, "footer", "article", NULL);
+        (ui_close(stdout, "div"), ui_open(stdout, "footer", NULL)); front_listen(item, id, 0, "fd-act"); front_open(item, NULL); ms_keep(item, pool->back, 1); ui_close_n(stdout, "footer", "article", NULL);
         front_use(picks[i]);
     }
     ui_close_n(stdout, "div", "section", NULL);
@@ -432,7 +500,7 @@ static int front_going(FrontPool *pool) {
         (ui_open(stdout, "li", NULL), ui_open(stdout, "p", "fd-date"), ui_open(stdout, "b", NULL)); html(date); (ui_close(stdout, "b"), ui_open(stdout, "span", NULL)); html(weekday); (ui_close(stdout, "span"), ui_close(stdout, "p"), ui_open(stdout, "div", NULL), ui_open(stdout, "h3", NULL));
         close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
         (ui_close(stdout, "h3"), ui_open(stdout, "p", NULL)); html(item->where[0] ? item->where : front_publisher(item)); (ui_close(stdout, "p"), ui_close(stdout, "div"), ui_open(stdout, "p", "fd-ahead"));
-        html(ahead); ui_close_n(stdout, "p", "li", NULL);
+        html(ahead); ui_close(stdout, "p"); ms_keep(item, pool->back, 1); ui_close(stdout, "li");
         front_use(picks[i]);
     }
     ui_close_n(stdout, "ol", "section", NULL);
@@ -460,11 +528,11 @@ static int front_pictured(FrontPool *pool, const char *heading) {
 }
 
 static void front_standard(void) {
-    fputs("<section class=\"fd-standard\" aria-labelledby=\"fd-standard-h\"><p class=\"fd-kicker\"><span>The Aurekai standard</span></p>"
-          "<h2 id=\"fd-standard-h\">A front page that ends.</h2>"
-          "<p>Everything here was published by the source named on it, and every item links back there. Nothing is ranked to keep you scrolling: "
-          "stories run newest first, and when today&#039;s run out, so does the page.</p>"
-          "<p class=\"fd-standard-ways\"><a href=\"/channels\">See the sources</a><a href=\"/people\">See the people behind them</a></p></section>", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","fd-standard");ui_attr(stdout,"aria-labelledby","fd-standard-h");ui_gt(stdout);
+    ui_open(stdout,"p","fd-kicker");ui_text(stdout,"span",NULL,"The Aurekai standard");ui_close(stdout,"p");
+    ui_elem(stdout,"h2",(const UiAttr[]){{"id","fd-standard-h"}},1,0);ui_lit(stdout,"A front page that ends.");ui_close(stdout,"h2");
+    ui_open(stdout,"p",NULL);ui_lit(stdout,"Everything here was published by the source named on it, and every item links back there. Nothing is ranked to keep you scrolling: stories run newest first, and when today&#039;s run out, so does the page.");ui_close(stdout,"p");
+    ui_open(stdout,"p","fd-standard-ways");ui_elem(stdout,"a",(const UiAttr[]){{"href","/channels"}},1,0);ui_lit(stdout,"See the sources");ui_close(stdout,"a");ui_elem(stdout,"a",(const UiAttr[]){{"href","/people"}},1,0);ui_lit(stdout,"See the people behind them");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section");
 }
 
 /* The count of picks the composer would show, for the edition strip: the
@@ -472,6 +540,52 @@ static void front_standard(void) {
 static int front_available(FrontPool *pool, unsigned mask, time_t max_age, int cap) {
     FrontPick *picks[12]; int n = front_choose(pool, mask, max_age, 0, picks, cap > 12 ? 12 : cap);
     return n;
+}
+
+/* A front's pool is the same for everyone who opens it: its beats read the
+ * same sources whoever is asking. Assembling it parses every beat's sources,
+ * so a worker keeps the last pool per host and route for two minutes and each
+ * request composes from a copy; what is personal (saved state, navigation)
+ * is still decided per request. The routes the beats stood for are replayed so
+ * the sections beneath behave as if read again. */
+#define FRONT_CACHE_SECONDS 120
+#define FRONT_CACHE_SLOTS 8
+typedef struct {
+    char key[160]; time_t at; FrontPick *pick; int count, beats, taken, source_count;
+    const BfPageProgram *beat[FRONT_BEATS]; char sources[64][96]; time_t newest;
+} FrontPoolCache;
+static FrontPoolCache front_cache[FRONT_CACHE_SLOTS];
+static void front_cache_key(const PageDocument *doc, char *key, size_t cap) {
+    snprintf(key, cap, "%s|%s", page_render_host ? page_render_host : "", doc->route ? doc->route : "");
+}
+static int front_cache_restore(const PageDocument *doc, FrontPool *pool) {
+    char key[160]; int s, i;
+    front_cache_key(doc, key, sizeof key);
+    for (s = 0; s < FRONT_CACHE_SLOTS; s++) {
+        FrontPoolCache *c = &front_cache[s];
+        if (!c->pick || strcmp(c->key, key) || pool->now - c->at > FRONT_CACHE_SECONDS || pool->now < c->at) continue;
+        memcpy(pool->pick, c->pick, sizeof(*pool->pick) * (size_t)c->count);
+        pool->count = c->count; pool->beats = c->beats; pool->source_count = c->source_count; pool->newest = c->newest;
+        memcpy(pool->beat, c->beat, sizeof(pool->beat)); memcpy(pool->sources, c->sources, sizeof(pool->sources));
+        for (i = 0; i < c->taken && i < c->beats; i++) if (c->beat[i]) page_front_take_route(c->beat[i]->route);
+        return 1;
+    }
+    return 0;
+}
+static void front_cache_store(const PageDocument *doc, const FrontPool *pool, int taken) {
+    char key[160]; int s, slot = 0;
+    front_cache_key(doc, key, sizeof key);
+    for (s = 0; s < FRONT_CACHE_SLOTS; s++) {
+        if (!strcmp(front_cache[s].key, key)) { slot = s; break; }
+        if (front_cache[s].at < front_cache[slot].at) slot = s;
+    }
+    FrontPoolCache *c = &front_cache[slot];
+    free(c->pick); memset(c, 0, sizeof(*c));
+    if (!(c->pick = malloc(sizeof(*c->pick) * (size_t)(pool->count ? pool->count : 1)))) return;
+    memcpy(c->pick, pool->pick, sizeof(*c->pick) * (size_t)pool->count);
+    snprintf(c->key, sizeof c->key, "%s", key); c->at = pool->now; c->count = pool->count; c->beats = pool->beats;
+    c->taken = taken; c->source_count = pool->source_count; c->newest = pool->newest;
+    memcpy(c->beat, pool->beat, sizeof(c->beat)); memcpy(c->sources, pool->sources, sizeof(c->sources));
 }
 
 static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, const PageDocument *doc,
@@ -482,11 +596,18 @@ static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, con
     front_db = db;
     memset(&pool, 0, sizeof(pool));
     pool.now = ctx ? ctx->now : time(NULL);
+    pool.back = doc->route;
     if (!(pool.pick = calloc(FRONT_POOL_MAX, sizeof(*pool.pick)))) return 0;
-    hub = !strcmp(territory, "work");
+    ms_saved_open();
+    /* The work front is a dossier of dispatches; Discover is the whole
+     * estate on every host, so it keeps the full reading rhythm. */
+    hub = !strcmp(territory, "work") && strcmp(doc->route, "/discover");
     /* The beats are the program's sections; a route without sections is its
      * own single beat over the material the page already read. */
-    if (doc->program && doc->program->section_count && doc->program->sections[0]) {
+    if (doc->program && doc->program->section_count && doc->program->sections[0] && front_cache_restore(doc, &pool)) {
+        /* Composed from the shared pool below. */
+    } else if (doc->program && doc->program->section_count && doc->program->sections[0]) {
+        int taken = 0;
         for (i = 0; i < (int)doc->program->section_count && pool.beats < FRONT_BEATS; i++) {
             const BfPageProgram *program = doc->program->sections[i] ? page_program_for_route(doc->program->sections[i]) : NULL;
             PageMaterial *beat;
@@ -496,6 +617,7 @@ static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, con
             front_pool_take(&pool, beat, pool.beats);
             pool.beats++;
             page_front_take_route(program->route);
+            taken = pool.beats;
             free(beat);
         }
         /* The front's own reading still counts: a source the territory admits
@@ -518,6 +640,7 @@ static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, con
                 free(shows);
             }
         }
+        front_cache_store(doc, &pool, taken);
     } else if (material && doc->program) {
         pool.beat[0] = doc->program; pool.beats = 1;
         front_pool_take(&pool, material, 0);
@@ -534,11 +657,15 @@ static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, con
                       front_available(&pool, FRONT_KIND(BF_PAGE_MATERIAL_AUDIO), 30 * FRONT_DAY, 6) +
                       front_available(&pool, FRONT_KIND(BF_PAGE_MATERIAL_PUBLICATION) | FRONT_KIND(BF_PAGE_MATERIAL_POST), 0, 6) +
                       front_available(&pool, FRONT_KIND(BF_PAGE_MATERIAL_EVENT), 0, 6);
-        fputs("<div class=\"fd ", stdout); fputs(hub ? "fd-hub" : "fd-discover", stdout); ui_lit(stdout, "\" data-front=\""); html(territory); ui_lit(stdout, "\">");
+        ui_start(stdout,"div");ui_attr_open(stdout,"class");ui_lit(stdout,"fd ");fputs(hub ? "fd-hub" : "fd-discover", stdout);ui_attr_close(stdout);ui_attr_open(stdout,"data-front");html(territory);ui_attr_close(stdout);ui_gt(stdout);
         front_strip(&pool, today);
         front_head(doc, &pool, kinds, kinds_n);
     }
-    if (front_choose(&pool, FRONT_STORIES, 0, 1, lead, 1)) { front_lead(&pool, lead[0]); front_use(lead[0]); shown++; }
+    if (front_choose(&pool, FRONT_STORIES, 0, 1, lead, 1)) {
+        front_lead(&pool, lead[0]); front_use(lead[0]); shown++;
+        /* Discover carries the lead's longer history from the whole archive. */
+        if (!strcmp(doc->route, "/discover")) page_emit_archive_thread(&lead[0]->item, pool.now);
+    }
     if (hub) {
         shown += front_dispatches(&pool, "Dispatches and recordings", 9);
     } else {
@@ -548,11 +675,13 @@ static int page_front_editorial(sqlite3 *db, PageProjectionRead *projection, con
         shown += front_going(&pool);
         shown += front_pictured(&pool, !strcmp(territory, "shop") ? "In the shops" : "Pictured");
     }
-    if (!shown)
-        fputs("<p class=\"fd-empty\">Nothing new from this front&#039;s sources yet. The sources are read through the day; "
-              "<a href=\"/channels\">see which ones</a>.</p>", stdout);
+    if (!shown) {
+        ui_open(stdout,"p","fd-empty");ui_lit(stdout,"Nothing new from this front&#039;s sources yet. The sources are read through the day; ");
+        ui_elem(stdout,"a",(const UiAttr[]){{"href","/channels"}},1,0);ui_lit(stdout,"see which ones");ui_close(stdout,"a");ui_lit(stdout,".");ui_close(stdout,"p");
+    }
     front_standard();
     ui_close(stdout, "div");
+    ms_saved_close();
     free(pool.pick);
     return shown ? shown : 1;
 }

@@ -5,7 +5,7 @@ architecture institutional-delegation-model
   owns DelegationEnvelope
   consumes Authority
   consumes InformationPolicy
-  consumes CapabilityClosure
+  consumes Capability
   consumes EvidenceClosure
   publishes DelegationEnvelope
   publishes BoundClosure

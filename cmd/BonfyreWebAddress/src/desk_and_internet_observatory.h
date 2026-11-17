@@ -383,13 +383,13 @@ static int internet_count(sqlite3 *db, const char *kind_prefix) {
 }
 
 static void internet_context(const BfMatrixAddressResolution *resolved) {
-    fputs("<script>window.BonfyreMatrixContext={\"subject\":", stdout); json(resolved->subject_id);
+    ui_open(stdout,"script",NULL);ui_lit(stdout,"window.BonfyreMatrixContext={\"subject\":"); json(resolved->subject_id);
     fputs(",\"presence\":", stdout); json(resolved->presence_id);
     fputs(",\"territory\":", stdout); json(resolved->territory);
     fputs(",\"world\":", stdout); json(bf_matrix_world_name(resolved->world));
     fputs(",\"audience\":", stdout); json(bf_matrix_scope_name(resolved->scope));
     fputs(",\"canonicalAddress\":", stdout); json(resolved->canonical_address);
-    fputs("};</script>", stdout);
+    ui_lit(stdout,"};");ui_close(stdout,"script");
 }
 
 /* SurfaceIR's shared document grammar owns the document.  Inject the exact
@@ -592,21 +592,46 @@ static int serve_internet_observatory(const BfRequest *r) {
             "<article class=\"subj\"><p class=\"eyebrow\"><i></i>Internet Observatory &middot; operator closure</p>"
             "<h2 class=\"subj-name\">Discover the address first. <em>Observe only after admission.</em></h2>"
             "<p class=\"subj-desc\">This is the candidate frontier for the Aurekai Internet Observatory. A registry row, crawl capture, code hit, or search result is retained with its query receipt but remains discovery-only until the ForeignTwin owner performs an admitted observation.</p>"
-            "<dl class=\"flow-facts\"><div><dt>Candidate addresses</dt><dd>%d</dd></div><div><dt>Hydrated origins</dt><dd>0 by this carrier</dd></div><div><dt>Authority</dt><dd>separate</dd></div></dl>"
-            "<form class=\"mk-commit\" hx-post=\"/operators/candidates\" hx-target=\"#candidate-result\" hx-swap=\"innerHTML\">"
-            "<label>Public candidate address<input name=\"address\" type=\"url\" required placeholder=\"https://example.org/.well-known/agent-card.json\"></label>"
-            "<div class=\"mk-money\"><label>Typed kind<input name=\"kind\" required pattern=\"[A-Za-z0-9:._-]+\" placeholder=\"agent:a2a\"></label>"
-            "<label>Source index<input name=\"source\" required pattern=\"[A-Za-z0-9:._-]+\" placeholder=\"official-registry\"></label></div>"
-            "<label>Query / discovery receipt input<textarea name=\"query\" required placeholder=\"protocol=A2A; capability=hotel-booking; registry page 2\"></textarea></label>"
-            "<p class=\"subj-note\">Adding an address only records where it came from. Nothing is fetched, and it gives no access, tool use or payment.</p>"
-            "<button class=\"button primary\" type=\"submit\">Add to the list <span>&rarr;</span></button></form><div id=\"candidate-result\"></div>",
+            "<dl class=\"flow-facts\"><div><dt>Candidate addresses</dt><dd>%d</dd></div><div><dt>Hydrated origins</dt><dd>0 by this carrier</dd></div><div><dt>Authority</dt><dd>separate</dd></div></dl>",
             internet_count(db, NULL));
+        { char *frag=NULL; size_t fraglen=0; FILE *m=open_memstream(&frag,&fraglen);
+          if(m){
+            ui_start(m,"form");ui_attr(m,"class","mk-commit");ui_attr(m,"hx-post","/operators/candidates");ui_attr(m,"hx-target","#candidate-result");ui_attr(m,"hx-swap","innerHTML");ui_gt(m);
+            ui_open(m,"label",NULL);ui_copy(m,"Public candidate address");
+            ui_start(m,"input");ui_attr(m,"name","address");ui_attr(m,"type","url");ui_flag(m,"required");ui_attr(m,"placeholder","https://example.org/.well-known/agent-card.json");ui_gt(m);
+            ui_close(m,"label");
+            ui_open(m,"div","mk-money");
+            ui_open(m,"label",NULL);ui_copy(m,"Typed kind");
+            ui_start(m,"input");ui_attr(m,"name","kind");ui_flag(m,"required");ui_attr(m,"pattern","[A-Za-z0-9:._-]+");ui_attr(m,"placeholder","agent:a2a");ui_gt(m);
+            ui_close(m,"label");
+            ui_open(m,"label",NULL);ui_copy(m,"Source index");
+            ui_start(m,"input");ui_attr(m,"name","source");ui_flag(m,"required");ui_attr(m,"pattern","[A-Za-z0-9:._-]+");ui_attr(m,"placeholder","official-registry");ui_gt(m);
+            ui_close(m,"label");ui_close(m,"div");
+            ui_open(m,"label",NULL);ui_copy(m,"Query / discovery receipt input");
+            ui_start(m,"textarea");ui_attr(m,"name","query");ui_flag(m,"required");ui_attr(m,"placeholder","protocol=A2A; capability=hotel-booking; registry page 2");ui_gt(m);ui_close(m,"textarea");
+            ui_close(m,"label");
+            ui_open(m,"p","subj-note");ui_copy(m,"Adding an address only records where it came from. Nothing is fetched, and it gives no access, tool use or payment.");ui_close(m,"p");
+            ui_start(m,"button");ui_attr(m,"class","button primary");ui_attr(m,"type","submit");ui_gt(m);
+            ui_copy(m,"Add to the list ");ui_open(m,"span",NULL);ui_copy(m,"&rarr;");ui_close(m,"span");ui_close(m,"button");ui_close(m,"form");
+            ui_start(m,"div");ui_attr(m,"id","candidate-result");ui_gt(m);ui_close(m,"div");
+            fclose(m);
+          }
+          w += (size_t)snprintf(page+w, sizeof(page)-w, "%s", frag?frag:""); free(frag); }
         w += (size_t)snprintf(page + w, sizeof(page) - w,
             "<section class=\"desk-q\"><div class=\"desk-qh\"><h3>Compile a source passport</h3><span class=\"desk-n\">one selected origin</span></div>"
-            "<p class=\"desk-why\">This runs the existing MachineMembrane ladder against a retained public candidate's publisher root: robots first, then the cheapest declared carrier. It stores a passport only; it does not hydrate a ForeignTwin.</p>"
-            "<form class=\"mk-commit\" hx-post=\"/operators/probe\" hx-target=\"#passport-result\" hx-swap=\"innerHTML\">"
-            "<label>Candidate ID<input name=\"candidate_id\" type=\"number\" min=\"1\" required placeholder=\"1\"></label>"
-            "<button class=\"button primary\" type=\"submit\">Compile passport <span>&rarr;</span></button></form><div id=\"passport-result\"></div></section>");
+            "<p class=\"desk-why\">This runs the existing MachineMembrane ladder against a retained public candidate's publisher root: robots first, then the cheapest declared carrier. It stores a passport only; it does not hydrate a ForeignTwin.</p>");
+        { char *frag=NULL; size_t fraglen=0; FILE *m=open_memstream(&frag,&fraglen);
+          if(m){
+            ui_start(m,"form");ui_attr(m,"class","mk-commit");ui_attr(m,"hx-post","/operators/probe");ui_attr(m,"hx-target","#passport-result");ui_attr(m,"hx-swap","innerHTML");ui_gt(m);
+            ui_open(m,"label",NULL);ui_copy(m,"Candidate ID");
+            ui_start(m,"input");ui_attr(m,"name","candidate_id");ui_attr(m,"type","number");ui_attr(m,"min","1");ui_flag(m,"required");ui_attr(m,"placeholder","1");ui_gt(m);
+            ui_close(m,"label");
+            ui_start(m,"button");ui_attr(m,"class","button primary");ui_attr(m,"type","submit");ui_gt(m);
+            ui_copy(m,"Compile passport ");ui_open(m,"span",NULL);ui_copy(m,"&rarr;");ui_close(m,"span");ui_close(m,"button");ui_close(m,"form");
+            ui_start(m,"div");ui_attr(m,"id","passport-result");ui_gt(m);ui_close(m,"div");ui_close(m,"section");
+            fclose(m);
+          }
+          w += (size_t)snprintf(page+w, sizeof(page)-w, "%s", frag?frag:""); free(frag); }
         if (db) {
             sqlite3_stmt *listed = NULL;
             w += (size_t)snprintf(page + w, sizeof(page) - w,
@@ -715,13 +740,13 @@ static int serve_desk_url_review(const char *url, const char *bearer, const char
         ui_open(page,"p","subj-desc");ui_copy(page,"You supplied this address. Its contents have not been fetched.");ui_close(page,"p");ui_start(page,"p");ui_attr(page,"class","review-address");ui_attr(page,"style","overflow-wrap:anywhere");ui_gt(page);ui_copy(page,escaped);ui_close(page,"p");
         if (session_valid(bearer, auth_db) && session_authorized(bearer, auth_db, "write")) {
             bf_sha256_hex((const uint8_t *)url, strlen(url), digest);
-            fprintf(page, "<form class=\"actions\" action=\"/studio/v1/foreign/observe\" method=\"post\" "
-                          "hx-post=\"/studio/v1/foreign/observe\" hx-target=\"#selected-foreign-result\" hx-swap=\"innerHTML\">"
-                          "<input type=\"hidden\" name=\"twin_id\" value=\"url:%s\">"
-                          "<input type=\"hidden\" name=\"url\" value=\"%s\">"
-                          "<button class=\"button\" type=\"submit\">Read this address</button></form>"
-                          "<p>This asks the source for a copy and keeps a receipt. It does not publish the source or verify its claims.</p>"
-                          "<div id=\"selected-foreign-result\" aria-live=\"polite\"></div>", digest, escaped);
+            ui_start(page,"form");ui_attr(page,"class","actions");ui_attr(page,"action","/studio/v1/foreign/observe");ui_attr(page,"method","post");
+            ui_attr(page,"hx-post","/studio/v1/foreign/observe");ui_attr(page,"hx-target","#selected-foreign-result");ui_attr(page,"hx-swap","innerHTML");ui_gt(page);
+            ui_start(page,"input");ui_attr(page,"type","hidden");ui_attr(page,"name","twin_id");ui_attr_open(page,"value");ui_copy(page,"url:");fputs(digest,page);ui_attr_close(page);ui_gt(page);
+            ui_start(page,"input");ui_attr(page,"type","hidden");ui_attr(page,"name","url");ui_attr_open(page,"value");fputs(escaped,page);ui_attr_close(page);ui_gt(page);
+            ui_start(page,"button");ui_attr(page,"class","button");ui_attr(page,"type","submit");ui_gt(page);ui_copy(page,"Read this address");ui_close(page,"button");ui_close(page,"form");
+            ui_open(page,"p",NULL);ui_copy(page,"This asks the source for a copy and keeps a receipt. It does not publish the source or verify its claims.");ui_close(page,"p");
+            ui_start(page,"div");ui_attr(page,"id","selected-foreign-result");ui_attr(page,"aria-live","polite");ui_gt(page);ui_close(page,"div");
         } else if (session_valid(bearer, auth_db)) {
             ui_open(page,"p",NULL);ui_copy(page,"Your account can review this address. Reading and retaining its contents requires write access.");ui_close(page,"p");
         } else {
@@ -730,8 +755,9 @@ static int serve_desk_url_review(const char *url, const char *bearer, const char
                 fputs("/studio/?foreign_url=", continuation); url_query_value_to(continuation, url);
                 if (!fclose(continuation)) {
                     char e_next[20000]; html_escape(next, e_next, sizeof(e_next));
-                    fprintf(page, "<form action=\"/login\" method=\"get\"><input type=\"hidden\" name=\"next\" value=\"%s\">"
-                                  "<button class=\"button\" type=\"submit\">Sign in to continue</button></form>", e_next);
+                    ui_start(page,"form");ui_attr(page,"action","/login");ui_attr(page,"method","get");ui_gt(page);
+                    ui_start(page,"input");ui_attr(page,"type","hidden");ui_attr(page,"name","next");ui_attr_open(page,"value");fputs(e_next,page);ui_attr_close(page);ui_gt(page);
+                    ui_start(page,"button");ui_attr(page,"class","button");ui_attr(page,"type","submit");ui_gt(page);ui_copy(page,"Sign in to continue");ui_close(page,"button");ui_close(page,"form");
                 }
             }
         }
@@ -783,13 +809,17 @@ static int serve_desk_external_candidate(const BfRequest *r) {
           "<p class=\"desk-why\">No source admission, evidence promotion, provider admission, authority, "
           "payment, settlement or effect follows from this route.</p>", route_html);
         if (may_write) {
-            w += (size_t)snprintf(body + w, sizeof(body) - w,
-              "<form class=\"actions\" hx-post=\"/studio/v1/foreign/observe\" "
-              "hx-target=\"#selected-foreign-result\" hx-swap=\"innerHTML\">"
-              "<input type=\"hidden\" name=\"twin_id\" value=\"%s\">"
-              "<input type=\"hidden\" name=\"url\" value=\"%s\">"
-              "<button class=\"button\" type=\"submit\">Observe this exact candidate</button></form>"
-              "<div id=\"selected-foreign-result\"></div>", e_occurrence, e_url);
+            char *frag=NULL; size_t fraglen=0; FILE *m=open_memstream(&frag,&fraglen);
+            if(m){
+              ui_start(m,"form");ui_attr(m,"class","actions");ui_attr(m,"hx-post","/studio/v1/foreign/observe");
+              ui_attr(m,"hx-target","#selected-foreign-result");ui_attr(m,"hx-swap","innerHTML");ui_gt(m);
+              ui_start(m,"input");ui_attr(m,"type","hidden");ui_attr(m,"name","twin_id");ui_attr_open(m,"value");fputs(e_occurrence,m);ui_attr_close(m);ui_gt(m);
+              ui_start(m,"input");ui_attr(m,"type","hidden");ui_attr(m,"name","url");ui_attr_open(m,"value");fputs(e_url,m);ui_attr_close(m);ui_gt(m);
+              ui_start(m,"button");ui_attr(m,"class","button");ui_attr(m,"type","submit");ui_gt(m);ui_copy(m,"Observe this exact candidate");ui_close(m,"button");ui_close(m,"form");
+              ui_start(m,"div");ui_attr(m,"id","selected-foreign-result");ui_gt(m);ui_close(m,"div");
+              fclose(m);
+            }
+            w += (size_t)snprintf(body+w, sizeof(body)-w, "%s", frag?frag:""); free(frag);
         } else {
             w += (size_t)snprintf(body + w, sizeof(body) - w,
               "<p class=\"desk-empty\">Write authority is required to ask ForeignTwin to observe this source.</p>");
@@ -890,15 +920,19 @@ static int serve_desk(const BfRequest *r) {
         fputs("\">Visual editor</a><a class=\"ak-btn is-quiet\" href=\"/profile\">Your page</a>", stdout);
     } else {ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr(stdout,"href","/login?next=/studio");ui_gt(stdout);ui_copy(stdout,"Sign in to your studio");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/signup");ui_gt(stdout);ui_copy(stdout,"Create an account");ui_close(stdout,"a");}
     ui_close(stdout,"div");ui_close(stdout,"div");ui_open(stdout,"dl","ak-stats");
-    printf("<div><dt>Addresses</dt><dd%s>%d</dd><small>sites bound to you</small></div>", site_n ? " class=\"is-on\"" : "", site_n);
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Addresses");ui_close(stdout,"dt");
+    ui_start(stdout,"dd");if(site_n)ui_attr(stdout,"class","is-on");ui_gt(stdout);printf("%d",site_n);ui_close(stdout,"dd");
+    ui_open(stdout,"small",NULL);ui_copy(stdout,"sites bound to you");ui_close(stdout,"small");ui_close(stdout,"div");
     ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Published");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",published);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"pages that answer");ui_close(stdout,"small");ui_close(stdout,"div");
     ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Drafts");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%d",pages - published);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"saved, not public");ui_close(stdout,"small");ui_close(stdout,"div");
-    printf("<div><dt>Write access</dt><dd%s>%s</dd><small>%s</small></div></dl></section>",
-           may_write ? " class=\"is-on\"" : "", may_write ? "Yes" : signed_in ? "Own site" : "No",
-           may_write ? "workspace and sites" : signed_in ? "your own sites only" : "sign in first");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Write access");ui_close(stdout,"dt");
+    ui_start(stdout,"dd");if(may_write)ui_attr(stdout,"class","is-on");ui_gt(stdout);
+    fputs(may_write ? "Yes" : signed_in ? "Own site" : "No",stdout);ui_close(stdout,"dd");
+    ui_open(stdout,"small",NULL);fputs(may_write ? "workspace and sites" : signed_in ? "your own sites only" : "sign in first",stdout);ui_close(stdout,"small");
+    ui_close(stdout,"div");ui_close(stdout,"dl");ui_close(stdout,"section");
 
     /* The ask: a sentence is read for what it proposes, by the existing reader. */
-    fputs("<section class=\"ak-ask\"><p class=\"ak-kicker\">Start from a sentence</p>", stdout);
+    ui_open(stdout,"section","ak-ask");ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"Start from a sentence");ui_close(stdout,"p");
     {
         BfAuthoringTree *tree = calloc(1, sizeof(*tree));
         int ok = tree && ft_action(tree, "studio-ask", NULL, 0, "Read it", "get", "/make/read", NULL, 0) &&
@@ -911,8 +945,10 @@ static int serve_desk(const BfRequest *r) {
     ui_start(stdout,"nav");ui_attr(stdout,"class","ak-chips");ui_attr(stdout,"aria-label","Studio regions");ui_attr(stdout,"style","padding-top:26px");ui_gt(stdout);ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#addresses");ui_gt(stdout);ui_copy(stdout,"Your addresses");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#pages");ui_gt(stdout);ui_copy(stdout,"Pages");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#design");ui_gt(stdout);ui_copy(stdout,"Design");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#copy");ui_gt(stdout);ui_copy(stdout,"Keep a copy");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#open");ui_gt(stdout);ui_copy(stdout,"Waiting on you");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","#rules");ui_gt(stdout);ui_copy(stdout,"What publishing does");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr(stdout,"href","/studio/controls");ui_gt(stdout);ui_copy(stdout,"Every control");ui_close(stdout,"a");ui_close(stdout,"nav");
 
     /* Addresses. */
-    fputs("<section class=\"ak-sec\" id=\"addresses\"><header><div><span class=\"ak-kicker\">Where it goes live</span>"
-          "<h2>Your addresses</h2></div><p>Each address is a site that carries your pages. Open it, compose for it, or change how it looks.</p></header>", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","addresses");ui_gt(stdout);
+    ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Where it goes live");ui_close(stdout,"span");
+    ui_open(stdout,"h2",NULL);ui_copy(stdout,"Your addresses");ui_close(stdout,"h2");ui_close(stdout,"div");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"Each address is a site that carries your pages. Open it, compose for it, or change how it looks.");ui_close(stdout,"p");ui_close(stdout,"header");
     if (!site_n) {
         ui_open(stdout,"div","ak-panel");ui_open(stdout,"p","ak-empty");
         fputs(signed_in ? "No address is bound to this account yet. Your profile is where one is claimed."
@@ -937,8 +973,11 @@ static int serve_desk(const BfRequest *r) {
     ui_close(stdout,"section");
 
     /* Pages of the first address, newest first, each opened in the composer. */
-    fputs("<section class=\"ak-sec\" id=\"pages\"><header><div><span class=\"ak-kicker\">Pages</span><h2>What you have written</h2></div>"
-          "<p>Open any page in the composer. Published pages answer at the address; drafts stay with you.</p></header><div class=\"ak-panel\">", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","pages");ui_gt(stdout);
+    ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Pages");ui_close(stdout,"span");
+    ui_open(stdout,"h2",NULL);ui_copy(stdout,"What you have written");ui_close(stdout,"h2");ui_close(stdout,"div");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"Open any page in the composer. Published pages answer at the address; drafts stay with you.");ui_close(stdout,"p");ui_close(stdout,"header");
+    ui_open(stdout,"div","ak-panel");
     if (site_n && db) {
         sqlite3_stmt *st = NULL; int shown = 0;
         if (sqlite3_prepare_v2(db, "SELECT namespace,route,COALESCE(NULLIF(title,''),NULLIF(heading,''),route),status,COALESCE(updated_at,'') FROM site_page "
@@ -969,15 +1008,20 @@ static int serve_desk(const BfRequest *r) {
 
     /* How the address looks: the one design choice that dresses every page
      * of the site, saved through the profile's existing /profile/theme. */
-    fputs("<section class=\"ak-sec\" id=\"design\"><header><div><span class=\"ak-kicker\">Type and design</span><h2>How your pages look</h2></div>"
-          "<p>One design sets the typefaces, colours and spacing for every page at the address. The newest choice wins.</p></header><div class=\"ak-panel studio-design\">", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","design");ui_gt(stdout);
+    ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Type and design");ui_close(stdout,"span");
+    ui_open(stdout,"h2",NULL);ui_copy(stdout,"How your pages look");ui_close(stdout,"h2");ui_close(stdout,"div");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"One design sets the typefaces, colours and spacing for every page at the address. The newest choice wins.");ui_close(stdout,"p");ui_close(stdout,"header");
+    ui_open(stdout,"div","ak-panel studio-design");
     if (site_n) ph_theme_edit(db, &sites[0]);
     else ui_text(stdout, "p", "ak-empty", "Choose a design once an address is bound to you.");
     ui_close(stdout,"div");ui_close(stdout,"section");
 
     /* A copy to keep: every page snapshot of an address in one file. */
-    fputs("<section class=\"ak-sec\" id=\"copy\"><header><div><span class=\"ak-kicker\">Keep a copy</span><h2>Take your site with you</h2></div>"
-          "<p>Download every page and section of an address as one file. Each page carries its own digest, so you can check a copy against what is live.</p></header>", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","copy");ui_gt(stdout);
+    ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Keep a copy");ui_close(stdout,"span");
+    ui_open(stdout,"h2",NULL);ui_copy(stdout,"Take your site with you");ui_close(stdout,"h2");ui_close(stdout,"div");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"Download every page and section of an address as one file. Each page carries its own digest, so you can check a copy against what is live.");ui_close(stdout,"p");ui_close(stdout,"header");
     if (site_n) {
         ui_open(stdout,"div","ak-grid is-2");
         for (int i = 0; i < site_n; i++) {
@@ -990,9 +1034,11 @@ static int serve_desk(const BfRequest *r) {
     ui_close(stdout,"section");
 
     /* What is held open for a decision. */
-    fputs("<section class=\"ak-sec\" id=\"open\"><header><div><span class=\"ak-kicker\">Waiting on a decision</span><h2>Held open</h2></div>"
-          "<p>Each line is a real record someone stopped short of finishing. An empty list means there is nothing of that kind open.</p></header>"
-          "<div class=\"ak-grid is-2\">", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","open");ui_gt(stdout);
+    ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Waiting on a decision");ui_close(stdout,"span");
+    ui_open(stdout,"h2",NULL);ui_copy(stdout,"Held open");ui_close(stdout,"h2");ui_close(stdout,"div");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"Each line is a real record someone stopped short of finishing. An empty list means there is nothing of that kind open.");ui_close(stdout,"p");ui_close(stdout,"header");
+    ui_open(stdout,"div","ak-grid is-2");
     n = desk_drafts(rows, 6, &total, bearer, auth_db);
     studio_desk_panel("Written but not published", "Writing and publishing are separate acts.", rows, n, total,
                       may_write ? "Open it" : "See it", "Nothing is written and waiting.", may_write);
@@ -1016,12 +1062,17 @@ static int serve_desk(const BfRequest *r) {
     ui_close(stdout,"div");ui_close(stdout,"section");
 
     /* The rules publishing keeps -- each is enforced by the composer route. */
-    fputs("<section class=\"ak-sec\" id=\"rules\"><header><div><span class=\"ak-kicker\">What publishing does</span><h2>The rules your pages keep</h2></div></header>"
-          "<div class=\"ak-grid is-3\">"
-          "<article class=\"ak-panel is-raised\"><h3>Saving is not publishing</h3><p>The composer keeps your draft in your own workspace. Nobody else sees it until you publish.</p></article>"
-          "<article class=\"ak-panel is-raised\"><h3>You review the exact version</h3><p>Publishing names the saved revision you looked at. If it changed since, nothing goes out and you reopen it.</p></article>"
-          "<article class=\"ak-panel is-raised\"><h3>Only your own address</h3><p>A page publishes to a site bound to your account and to no other, whatever the request says.</p></article>"
-          "</div></section>", stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec");ui_attr(stdout,"id","rules");ui_gt(stdout);
+    ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"What publishing does");ui_close(stdout,"span");
+    ui_open(stdout,"h2",NULL);ui_copy(stdout,"The rules your pages keep");ui_close(stdout,"h2");ui_close(stdout,"div");ui_close(stdout,"header");
+    ui_open(stdout,"div","ak-grid is-3");
+    ui_open(stdout,"article","ak-panel is-raised");ui_open(stdout,"h3",NULL);ui_copy(stdout,"Saving is not publishing");ui_close(stdout,"h3");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"The composer keeps your draft in your own workspace. Nobody else sees it until you publish.");ui_close(stdout,"p");ui_close(stdout,"article");
+    ui_open(stdout,"article","ak-panel is-raised");ui_open(stdout,"h3",NULL);ui_copy(stdout,"You review the exact version");ui_close(stdout,"h3");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"Publishing names the saved revision you looked at. If it changed since, nothing goes out and you reopen it.");ui_close(stdout,"p");ui_close(stdout,"article");
+    ui_open(stdout,"article","ak-panel is-raised");ui_open(stdout,"h3",NULL);ui_copy(stdout,"Only your own address");ui_close(stdout,"h3");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"A page publishes to a site bound to your account and to no other, whatever the request says.");ui_close(stdout,"p");ui_close(stdout,"article");
+    ui_close(stdout,"div");ui_close(stdout,"section");
 
     ui_open(stdout,"section","ak-band");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"The last step");ui_close(stdout,"p");ui_open(stdout,"h2",NULL);
     if (site_n) { fputs("Publish, and it answers at ", stdout); html(sites[0].host); fputs(".", stdout); }
@@ -1335,13 +1386,16 @@ static int serve_flow(const BfRequest *r) {
             flow_reply(body);
             return 1;
         }
-        snprintf(body, sizeof(body),
-          "%s"
-          "<div class=\"fl-move\">"
-          "<button class=\"fl-next\" hx-get=\"/flow/at?i=%d\" hx-target=\"#flow-card\" "
-          "hx-swap=\"innerHTML\" data-flow-next=\"%d\">Next <span>&darr;</span></button>"
-          "<span class=\"fl-pos\">%d</span>"
-          "</div>", card, i + 1, i + 1, i + 1);
+        { char *frag=NULL; size_t fraglen=0; FILE *m=open_memstream(&frag,&fraglen);
+          if(m){ fputs(card,m);
+            ui_open(m,"div","fl-move");
+            ui_start(m,"button");ui_attr(m,"class","fl-next");ui_attr_open(m,"hx-get");fprintf(m,"/flow/at?i=%d",i+1);ui_attr_close(m);
+            ui_attr(m,"hx-target","#flow-card");ui_attr(m,"hx-swap","innerHTML");ui_attr_open(m,"data-flow-next");fprintf(m,"%d",i+1);ui_attr_close(m);ui_gt(m);
+            ui_copy(m,"Next ");ui_open(m,"span",NULL);ui_copy(m,"&darr;");ui_close(m,"span");ui_close(m,"button");
+            ui_open(m,"span","fl-pos");fprintf(m,"%d",i+1);ui_close(m,"span");
+            ui_close(m,"div");
+            fclose(m); }
+          snprintf(body, sizeof(body), "%s", frag?frag:""); free(frag); }
         flow_reply(body);
         return 1;
     }
@@ -1763,6 +1817,39 @@ static int serve_studio(const BfRequest *r) {
                 int n;
                 html_escape(who.name, e_name, sizeof(e_name));
                 html_escape(who.email, e_email, sizeof(e_email));
+                char *selfblock=NULL; size_t selfblocklen=0;
+                { FILE *m=open_memstream(&selfblock,&selfblocklen);
+                  if(m){
+                    if(may_self_author){
+                      ui_start(m,"form");ui_attr(m,"class","actions");ui_attr(m,"hx-post","/studio/v1/matrix/self-publish");ui_attr(m,"hx-target","#self-presence-result");ui_attr(m,"hx-swap","innerHTML");ui_gt(m);
+                      ui_open(m,"label",NULL);ui_copy(m,"Life presence ");
+                      ui_start(m,"input");ui_attr(m,"name","title");ui_attr(m,"placeholder","How you appear");ui_flag(m,"required");ui_gt(m);
+                      ui_close(m,"label");
+                      ui_open(m,"label",NULL);ui_copy(m,"Address ");
+                      ui_start(m,"input");ui_attr(m,"name","slug");ui_attr(m,"pattern","[a-z0-9-]+");ui_attr(m,"placeholder","my-friday");ui_flag(m,"required");ui_gt(m);
+                      ui_close(m,"label");
+                      ui_start(m,"button");ui_attr(m,"class","button primary");ui_attr(m,"type","submit");ui_gt(m);
+                      ui_copy(m,"Create my Life presence ");ui_open(m,"span",NULL);ui_copy(m,"&rarr;");ui_close(m,"span");ui_close(m,"button");ui_close(m,"form");
+                      ui_start(m,"div");ui_attr(m,"id","self-presence-result");ui_gt(m);ui_close(m,"div");
+                      ui_start(m,"form");ui_attr(m,"class","actions");ui_attr(m,"hx-post","/studio/v1/self/foreign/observe");ui_attr(m,"hx-target","#self-foreign-result");ui_attr(m,"hx-swap","innerHTML");ui_gt(m);
+                      ui_open(m,"label",NULL);ui_copy(m,"Private source label ");
+                      ui_start(m,"input");ui_attr(m,"name","twin_id");ui_attr(m,"pattern","[A-Za-z0-9:_-]+");ui_attr(m,"placeholder","my-source");ui_flag(m,"required");ui_gt(m);
+                      ui_close(m,"label");
+                      ui_open(m,"label",NULL);ui_copy(m,"Public source URL ");
+                      ui_start(m,"input");ui_attr(m,"name","url");ui_attr(m,"type","url");ui_attr(m,"placeholder","https://example.org/source");ui_flag(m,"required");ui_gt(m);
+                      ui_close(m,"label");
+                      ui_start(m,"button");ui_attr(m,"class","button quiet");ui_attr(m,"type","submit");ui_gt(m);
+                      ui_copy(m,"Observe privately ");ui_open(m,"span",NULL);ui_copy(m,"&rarr;");ui_close(m,"span");ui_close(m,"button");ui_close(m,"form");
+                      ui_start(m,"div");ui_attr(m,"id","self-foreign-result");ui_gt(m);ui_close(m,"div");
+                      ui_start(m,"section");ui_attr(m,"id","self-foreign-workspace");ui_attr(m,"hx-get","/studio/v1/self/foreign");ui_attr(m,"hx-trigger","load");ui_attr(m,"hx-swap","innerHTML");ui_gt(m);
+                      ui_open(m,"p","hint");ui_copy(m,"Loading your private source desk…");ui_close(m,"p");ui_close(m,"section");
+                      ui_open(m,"p",NULL);ui_start(m,"a");ui_attr(m,"href","/cms/");ui_gt(m);ui_copy(m,"Open my carrier recipes");ui_close(m,"a");ui_close(m,"p");
+                    }else{
+                      ui_open(m,"p","hint");ui_copy(m,"This session has no self-authoring scope. Sign in again or contact the institution that issued it.");ui_close(m,"p");
+                    }
+                    fclose(m);
+                  }
+                }
                 n = snprintf(fragment, sizeof(fragment),
                     "<section class=\"studio-result is-ok\" aria-live=\"polite\">"
                     "<span class=\"result-kicker\">Your closure</span>"
@@ -1775,20 +1862,8 @@ static int serve_studio(const BfRequest *r) {
                     "</section>",
                     e_name, e_email, may_self_author ? "available" : "unavailable",
                     may_write ? "available" : "not granted",
-                    may_self_author ?
-                    "<form class=\"actions\" hx-post=\"/studio/v1/matrix/self-publish\" hx-target=\"#self-presence-result\" hx-swap=\"innerHTML\">"
-                    "<label>Life presence <input name=\"title\" placeholder=\"How you appear\" required></label>"
-                    "<label>Address <input name=\"slug\" pattern=\"[a-z0-9-]+\" placeholder=\"my-friday\" required></label>"
-                    "<button class=\"button primary\" type=\"submit\">Create my Life presence <span>&rarr;</span></button></form>"
-                    "<div id=\"self-presence-result\"></div>"
-                    "<form class=\"actions\" hx-post=\"/studio/v1/self/foreign/observe\" hx-target=\"#self-foreign-result\" hx-swap=\"innerHTML\">"
-                    "<label>Private source label <input name=\"twin_id\" pattern=\"[A-Za-z0-9:_-]+\" placeholder=\"my-source\" required></label>"
-                    "<label>Public source URL <input name=\"url\" type=\"url\" placeholder=\"https://example.org/source\" required></label>"
-                    "<button class=\"button quiet\" type=\"submit\">Observe privately <span>&rarr;</span></button></form>"
-                    "<div id=\"self-foreign-result\"></div>"
-                    "<section id=\"self-foreign-workspace\" hx-get=\"/studio/v1/self/foreign\" hx-trigger=\"load\" hx-swap=\"innerHTML\"><p class=\"hint\">Loading your private source desk…</p></section>"
-                    "<p><a href=\"/cms/\">Open my carrier recipes</a></p>" :
-                    "<p class=\"hint\">This session has no self-authoring scope. Sign in again or contact the institution that issued it.</p>");
+                    selfblock?selfblock:"");
+                free(selfblock);
                 if (n < 0 || n >= (int)sizeof(fragment)) {
                     studio_reply(503, "application/json", "{\"error\":\"profile_overflow\"}\n"); return 1;
                 }

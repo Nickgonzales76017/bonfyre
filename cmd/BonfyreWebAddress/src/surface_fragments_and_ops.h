@@ -23,7 +23,7 @@ static void ways_html(const char *ways_json) {
         hv++;
         he = strchr(hv, '"');
         if (!he) break;
-        printf("<a class=\"way\" href=\"%.*s\">%.*s</a>", (int)(he - hv), hv, (int)(le - lv), lv);
+        ui_start(stdout,"a");ui_attr(stdout,"class","way");ui_attr_open(stdout,"href");printf("%.*s",(int)(he - hv),hv);ui_attr_close(stdout);ui_gt(stdout);printf("%.*s",(int)(le - lv),lv);ui_close(stdout,"a");
         cursor = he + 1;
     }
 }
@@ -71,7 +71,7 @@ static int serve_door_fragment(const char *target, const char *query) {
     }
     if (st) sqlite3_finalize(st);
     sqlite3_close(db);
-    if (!rows) printf("<!-- no authored doors for this page -->");
+    if (!rows) ui_lit(stdout,"<!-- no authored doors for this page -->");
     fflush(stdout);
     return 1;
 }
@@ -98,11 +98,12 @@ static int serve_aperture_fragment(BfMatrix *m, const char *host_in, const char 
         html(occurrence);
         (ui_lit(stdout, ". This preserves the ExternalEstate occurrence coordinate only; Studio must still observe the source independently."), ui_close(stdout, "p"));
     }
-    printf("<form action=\"/studio/\" method=\"get\"><input type=\"hidden\" name=\"foreign_url\" value=\"");
+    ui_open_a(stdout,"form","action","/studio/","method","get");
+    ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","foreign_url");ui_attr_open(stdout,"value");
     html(url);
     ui_lit(stdout, "\">");
     if (occurrence[0]) {
-        printf("<input type=\"hidden\" name=\"foreign_occurrence\" value=\"");
+        ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","foreign_occurrence");ui_attr_open(stdout,"value");
         html(occurrence);
         ui_lit(stdout, "\">");
     }
@@ -367,9 +368,10 @@ static int resolve(BfMatrix *m, const char *host_in, const char *path_in, const 
         html(out.subject_id);ui_lit(stdout, "\" data-bonfyre-presence=\"");html(out.presence_id);
         (ui_lit(stdout, "\">"), ui_open(stdout, "header", "ak-wb-hero is-solo"), ui_open(stdout, "div", NULL), ui_open(stdout, "p", "ak-kicker"), ui_lit(stdout, "Address "), ui_open(stdout, "span", NULL), ui_lit(stdout, "/"), ui_close(stdout, "span"), ui_lit(stdout, " "));html(out.territory);(ui_close(stdout, "p"), ui_open(stdout, "h1", NULL));html(out.subject_id);ui_close_n(stdout, "h1", "div", "header", NULL);
         (ui_open(stdout, "dl", "ak-spec ak-panel address-facts"), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Territory"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL));html(out.territory);(ui_close(stdout, "dd"), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Presence"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL));html(out.presence_id);
-        printf("</dd><dt>Canonical address</dt><dd class=\"is-on\"><a href=\"");html(out.canonical_address);ui_lit(stdout, "\">");html(out.canonical_address);ui_close_n(stdout, "a", "dd", NULL);
-        if(standing_rc==1)printf("<dt>Live members</dt><dd data-bonfyre-standing-members=\"%d\">%d</dd>",standing_members,standing_members);
-        fputs("</dl><p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" href=\"",stdout);html(crate);fputs("\">Machine description</a><a class=\"ak-btn is-quiet\" href=\"",stdout);html(zarr);
+        ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Canonical address");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");
+        ui_start(stdout,"a");ui_attr_open(stdout,"href");html(out.canonical_address);ui_lit(stdout, "\">");html(out.canonical_address);ui_close_n(stdout, "a", "dd", NULL);
+        if(standing_rc==1)do{ui_open(stdout,"dt",NULL);ui_copy(stdout,"Live members");ui_close(stdout,"dt");ui_start(stdout,"dd");ui_attr_open(stdout,"data-bonfyre-standing-members");printf("%d",standing_members);ui_attr_close(stdout);ui_gt(stdout);printf("%d",standing_members);ui_close(stdout,"dd");}while(0);
+        ui_close(stdout,"dl");ui_open(stdout,"p","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-quiet");ui_attr_open(stdout,"href");html(crate);fputs("\">Machine description",stdout);ui_close(stdout,"a");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-quiet");ui_attr_open(stdout,"href");html(zarr);
         fputs("\">Data array</a></p></main>" BF_ESTATE_FOOT "</body></html>\n",stdout); return 0;
     }
     if (http) printf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nConnection: close\r\n\r\n",content_type(out.representation));

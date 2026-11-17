@@ -831,13 +831,13 @@ static int emit_matrix_index(const char *root, const BfMatrixAddressResolution *
         ui_start(stdout,"meta");ui_attr(stdout,"name","twitter:title");ui_attr_open(stdout,"content"); html(title); fputs("\">", stdout);
         ui_start(stdout,"meta");ui_attr(stdout,"name","twitter:description");ui_attr_open(stdout,"content"); html(desc); fputs("\">", stdout);
     }
-    fputs("<script>window.BonfyreMatrixContext={\"subject\":", stdout); json(out->subject_id);
+    ui_open(stdout,"script",NULL);ui_lit(stdout,"window.BonfyreMatrixContext={\"subject\":"); json(out->subject_id);
     fputs(",\"presence\":", stdout); json(out->presence_id);
     fputs(",\"territory\":", stdout); json(out->territory);
     fputs(",\"world\":", stdout); json(bf_matrix_world_name(out->world));
     fputs(",\"audience\":", stdout); json(bf_matrix_scope_name(out->scope));
     fputs(",\"canonicalAddress\":", stdout); json(out->canonical_address);
-    fputs("};</script>", stdout);
+    ui_lit(stdout,"};");ui_close(stdout,"script");
     fwrite(slot + strlen(marker), 1, strlen(slot + strlen(marker)), stdout);
     free(body);
     return 1;

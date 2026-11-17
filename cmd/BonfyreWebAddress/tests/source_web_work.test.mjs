@@ -71,7 +71,7 @@ int main(int argc,char **argv){if(argc!=8)return 2;setenv("BONFYRE_BUN_BINARY","
  if(!serve_source_web_work(&(BfRequest){.method=argv[2],.target="/sources/_web",.query=argv[1],.body=(const char*)body,.raw=raw,.host="aurekai.life",.bearer=argv[3],.auth_db="/native/auth.db"}))return 3;
   printf("%d %d %d %s %s %s %zu\n",status_code,native_calls,permission,native_subject,native_actor,native_operation,native_size);if(!strcmp(native_operation,"provider"))printf("%s %s %s\n",native_revision,native_challenge,native_origin);return 0;}
 `;
- writeFileSync(join(home,'gateway.c'),source);execFileSync(process.env.CC||'cc',['-std=c11','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-include',resolve(root,'cmd/BonfyreWebAddress/src/web_request.h'),'-I'+resolve(root,'lib/libbonfyre/include'),join(home,'gateway.c'),resolve(root,'lib/libbonfyre/bf_msgpack.c'),'-o',binary],{stdio:'pipe'});
+ writeFileSync(join(home,'gateway.c'),source);execFileSync(process.env.CC||'cc',['-std=c11','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-DBF_ESTATE_FOOT=""','-include',resolve(root,'cmd/BonfyreWebAddress/src/web_request.h'),'-I'+resolve(root,'lib/libbonfyre/include'),join(home,'gateway.c'),resolve(root,'lib/libbonfyre/bf_msgpack.c'),'-o',binary],{stdio:'pipe'});
 });
 afterAll(()=>{if(home)rmSync(home,{recursive:true,force:true});});
 const call=(query,{method='GET',user='owner',origin='https://aurekai.life',type='application/msgpack',length='6',fault=0}={})=>execFileSync(binary,[query,method,user,origin,type,length,String(fault)],{encoding:'utf8'}).trim().split(' ');

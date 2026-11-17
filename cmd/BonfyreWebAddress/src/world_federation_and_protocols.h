@@ -209,9 +209,12 @@ static int emit_world_atom(sqlite3 *db, const BfWorldFederation *world, const ch
            "<feed xmlns=\"http://www.w3.org/2005/Atom\">\n");
     html_escape(world->title,et,sizeof(et));
     html_escape(world->lede,es,sizeof(es));
-    printf("<title>%s</title><id>%s/w/%s</id><link rel=\"self\" href=\"%s/w/%s/feed.atom\"/>"
-           "<link href=\"%s/w/%s\"/><updated>%s</updated><subtitle>%s</subtitle>\n",
-           et,origin,world->world,origin,world->world,origin,world->world,stamp,es);
+    ui_open(stdout,"title",NULL);printf("%s",et);ui_close(stdout,"title");
+    ui_open(stdout,"id",NULL);printf("%s",origin);ui_copy(stdout,"/w/");printf("%s",world->world);ui_close(stdout,"id");
+    ui_start(stdout,"link");ui_attr(stdout,"rel","self");ui_attr_open(stdout,"href");printf("%s",origin);ui_copy(stdout,"/w/");printf("%s",world->world);ui_copy(stdout,"/feed.atom");ui_attr_close(stdout);ui_copy(stdout,"/>");
+    ui_start(stdout,"link");ui_attr_open(stdout,"href");printf("%s",origin);ui_copy(stdout,"/w/");printf("%s",world->world);ui_attr_close(stdout);ui_copy(stdout,"/>");
+    ui_open(stdout,"updated",NULL);printf("%s",stamp);ui_close(stdout,"updated");
+    ui_open(stdout,"subtitle",NULL);printf("%s",es);ui_close(stdout,"subtitle");ui_copy(stdout,"\n");
     while (rc == SQLITE_ROW) {
         const char *id=(const char*)sqlite3_column_text(st,0), *source=(const char*)sqlite3_column_text(st,1);
         const char *href=(const char*)sqlite3_column_text(st,2), *title=(const char*)sqlite3_column_text(st,3);
@@ -219,9 +222,10 @@ static int emit_world_atom(sqlite3 *db, const BfWorldFederation *world, const ch
         html_escape(title?title:"",et,sizeof(et)); html_escape(summary?summary:"",es,sizeof(es));
         html_escape(href?href:"",eh,sizeof(eh)); html_escape(id?id:"",eid,sizeof(eid)); html_escape(source?source:"",esource,sizeof(esource));
         ui_open(stdout,"entry",NULL);ui_open(stdout,"title",NULL);ui_copy(stdout,et);ui_close(stdout,"title");ui_open(stdout,"id",NULL);ui_copy(stdout,"urn:bonfyre:publication:");ui_copy(stdout,eid);ui_close(stdout,"id");
-        if (eh[0]) printf("<link href=\"%s\"/>",eh);
-        printf("<updated>%s</updated><category term=\"%s\"/><summary>%s</summary></entry>\n",
-               observed&&*observed?observed:stamp,esource,es);
+        if (eh[0]) do { ui_start(stdout,"link");ui_attr_open(stdout,"href");printf("%s",eh);ui_attr_close(stdout);ui_copy(stdout,"/>"); } while (0);
+        ui_open(stdout,"updated",NULL);printf("%s",observed&&*observed?observed:stamp);ui_close(stdout,"updated");
+        ui_start(stdout,"category");ui_attr_open(stdout,"term");printf("%s",esource);ui_attr_close(stdout);ui_copy(stdout,"/>");
+        ui_open(stdout,"summary",NULL);printf("%s",es);ui_close(stdout,"summary");ui_close(stdout,"entry");ui_copy(stdout,"\n");
         rc = sqlite3_step(st);
     }
     ui_close(stdout,"feed");ui_copy(stdout,"\n"); sqlite3_finalize(st); return 1;

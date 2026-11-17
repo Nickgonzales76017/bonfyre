@@ -1123,7 +1123,7 @@ static int mf_open(const char *root, const char *target, const char *title, cons
     ui_open(stdout,"header","hero");ui_open(stdout,"h1",NULL); html(title); ui_close(stdout,"h1");ui_open(stdout,"p","lede"); html(lede); ui_close(stdout,"p");
     return 1;
 }
-static void mf_close(void) { fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout); }
+static void mf_close(void) { ui_close(stdout,"main");fputs(BF_ESTATE_FOOT,stdout);ui_close(stdout,"body");ui_close(stdout,"html"); }
 
 /* The offers the estate's sample shops publish, as numbered lots. */
 static int mf_offer_rows(sqlite3 *db, int with_head) {
@@ -1193,9 +1193,8 @@ static int emit_market_fronts(const BfRequest *r) {
         sqlite3 *db = cms_open_ro(); sqlite3_stmt *st = NULL; int shops = 0;
         if (query && *query && query_value(query, "q", raw, sizeof(raw))) flow_safe_term(raw, term, sizeof(term));
         if (!mf_open(root, "/property", "Living neighborhoods", "The land under the street, as the county roll records it, and the shops and people who keep places here.", "route-property")) { if (db) sqlite3_close(db); return 0; }
-        fputs("<form class=\"place-find\" role=\"search\" method=\"get\" action=\"/property\"><label for=\"place-q\">Find a property on the Tarrant County roll</label>"
-              "<div><input id=\"place-q\" type=\"search\" name=\"q\" placeholder=\"A street address, such as 200 Texas St\" value=\"", stdout); html(term);
-        fputs("\"><button type=\"submit\">Search</button></div></form></header>", stdout);
+        ui_open_a(stdout,"form","class","place-find","role","search","method","get","action","/property");ui_open_a(stdout,"label","for","place-q");ui_copy(stdout,"Find a property on the Tarrant County roll");ui_close(stdout,"label");ui_open(stdout,"div",NULL);ui_start(stdout,"input");ui_attr(stdout,"id","place-q");ui_attr(stdout,"type","search");ui_attr(stdout,"name","q");ui_attr(stdout,"placeholder","A street address, such as 200 Texas St");ui_attr_open(stdout,"value");html(term);ui_attr_close(stdout);ui_gt(stdout);
+        ui_open_a(stdout,"button","type","submit");ui_copy(stdout,"Search");ui_close(stdout,"button");ui_close(stdout,"div");ui_close(stdout,"form");ui_close(stdout,"header");
         if (term[0]) {
             fflush(stdout);
             page_emit_property_results(term);

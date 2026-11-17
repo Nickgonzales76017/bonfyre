@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <strings.h>
 #include "estate_reference.h"
+#include "ui_tree.h"
 
 static void esc(FILE *out, const char *s) {
     bf_lex_html_emit(out, s);
@@ -65,18 +66,18 @@ static void pager(FILE *out, const char *route, const char *host, const char *fa
                   unsigned offset, unsigned page_size, int shown, int total) {
     if (offset) {
         unsigned back = offset > page_size ? offset - page_size : 0;
-        fputs("<a class='source-page' href='", out); esc(out, route);
+        ui_start(out, "a"); ui_attr_sq(out, "class", "source-page"); ui_attr_open_sq(out, "href"); esc(out, route);
         fputs(host ? "?root=" : "?roots=1", out);
         if (host) url(out, host);
         if (family && *family) { fputs("&amp;family=", out); url(out, family); }
-        fprintf(out, "&amp;from=%u'>Back</a>", back);
+        fprintf(out, "&amp;from=%u'>Back", back); ui_close(out, "a");
     }
     if (total > (int)(offset + (unsigned)shown)) {
-        fputs("<a class='source-page' href='", out); esc(out, route);
+        ui_start(out, "a"); ui_attr_sq(out, "class", "source-page"); ui_attr_open_sq(out, "href"); esc(out, route);
         fputs(host ? "?root=" : "?roots=1", out);
         if (host) url(out, host);
         if (family && *family) { fputs("&amp;family=", out); url(out, family); }
-        fprintf(out, "&amp;from=%u'>More (%d left)</a>", offset + (unsigned)shown, total - (int)(offset + (unsigned)shown));
+        fprintf(out, "&amp;from=%u'>More (%d left)", offset + (unsigned)shown, total - (int)(offset + (unsigned)shown)); ui_close(out, "a");
     }
 }
 
@@ -104,26 +105,34 @@ int bf_source_depth_roots(FILE *out, const char *db_path, const char *route,
     sqlite3_bind_text(st, 1, needle ? needle : "", -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(st, 2, (int)page_size);
     sqlite3_bind_int(st, 3, (int)offset);
-    fputs("<section class='region region-depth' aria-label='Publishers'>"
-          "<h2 class='region-label'>Every publisher this estate has listed</h2>", out);
-    fprintf(out, "<p class='source-count'>%d publishers. A publisher is one origin; what it publishes is below it.</p><ol class='source-roots'>", total);
+    ui_start(out, "section"); ui_attr_sq(out, "class", "region region-depth"); ui_attr_sq(out, "aria-label", "Publishers"); ui_gt(out);
+    ui_start(out, "h2"); ui_attr_sq(out, "class", "region-label"); ui_gt(out);
+    ui_copy(out, "Every publisher this estate has listed"); ui_close(out, "h2");
+    ui_start(out, "p"); ui_attr_sq(out, "class", "source-count"); ui_gt(out);
+    fprintf(out, "%d", total);
+    ui_copy(out, " publishers. A publisher is one origin; what it publishes is below it."); ui_close(out, "p");
+    ui_start(out, "ol"); ui_attr_sq(out, "class", "source-roots"); ui_gt(out);
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *host = (const char *)sqlite3_column_text(st, 0);
         const char *name = (const char *)sqlite3_column_text(st, 1);
         int channels = sqlite3_column_int(st, 2), families = sqlite3_column_int(st, 3), read = sqlite3_column_int(st, 4);
         const char *identity = (const char *)sqlite3_column_text(st, 5);
-        fputs("<li><a href='", out); esc(out, route); fputs("?root=", out); url(out, host); fputs("'>", out);
-        esc(out, name); fputs("</a><span class='by'>", out);
-        fprintf(out, "<span>%d channel%s</span><span>%d way%s in</span>", channels, channels == 1 ? "" : "s", families, families == 1 ? "" : "s");
-        if (read) fprintf(out, "<span>%d read here</span>", read);
-        { char own[600]; if (estate_publisher_link(NULL, host, identity, own, sizeof(own))) { fputs("<a href='", out); esc(out, own); fputs("'>Its page</a>", out); } }
-        fputs("</span></li>", out);
+        ui_open(out, "li", NULL); ui_start(out, "a"); ui_attr_open_sq(out, "href");
+        esc(out, route); fputs("?root=", out); url(out, host); fputs("'>", out);
+        esc(out, name); ui_close(out, "a");
+        ui_start(out, "span"); ui_attr_sq(out, "class", "by"); ui_gt(out);
+        ui_open(out, "span", NULL); fprintf(out, "%d channel%s", channels, channels == 1 ? "" : "s"); ui_close(out, "span");
+        ui_open(out, "span", NULL); fprintf(out, "%d way%s in", families, families == 1 ? "" : "s"); ui_close(out, "span");
+        if (read) do { ui_open(out, "span", NULL); fprintf(out, "%d", read); ui_copy(out, " read here"); ui_close(out, "span"); } while (0);
+        { char own[600]; if (estate_publisher_link(NULL, host, identity, own, sizeof(own))) { ui_start(out, "a"); ui_attr_open_sq(out, "href"); esc(out, own); fputs("'>Its page", out); ui_close(out, "a"); } }
+        ui_close(out, "span"); ui_close(out, "li");
         shown++;
     }
-    fputs("</ol>", out);
+    ui_close(out, "ol");
     pager(out, route, NULL, NULL, offset, page_size, shown, total);
-    fputs("<p class='src'>A listed channel is an address this estate knows of. It is not a source it reads, "
-          "and nothing here says the endpoint answers.</p></section>", out);
+    ui_start(out, "p"); ui_attr_sq(out, "class", "src"); ui_gt(out);
+    ui_copy(out, "A listed channel is an address this estate knows of. It is not a source it reads, "
+          "and nothing here says the endpoint answers."); ui_close(out, "p"); ui_close(out, "section");
     sqlite3_finalize(st);
     sqlite3_close(db);
     return shown;
@@ -146,11 +155,14 @@ int bf_source_depth_emit(FILE *out, const char *db_path, const char *host,
     sqlite3_finalize(st); st = NULL;
     if (!name[0]) { sqlite3_close(db); return 0; }
 
-    fputs("<section class='region region-depth' aria-label='One publisher'><h2 class='region-label'>", out);
+    ui_start(out, "section"); ui_attr_sq(out, "class", "region region-depth"); ui_attr_sq(out, "aria-label", "One publisher"); ui_gt(out);
+    ui_start(out, "h2"); ui_attr_sq(out, "class", "region-label"); ui_gt(out);
     esc(out, name);
-    fputs("</h2><p class='source-count'><a href='", out); esc(out, route); fputs("?roots=1'>All publishers</a>", out);
-    { char own[600]; if (estate_publisher_link(NULL, host, identity, own, sizeof(own))) { fputs(" &middot; <a href='", out); esc(out, own); fputs("'>Its page</a>", out); } }
-    fputs("</p>", out);
+    ui_close(out, "h2");
+    ui_start(out, "p"); ui_attr_sq(out, "class", "source-count"); ui_gt(out);
+    ui_start(out, "a"); ui_attr_open_sq(out, "href"); esc(out, route); fputs("?roots=1'>All publishers", out); ui_close(out, "a");
+    { char own[600]; if (estate_publisher_link(NULL, host, identity, own, sizeof(own))) { fputs(" &middot; <a href='", out); esc(out, own); fputs("'>Its page", out); ui_close(out, "a"); } }
+    ui_close(out, "p");
 
     /* The ways in, with how much sits behind each. */
     if (!family || !*family) {
@@ -159,17 +171,20 @@ int bf_source_depth_emit(FILE *out, const char *db_path, const char *host,
                 " FROM channel c JOIN root r ON r.root_id=c.root_id WHERE r.host=?1"
                 " GROUP BY c.protocol ORDER BY COUNT(*) DESC", -1, &st, NULL) == SQLITE_OK) {
             sqlite3_bind_text(st, 1, host, -1, SQLITE_TRANSIENT);
-            fputs("<ol class='source-ways'>", out);
+            ui_start(out, "ol"); ui_attr_sq(out, "class", "source-ways"); ui_gt(out);
             while (sqlite3_step(st) == SQLITE_ROW) {
                 const char *protocol = (const char *)sqlite3_column_text(st, 0);
                 int count = sqlite3_column_int(st, 1), read = sqlite3_column_int(st, 2);
-                fputs("<li><a href='", out); esc(out, route); fputs("?root=", out); url(out, host);
+                ui_open(out, "li", NULL); ui_start(out, "a"); ui_attr_open_sq(out, "href");
+                esc(out, route); fputs("?root=", out); url(out, host);
                 fputs("&amp;family=", out); url(out, protocol); fputs("'>", out); esc(out, protocol);
-                fprintf(out, "</a><span class='by'><span>%d channel%s</span>", count, count == 1 ? "" : "s");
-                if (read) fprintf(out, "<span>%d read here</span>", read);
-                fputs("</span></li>", out);
+                ui_close(out, "a");
+                ui_start(out, "span"); ui_attr_sq(out, "class", "by"); ui_gt(out);
+                ui_open(out, "span", NULL); fprintf(out, "%d channel%s", count, count == 1 ? "" : "s"); ui_close(out, "span");
+                if (read) do { ui_open(out, "span", NULL); fprintf(out, "%d", read); ui_copy(out, " read here"); ui_close(out, "span"); } while (0);
+                ui_close(out, "span"); ui_close(out, "li");
             }
-            fputs("</ol>", out);
+            ui_close(out, "ol");
         }
         sqlite3_finalize(st); st = NULL;
     }
@@ -193,7 +208,7 @@ int bf_source_depth_emit(FILE *out, const char *db_path, const char *host,
         sqlite3_bind_text(st, 2, family ? family : "", -1, SQLITE_TRANSIENT);
         sqlite3_bind_int(st, 3, (int)page_size);
         sqlite3_bind_int(st, 4, (int)offset);
-        fputs("<ol class='source-channels'>", out);
+        ui_start(out, "ol"); ui_attr_sq(out, "class", "source-channels"); ui_gt(out);
         while (sqlite3_step(st) == SQLITE_ROW) {
             const char *address = (const char *)sqlite3_column_text(st, 0);
             const char *protocol = (const char *)sqlite3_column_text(st, 1);
@@ -203,26 +218,33 @@ int bf_source_depth_emit(FILE *out, const char *db_path, const char *host,
             const char *source = (const char *)sqlite3_column_text(st, 5);
             const char *material = (const char *)sqlite3_column_text(st, 6);
             int contributions = sqlite3_column_int(st, 7);
-            fputs("<li><div><a href='", out); esc(out, route); fputs("?channel=", out); url(out, address);
+            ui_open(out, "li", NULL); ui_open(out, "div", NULL);
+            ui_start(out, "a"); ui_attr_open_sq(out, "href");
+            esc(out, route); fputs("?channel=", out); url(out, address);
             fputs("'>", out);
             esc(out, title && *title ? title : address);
-            fputs("</a><span class='by'><span class='channel-state'>", out); esc(out, standing(state, refusal));
-            fputs("</span>", out);
-            if (protocol && *protocol) { fputs("<span>", out); esc(out, protocol); fputs("</span>", out); }
-            if (material && *material) { fputs("<span>", out); esc(out, material); fputs("</span>", out); }
-            if (contributions > 0) fprintf(out, "<span>%d shown</span>", contributions);
-            if (source && *source) { fputs("<span>read as ", out); esc(out, source); fputs("</span>", out); }
-            fputs("</span>", out);
-            if (refusal && *refusal) { fputs("<p class='channel-refusal'>", out); esc(out, refusal); fputs("</p>", out); }
-            fputs("</div></li>", out);
+            ui_close(out, "a");
+            ui_start(out, "span"); ui_attr_sq(out, "class", "by"); ui_gt(out);
+            ui_start(out, "span"); ui_attr_sq(out, "class", "channel-state"); ui_gt(out);
+            esc(out, standing(state, refusal));
+            ui_close(out, "span");
+            if (protocol && *protocol) { ui_open(out, "span", NULL); esc(out, protocol); ui_close(out, "span"); }
+            if (material && *material) { ui_open(out, "span", NULL); esc(out, material); ui_close(out, "span"); }
+            if (contributions > 0) do { ui_open(out, "span", NULL); fprintf(out, "%d", contributions); ui_copy(out, " shown"); ui_close(out, "span"); } while (0);
+            if (source && *source) { ui_open(out, "span", NULL); ui_copy(out, "read as "); esc(out, source); ui_close(out, "span"); }
+            ui_close(out, "span");
+            if (refusal && *refusal) { ui_start(out, "p"); ui_attr_sq(out, "class", "channel-refusal"); ui_gt(out); esc(out, refusal); ui_close(out, "p"); }
+            ui_close(out, "div"); ui_close(out, "li");
             shown++;
         }
-        fputs("</ol>", out);
+        ui_close(out, "ol");
     }
     sqlite3_finalize(st);
     pager(out, route, host, family, offset, page_size, shown, total);
-    fprintf(out, "<p class='src'>%d channel%s at this publisher. A channel's standing is what this estate has done with it, "
-                 "never a judgement of what it publishes.</p></section>", total, total == 1 ? "" : "s");
+    ui_start(out, "p"); ui_attr_sq(out, "class", "src"); ui_gt(out);
+    fprintf(out, "%d channel%s", total, total == 1 ? "" : "s");
+    ui_copy(out, " at this publisher. A channel's standing is what this estate has done with it, "
+                 "never a judgement of what it publishes."); ui_close(out, "p"); ui_close(out, "section");
     sqlite3_close(db);
     return shown;
 }
@@ -242,24 +264,28 @@ static void counted_list(FILE *out, sqlite3 *db, const char *sql, const char *ro
                          const char *param, const char *label, const char *nothing) {
     sqlite3_stmt *st = NULL; int rows = 0;
     if (sqlite3_prepare_v2(db, sql, -1, &st, NULL) != SQLITE_OK) return;
-    fputs("<div class='ledger-cut'><h3>", out); esc(out, label); fputs("</h3><ol class='source-ways'>", out);
+    ui_start(out, "div"); ui_attr_sq(out, "class", "ledger-cut"); ui_gt(out);
+    ui_open(out, "h3", NULL); esc(out, label); ui_close(out, "h3");
+    ui_start(out, "ol"); ui_attr_sq(out, "class", "source-ways"); ui_gt(out);
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *name = (const char *)sqlite3_column_text(st, 0);
         int count = sqlite3_column_int(st, 1);
         int read = sqlite3_column_count(st) > 2 ? sqlite3_column_int(st, 2) : 0;
         if (!name || !*name) continue;
-        fputs("<li>", out);
+        ui_open(out, "li", NULL);
         if (param) {
-            fputs("<a href='", out); esc(out, route); fputs("?", out); esc(out, param); fputs("=", out);
-            url(out, name); fputs("'>", out); esc(out, name); fputs("</a>", out);
-        } else { fputs("<span>", out); esc(out, name); fputs("</span>", out); }
-        fprintf(out, "<span class='by'><span>%d</span>", count);
-        if (read) fprintf(out, "<span>%d read</span>", read);
-        fputs("</span></li>", out);
+            ui_start(out, "a"); ui_attr_open_sq(out, "href");
+            esc(out, route); fputs("?", out); esc(out, param); fputs("=", out);
+            url(out, name); fputs("'>", out); esc(out, name); ui_close(out, "a");
+        } else { ui_open(out, "span", NULL); esc(out, name); ui_close(out, "span"); }
+        ui_start(out, "span"); ui_attr_sq(out, "class", "by"); ui_gt(out);
+        ui_open(out, "span", NULL); fprintf(out, "%d", count); ui_close(out, "span");
+        if (read) do { ui_open(out, "span", NULL); fprintf(out, "%d", read); ui_copy(out, " read"); ui_close(out, "span"); } while (0);
+        ui_close(out, "span"); ui_close(out, "li");
         rows++;
     }
-    if (!rows && nothing) { fputs("<li><span class='by'>", out); esc(out, nothing); fputs("</span></li>", out); }
-    fputs("</ol></div>", out);
+    if (!rows && nothing) { ui_open(out, "li", NULL); ui_start(out, "span"); ui_attr_sq(out, "class", "by"); ui_gt(out); esc(out, nothing); ui_close(out, "span"); ui_close(out, "li"); }
+    ui_close(out, "ol"); ui_close(out, "div");
     sqlite3_finalize(st);
 }
 
@@ -275,21 +301,27 @@ int bf_source_depth_index(FILE *out, const char *db_path, const char *route, con
     families = one_count(db, "SELECT COUNT(DISTINCT protocol) FROM channel", NULL);
     listed = channels - read;
 
-    fputs("<section class='region region-depth' aria-label='The ledger'>"
-          "<h2 class='region-label'>Everything this estate has listed</h2>", out);
-    fputs("<p class='source-count'>", out);
+    ui_start(out, "section"); ui_attr_sq(out, "class", "region region-depth"); ui_attr_sq(out, "aria-label", "The ledger"); ui_gt(out);
+    ui_start(out, "h2"); ui_attr_sq(out, "class", "region-label"); ui_gt(out);
+    ui_copy(out, "Everything this estate has listed"); ui_close(out, "h2");
+    ui_start(out, "p"); ui_attr_sq(out, "class", "source-count"); ui_gt(out);
     fprintf(out, "%d publishers, %d channels, %d ways in. %d are read here; %d are listed and unread.",
             roots, channels, families, read, listed);
     if (waiting) fprintf(out, " %d wait on a key that has not been given.", waiting);
     if (refused) fprintf(out, " %d were refused, each with the reason kept.", refused);
-    fputs("</p>", out);
+    ui_close(out, "p");
 
-    fputs("<form class='ledger-find' method='get' action='", out); esc(out, route);
-    fputs("'><label>Find a publisher <input type='search' name='q' value='", out);
-    esc(out, needle ? needle : ""); fputs("' placeholder='a name, or a host'></label>"
-          "<button type='submit'>Look</button></form>", out);
+    ui_start(out, "form"); ui_attr_sq(out, "class", "ledger-find"); ui_attr_sq(out, "method", "get");
+    ui_attr_open_sq(out, "action"); esc(out, route); fputs("'>", out);
+    ui_open(out, "label", NULL); ui_copy(out, "Find a publisher ");
+    ui_start(out, "input"); ui_attr_sq(out, "type", "search"); ui_attr_sq(out, "name", "q");
+    ui_attr_open_sq(out, "value"); esc(out, needle ? needle : ""); ui_attr_close_sq(out);
+    ui_attr_sq(out, "placeholder", "a name, or a host"); ui_gt(out);
+    ui_close(out, "label");
+    ui_start(out, "button"); ui_attr_sq(out, "type", "submit"); ui_gt(out);
+    ui_copy(out, "Look"); ui_close(out, "button"); ui_close(out, "form");
 
-    fputs("<div class='ledger-cuts'>", out);
+    ui_start(out, "div"); ui_attr_sq(out, "class", "ledger-cuts"); ui_gt(out);
     counted_list(out, db,
         "SELECT protocol, COUNT(*), SUM(state IN ('admitted','active')) FROM channel"
         " GROUP BY protocol ORDER BY COUNT(*) DESC LIMIT 14",
@@ -305,10 +337,11 @@ int bf_source_depth_index(FILE *out, const char *db_path, const char *route, con
         "SELECT refusal, COUNT(*) FROM channel WHERE COALESCE(refusal,'')<>''"
         " GROUP BY refusal ORDER BY COUNT(*) DESC LIMIT 8",
         route, NULL, "Why the estate said no", "nothing refused");
-    fputs("</div>", out);
+    ui_close(out, "div");
 
-    fputs("<p class='src'>A listed channel is an address this estate knows of. It is not a source it reads, "
-          "and nothing here says the endpoint answers.</p></section>", out);
+    ui_start(out, "p"); ui_attr_sq(out, "class", "src"); ui_gt(out);
+    ui_copy(out, "A listed channel is an address this estate knows of. It is not a source it reads, "
+          "and nothing here says the endpoint answers."); ui_close(out, "p"); ui_close(out, "section");
     sqlite3_close(db);
     return roots;
 }
@@ -350,35 +383,46 @@ int bf_source_depth_channel(FILE *out, const char *db_path, const char *address,
         snprintf(host, sizeof(host), "%s", (const char *)sqlite3_column_text(st, 0));
         snprintf(source, sizeof(source), "%s", census ? census : "");
 
-        fputs("<section class='region region-depth' aria-label='One channel'><h2 class='region-label'>", out);
+        ui_start(out, "section"); ui_attr_sq(out, "class", "region region-depth"); ui_attr_sq(out, "aria-label", "One channel"); ui_gt(out);
+        ui_start(out, "h2"); ui_attr_sq(out, "class", "region-label"); ui_gt(out);
         esc(out, title && *title ? title : address);
-        fputs("</h2><p class='source-count'><a href='", out); esc(out, route); fputs("?root=", out); url(out, host);
-        fputs("'>", out); esc(out, name); fputs("</a> &middot; <a href='", out); esc(out, route);
-        fputs("'>the whole ledger</a></p>", out);
+        ui_close(out, "h2");
+        ui_start(out, "p"); ui_attr_sq(out, "class", "source-count"); ui_gt(out);
+        ui_start(out, "a"); ui_attr_open_sq(out, "href");
+        esc(out, route); fputs("?root=", out); url(out, host);
+        fputs("'>", out); esc(out, name); ui_close(out, "a");
+        ui_copy(out, " &middot; ");
+        ui_start(out, "a"); ui_attr_open_sq(out, "href"); esc(out, route);
+        fputs("'>the whole ledger", out); ui_close(out, "a"); ui_close(out, "p");
 
-        fputs("<dl class='channel-standing'>", out);
-        fputs("<dt>Standing</dt><dd>", out); esc(out, standing(state, refusal)); fputs("</dd>", out);
-        if (protocol && *protocol) { fputs("<dt>Read as</dt><dd>", out); esc(out, protocol); fputs("</dd>", out); }
-        if (material && *material) { fputs("<dt>Publishes</dt><dd>", out); esc(out, material); fputs("</dd>", out); }
+        ui_start(out, "dl"); ui_attr_sq(out, "class", "channel-standing"); ui_gt(out);
+        ui_open(out, "dt", NULL); ui_copy(out, "Standing"); ui_close(out, "dt");
+        ui_open(out, "dd", NULL); esc(out, standing(state, refusal)); ui_close(out, "dd");
+        if (protocol && *protocol) { ui_open(out, "dt", NULL); ui_copy(out, "Read as"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, protocol); ui_close(out, "dd"); }
+        if (material && *material) { ui_open(out, "dt", NULL); ui_copy(out, "Publishes"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, material); ui_close(out, "dd"); }
         {   /* What a reading of its own body actually found beside that. */
             const char *carries = sqlite3_column_count(st) > 18 ? (const char *)sqlite3_column_text(st, 18) : NULL;
             if (carries && *carries) {
-                fputs("<dt>Also carries</dt><dd>", out); esc(out, carries);
-                fputs(" <span class='src'>measured from what it sent</span></dd>", out);
+                ui_open(out, "dt", NULL); ui_copy(out, "Also carries"); ui_close(out, "dt");
+                ui_open(out, "dd", NULL); esc(out, carries);
+                ui_copy(out, " "); ui_start(out, "span"); ui_attr_sq(out, "class", "src"); ui_gt(out);
+                ui_copy(out, "measured from what it sent"); ui_close(out, "span"); ui_close(out, "dd");
             }
         }
-        if (truth && *truth) { fputs("<dt>How this address is known</dt><dd>", out); esc(out, truth); fputs("</dd>", out); }
-        if (from && *from) { fputs("<dt>Found through</dt><dd>", out); esc(out, from); fputs("</dd>", out); }
-        if (first && *first) { fputs("<dt>First listed</dt><dd>", out); esc(out, first); fputs("</dd>", out); }
-        if (last && *last) { fputs("<dt>Last looked at</dt><dd>", out); esc(out, last); fputs("</dd>", out); }
-        if (gave && *gave) { fputs("<dt>Last gave something</dt><dd>", out); esc(out, gave); fputs("</dd>", out); }
-        if (cadence && *cadence) { fputs("<dt>Asked no more often than</dt><dd>", out); esc(out, cadence); fputs("</dd>", out); }
-        if (credential && *credential) { fputs("<dt>Needs a key from</dt><dd>", out); esc(out, credential); fputs("</dd>", out); }
-        if (rights && *rights) { fputs("<dt>Terms it states</dt><dd>", out); esc(out, rights); fputs("</dd>", out); }
-        if (contributions > 0) { fprintf(out, "<dt>Things shown from it</dt><dd>%d</dd>", contributions); }
-        fputs("<dt>Address</dt><dd><a rel='nofollow' href='", out); esc(out, address); fputs("'>", out);
-        esc(out, address); fputs("</a></dd></dl>", out);
-        if (refusal && *refusal) { fputs("<p class='channel-refusal'>", out); esc(out, refusal); fputs("</p>", out); }
+        if (truth && *truth) { ui_open(out, "dt", NULL); ui_copy(out, "How this address is known"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, truth); ui_close(out, "dd"); }
+        if (from && *from) { ui_open(out, "dt", NULL); ui_copy(out, "Found through"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, from); ui_close(out, "dd"); }
+        if (first && *first) { ui_open(out, "dt", NULL); ui_copy(out, "First listed"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, first); ui_close(out, "dd"); }
+        if (last && *last) { ui_open(out, "dt", NULL); ui_copy(out, "Last looked at"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, last); ui_close(out, "dd"); }
+        if (gave && *gave) { ui_open(out, "dt", NULL); ui_copy(out, "Last gave something"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, gave); ui_close(out, "dd"); }
+        if (cadence && *cadence) { ui_open(out, "dt", NULL); ui_copy(out, "Asked no more often than"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, cadence); ui_close(out, "dd"); }
+        if (credential && *credential) { ui_open(out, "dt", NULL); ui_copy(out, "Needs a key from"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, credential); ui_close(out, "dd"); }
+        if (rights && *rights) { ui_open(out, "dt", NULL); ui_copy(out, "Terms it states"); ui_close(out, "dt"); ui_open(out, "dd", NULL); esc(out, rights); ui_close(out, "dd"); }
+        if (contributions > 0) { ui_open(out, "dt", NULL); ui_copy(out, "Things shown from it"); ui_close(out, "dt"); ui_open(out, "dd", NULL); fprintf(out, "%d", contributions); ui_close(out, "dd"); }
+        ui_open(out, "dt", NULL); ui_copy(out, "Address"); ui_close(out, "dt"); ui_open(out, "dd", NULL);
+        ui_start(out, "a"); ui_attr_sq(out, "rel", "nofollow"); ui_attr_open_sq(out, "href");
+        esc(out, address); fputs("'>", out);
+        esc(out, address); ui_close(out, "a"); ui_close(out, "dd"); ui_close(out, "dl");
+        if (refusal && *refusal) { ui_start(out, "p"); ui_attr_sq(out, "class", "channel-refusal"); ui_gt(out); esc(out, refusal); ui_close(out, "p"); }
     }
     sqlite3_finalize(st); st = NULL;
     sqlite3_close(db);
@@ -391,29 +435,34 @@ int bf_source_depth_channel(FILE *out, const char *db_path, const char *address,
                     "SELECT key, title, kind, COALESCE(first_read,'') FROM item WHERE source=?1"
                     " ORDER BY at DESC LIMIT 24", -1, &st, NULL) == SQLITE_OK) {
                 sqlite3_bind_text(st, 1, source, -1, SQLITE_TRANSIENT);
-                fputs("<h3>What this estate kept from it</h3><ol class='source-channels'>", out);
+                ui_open(out, "h3", NULL); ui_copy(out, "What this estate kept from it"); ui_close(out, "h3");
+                ui_start(out, "ol"); ui_attr_sq(out, "class", "source-channels"); ui_gt(out);
                 while (sqlite3_step(st) == SQLITE_ROW) {
                     const char *key = (const char *)sqlite3_column_text(st, 0);
                     const char *title = (const char *)sqlite3_column_text(st, 1);
                     const char *kind = (const char *)sqlite3_column_text(st, 2);
                     const char *when = (const char *)sqlite3_column_text(st, 3);
-                    fputs("<li><div><a href='/o/", out); url(out, source); fputs("/", out); esc(out, key);
-                    fputs("'>", out); esc(out, title && *title ? title : key); fputs("</a><span class='by'>", out);
-                    if (kind && *kind) { fputs("<span>", out); esc(out, kind); fputs("</span>", out); }
-                    if (when && *when) { fputs("<span>kept ", out); esc(out, when); fputs("</span>", out); }
-                    fputs("</span></div></li>", out);
+                    ui_open(out, "li", NULL); ui_open(out, "div", NULL);
+                    ui_start(out, "a"); ui_attr_open_sq(out, "href"); ui_copy(out, "/o/");
+                    url(out, source); fputs("/", out); esc(out, key);
+                    fputs("'>", out); esc(out, title && *title ? title : key); ui_close(out, "a");
+                    ui_start(out, "span"); ui_attr_sq(out, "class", "by"); ui_gt(out);
+                    if (kind && *kind) { ui_open(out, "span", NULL); esc(out, kind); ui_close(out, "span"); }
+                    if (when && *when) { ui_open(out, "span", NULL); ui_copy(out, "kept "); esc(out, when); ui_close(out, "span"); }
+                    ui_close(out, "span"); ui_close(out, "div"); ui_close(out, "li");
                     shown++;
                 }
-                fputs("</ol>", out);
+                ui_close(out, "ol");
                 sqlite3_finalize(st);
-                if (!shown) fputs("<p class='src'>Nothing from this channel is kept yet.</p>", out);
+                if (!shown) do { ui_start(out, "p"); ui_attr_sq(out, "class", "src"); ui_gt(out); ui_copy(out, "Nothing from this channel is kept yet."); ui_close(out, "p"); } while (0);
             }
             sqlite3_close(archive);
         }
     }
-    fputs("<p class='src'>A channel's standing is what this estate has done with it, never a judgement of "
+    ui_start(out, "p"); ui_attr_sq(out, "class", "src"); ui_gt(out);
+    ui_copy(out, "A channel's standing is what this estate has done with it, never a judgement of "
           "what it publishes. What was kept is what this estate read at a time, not a claim that the "
-          "channel still publishes it.</p></section>", out);
+          "channel still publishes it."); ui_close(out, "p"); ui_close(out, "section");
     return 1;
 }
 
@@ -445,13 +494,18 @@ int bf_source_depth_slice(FILE *out, const char *db_path, const char *route,
     sqlite3_bind_text(st, 3, state ? state : "", -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(st, 4, (int)page_size);
     sqlite3_bind_int(st, 5, (int)offset);
-    fputs("<section class='region region-depth' aria-label='Channels'><h2 class='region-label'>", out);
+    ui_start(out, "section"); ui_attr_sq(out, "class", "region region-depth"); ui_attr_sq(out, "aria-label", "Channels"); ui_gt(out);
+    ui_start(out, "h2"); ui_attr_sq(out, "class", "region-label"); ui_gt(out);
     if (way && *way) { esc(out, way); fputs(" channels", out); }
     else if (publishes && *publishes) { esc(out, publishes); fputs(" channels", out); }
     else if (state && *state) { esc(out, standing(state, "")); fputs(" channels", out); }
     else fputs("Channels", out);
-    fputs("</h2><p class='source-count'><a href='", out); esc(out, route);
-    fprintf(out, "'>the whole ledger</a> &middot; %d here, across every publisher.</p><ol class='source-channels'>", total);
+    ui_close(out, "h2");
+    ui_start(out, "p"); ui_attr_sq(out, "class", "source-count"); ui_gt(out);
+    ui_start(out, "a"); ui_attr_open_sq(out, "href"); esc(out, route);
+    fputs("'>the whole ledger", out); ui_close(out, "a");
+    fprintf(out, " &middot; %d here, across every publisher.", total); ui_close(out, "p");
+    ui_start(out, "ol"); ui_attr_sq(out, "class", "source-channels"); ui_gt(out);
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *address = (const char *)sqlite3_column_text(st, 0);
         const char *title = (const char *)sqlite3_column_text(st, 1);
@@ -462,40 +516,51 @@ int bf_source_depth_slice(FILE *out, const char *db_path, const char *route,
         const char *host = (const char *)sqlite3_column_text(st, 6);
         const char *material = (const char *)sqlite3_column_text(st, 7);
         int contributions = sqlite3_column_int(st, 8);
-        fputs("<li><div><a href='", out); esc(out, route); fputs("?channel=", out); url(out, address);
+        ui_open(out, "li", NULL); ui_open(out, "div", NULL);
+        ui_start(out, "a"); ui_attr_open_sq(out, "href");
+        esc(out, route); fputs("?channel=", out); url(out, address);
         fputs("'>", out); esc(out, title && *title ? title : address);
-        fputs("</a><span class='by'><a href='", out); esc(out, route); fputs("?root=", out); url(out, host);
-        fputs("'>", out); esc(out, name); fputs("</a><span class='channel-state'>", out);
-        esc(out, standing(channel_state, refusal)); fputs("</span>", out);
-        if (protocol && *protocol) { fputs("<span>", out); esc(out, protocol); fputs("</span>", out); }
-        if (material && *material) { fputs("<span>", out); esc(out, material); fputs("</span>", out); }
-        if (contributions > 0) fprintf(out, "<span>%d shown</span>", contributions);
-        fputs("</span></div></li>", out);
+        ui_close(out, "a");
+        ui_start(out, "span"); ui_attr_sq(out, "class", "by"); ui_gt(out);
+        ui_start(out, "a"); ui_attr_open_sq(out, "href");
+        esc(out, route); fputs("?root=", out); url(out, host);
+        fputs("'>", out); esc(out, name); ui_close(out, "a");
+        ui_start(out, "span"); ui_attr_sq(out, "class", "channel-state"); ui_gt(out);
+        esc(out, standing(channel_state, refusal)); ui_close(out, "span");
+        if (protocol && *protocol) { ui_open(out, "span", NULL); esc(out, protocol); ui_close(out, "span"); }
+        if (material && *material) { ui_open(out, "span", NULL); esc(out, material); ui_close(out, "span"); }
+        if (contributions > 0) do { ui_open(out, "span", NULL); fprintf(out, "%d", contributions); ui_copy(out, " shown"); ui_close(out, "span"); } while (0);
+        ui_close(out, "span"); ui_close(out, "div"); ui_close(out, "li");
         shown++;
     }
-    fputs("</ol>", out);
+    ui_close(out, "ol");
     sqlite3_finalize(st);
     {   /* The pager carries whichever cut this is. */
         int left = total - (int)(offset + (unsigned)shown);
         if (offset) {
             unsigned back = offset > page_size ? offset - page_size : 0;
-            fputs("<p class='pager'><a href='", out); esc(out, route);
+            ui_start(out, "p"); ui_attr_sq(out, "class", "pager"); ui_gt(out);
+            ui_start(out, "a"); ui_attr_open_sq(out, "href"); esc(out, route);
             fputs("?", out);
             if (way && *way) { fputs("way=", out); url(out, way); }
             else if (publishes && *publishes) { fputs("publishes=", out); url(out, publishes); }
             else { fputs("standing=", out); url(out, state ? state : ""); }
-            fprintf(out, "&amp;from=%u'>Back</a></p>", back);
+            fprintf(out, "&amp;from=%u'>Back", back); ui_close(out, "a"); ui_close(out, "p");
         }
         if (left > 0) {
-            fputs("<p class='pager'><a href='", out); esc(out, route);
+            ui_start(out, "p"); ui_attr_sq(out, "class", "pager"); ui_gt(out);
+            ui_start(out, "a"); ui_attr_open_sq(out, "href"); esc(out, route);
             fputs("?", out);
             if (way && *way) { fputs("way=", out); url(out, way); }
             else if (publishes && *publishes) { fputs("publishes=", out); url(out, publishes); }
             else { fputs("standing=", out); url(out, state ? state : ""); }
-            fprintf(out, "&amp;from=%u'>More (%d left)</a></p>", offset + (unsigned)shown, left);
+            fprintf(out, "&amp;from=%u'>More (%d left)", offset + (unsigned)shown, left);
+            ui_close(out, "a"); ui_close(out, "p");
         }
     }
-    fputs("<p class='src'>A listed channel is an address this estate knows of, not a source it reads.</p></section>", out);
+    ui_start(out, "p"); ui_attr_sq(out, "class", "src"); ui_gt(out);
+    ui_copy(out, "A listed channel is an address this estate knows of, not a source it reads.");
+    ui_close(out, "p"); ui_close(out, "section");
     sqlite3_close(db);
     return shown;
 }

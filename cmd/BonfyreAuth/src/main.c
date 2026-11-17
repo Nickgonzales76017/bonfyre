@@ -409,7 +409,29 @@ static int cmd_signup(sqlite3 *db, const char *email, const char *name,
     sqlite3_finalize(st);
 
     int uid=(int)sqlite3_last_insert_rowid(db);
-    printf("{\"user\":{\"id\":%d,\"email\":\"%s\",\"name\":\"%s\",\"tier\":\"%s\"},",
+
+    /* Registration authenticates: the credential just presented mints the
+     * first session, so signup lands signed in. Scope follows the tier
+     * exactly like login (a new free account gets narrow `self`). */
+    char token[MAX_TOKEN]; generate_token(token,sizeof(token));
+    char exp[64]; iso_future(exp,sizeof(exp),SESSION_HOURS);
+    const char *granted = (!strcmp(tier,"pro")||!strcmp(tier,"enterprise")) ? "write" : "self";
+    sqlite3_prepare_v2(db,
+        "INSERT INTO sessions (user_id,token,created_at,expires_at,scope) VALUES (?,?,?,?,?)",
+        -1,&st,NULL);
+    sqlite3_bind_int(st,1,uid);
+    sqlite3_bind_text(st,2,token,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,3,ts,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,4,exp,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,5,granted,-1,SQLITE_STATIC);
+    if (sqlite3_step(st)!=SQLITE_DONE) {
+        fprintf(stderr,"Signup session failed: %s\n",sqlite3_errmsg(db));
+        sqlite3_finalize(st); return 1;
+    }
+    sqlite3_finalize(st);
+
+    printf("{\"session\":{\"token\":\"%s\",\"expires_at\":\"%s\",\"scope\":\"%s\"},",token,exp,granted);
+    printf("\"user\":{\"id\":%d,\"email\":\"%s\",\"name\":\"%s\",\"tier\":\"%s\"},",
         uid,email,name,tier);
     printf("\"gate_key\":\"%s\",\"created\":true}\n",gate_key);
     return 0;

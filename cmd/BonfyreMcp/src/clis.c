@@ -477,6 +477,33 @@ static int positional(int have, int count, const char *command, char *err) {
 }
 
 /* ── canary ─────────────────────────────────────────────────── */
+/* Canary verb vocabularies in strcmp order for the shared bf_command_lookup;
+ * the first word selects the command and the second word selects the
+ * subcommand of a two-word command. Handlers keep their own arguments. */
+enum {
+    CAN_CERTIFICATE, CAN_CERTIFICATES, CAN_DECISIONS, CAN_FIXTURES, CAN_OUTCOME,
+    CAN_OUTCOMES, CAN_POLICIES, CAN_POLICY, CAN_ROUTE, CAN_STATUS, CAN_VERIFY
+};
+static const BfCommandEntry canary_first_commands[] = {
+    {"certificate", CAN_CERTIFICATE, 0, NULL},
+    {"certificates", CAN_CERTIFICATES, 0, NULL},
+    {"decisions", CAN_DECISIONS, 0, NULL},
+    {"fixtures", CAN_FIXTURES, 0, NULL},
+    {"outcome", CAN_OUTCOME, 0, NULL},
+    {"outcomes", CAN_OUTCOMES, 0, NULL},
+    {"policies", CAN_POLICIES, 0, NULL},
+    {"policy", CAN_POLICY, 0, NULL},
+    {"route", CAN_ROUTE, 0, NULL},
+    {"status", CAN_STATUS, 0, NULL},
+    {"verify", CAN_VERIFY, 0, NULL},
+};
+enum { CAN2_RUN, CAN2_STATE, CAN2_UPSERT, CAN2_VERIFY };
+static const BfCommandEntry canary_second_commands[] = {
+    {"run", CAN2_RUN, 0, NULL},
+    {"state", CAN2_STATE, 0, NULL},
+    {"upsert", CAN2_UPSERT, 0, NULL},
+    {"verify", CAN2_VERIFY, 0, NULL},
+};
 static const char CANARY_HELP[] =
     "Bonfyre Hypervisor v5 Fixture Correction + Capability Canary R4.\n"
     "Usage: bonfyre-canary [--version | --help] <command> [arguments]\n"
@@ -505,13 +532,17 @@ static int canary_parse(int argc, char **argv, const bf_jv *tools, const char **
     if (!strcmp(argv[0], "--version")) { *text = "bonfyre-canary 5.4.0-fixture-canary-r4\n"; *code = 0; return 1; }
     for (int i = 0; i < argc; i++) if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) { *text = CANARY_HELP; *code = 0; return 1; }
     const char *first = argv[0], *second = argc > 1 ? argv[1] : "";
+    const int first_id = bf_command_id(canary_first_commands,
+        BF_COMMAND_COUNT(canary_first_commands), first, -1);
+    const int second_id = bf_command_id(canary_second_commands,
+        BF_COMMAND_COUNT(canary_second_commands), second, -1);
     Found found[8]; int nf = 0, np = 0; char **pos = calloc((size_t)argc + 1, sizeof *pos); int rc = -1;
     bf_jv *a = NULL; *timeout = 120000;
-    if (!strcmp(first, "status") || !strcmp(first, "certificates") || !strcmp(first, "verify") || !strcmp(first, "policies")) {
+    if (first_id == CAN_STATUS || first_id == CAN_CERTIFICATES || first_id == CAN_VERIFY || first_id == CAN_POLICIES) {
         if (positional(argc - 1, 0, first, err)) goto out;
-        *tool = !strcmp(first, "status") ? "canary_status" : !strcmp(first, "certificates") ? "canary_certificate_list" : !strcmp(first, "verify") ? "canary_receipt_verify" : "canary_policy_list";
+        *tool = first_id == CAN_STATUS ? "canary_status" : first_id == CAN_CERTIFICATES ? "canary_certificate_list" : first_id == CAN_VERIFY ? "canary_receipt_verify" : "canary_policy_list";
         a = bf_jv_obj();
-    } else if (!strcmp(first, "fixtures") && !strcmp(second, "run")) {
+    } else if (first_id == CAN_FIXTURES && second_id == CAN2_RUN) {
         const Spec s[] = { { "--providers", "providers", 'l', PROVIDERS }, { "--max-agent-turns", "turns", 'i', NULL }, { 0 } };
         if (options(0, argv + 2, argc - 2, s, found, &nf, pos, &np, err) || positional(np, 0, "fixtures run", err)) goto out;
         a = bf_jv_obj(); bf_jv *p = found_get(found, nf, "providers");
@@ -519,10 +550,10 @@ static int canary_parse(int argc, char **argv, const bf_jv *tools, const char **
         else { bf_jv *l = bf_jv_arr(); for (int i = 0; PROVIDERS[i]; i++) bf_jv_push(l, S(PROVIDERS[i])); bf_jv_set(a, "providers", l); }
         bf_jv *t = found_get(found, nf, "turns"); double turns = t ? t->n : 4; if (turns > 4) turns = 4; if (turns < 1) turns = 1;
         bf_jv_set(a, "max_agent_turns", N(turns)); *tool = "fixture_correction_run"; *timeout = 7200000;
-    } else if (!strcmp(first, "certificate") && !strcmp(second, "verify")) {
+    } else if (first_id == CAN_CERTIFICATE && second_id == CAN2_VERIFY) {
         if (positional(argc - 2, 2, "certificate verify", err)) goto out;
         a = bf_jv_obj(); bf_jv_set(a, "provider", S(argv[2])); bf_jv_set(a, "capability", S(argv[3])); *tool = "canary_certificate_verify";
-    } else if (!strcmp(first, "policy") && !strcmp(second, "upsert")) {
+    } else if (first_id == CAN_POLICY && second_id == CAN2_UPSERT) {
         const Spec s[] = { { "--percentage", "percentage", 'i', NULL }, { "--effect-class", "effects", 'r', EFFECTS }, { "--enable", "enable", 'f', NULL }, { 0 } };
         if (options(0, argv + 2, argc - 2, s, found, &nf, pos, &np, err) || positional(np, 3, "policy upsert", err)) goto out;
         a = bf_jv_obj(); bf_jv_set(a, "capability", S(pos[0])); bf_jv_set(a, "provider", S(pos[1])); bf_jv_set(a, "fallback_provider", S(pos[2]));
@@ -531,11 +562,11 @@ static int canary_parse(int argc, char **argv, const bf_jv *tools, const char **
         if (ef && ef->len) bf_jv_set(a, "effect_classes", bf_jv_clone(ef));
         else { bf_jv *l = bf_jv_arr(); bf_jv_push(l, S("PURE")); bf_jv_push(l, S("READ_ONLY")); bf_jv_set(a, "effect_classes", l); }
         bf_jv_set(a, "enable", bf_jv_bool(found_get(found, nf, "enable") != NULL)); *tool = "canary_policy_upsert";
-    } else if (!strcmp(first, "policy") && !strcmp(second, "state")) {
+    } else if (first_id == CAN_POLICY && second_id == CAN2_STATE) {
         if (positional(argc - 2, 2, "policy state", err)) goto out;
         if (!in_list(argv[3], POLICY_STATES)) { snprintf(err, ERR_MAX, "unsupported policy state"); goto out; }
         a = bf_jv_obj(); bf_jv_set(a, "policy_id", S(argv[2])); bf_jv_set(a, "state", S(argv[3])); *tool = "canary_policy_state";
-    } else if (!strcmp(first, "route")) {
+    } else if (first_id == CAN_ROUTE) {
         const Spec s[] = { { "--effect-class", "effect_class", 's', NULL }, { "--task-id", "task_id", 's', NULL }, { "--fallback-provider", "fallback_provider", 's', NULL }, { 0 } };
         if (options(0, argv + 1, argc - 1, s, found, &nf, pos, &np, err) || positional(np, 2, "route", err)) goto out;
         a = bf_jv_obj(); bf_jv_set(a, "mission_id", S(pos[0])); bf_jv_set(a, "capability", S(pos[1]));
@@ -543,7 +574,7 @@ static int canary_parse(int argc, char **argv, const bf_jv *tools, const char **
         bf_jv_set(a, "effect_class", ec ? bf_jv_clone(ec) : S("CANDIDATE_WRITE"));
         if (jsx_truthy(ti)) bf_jv_set(a, "task_id", bf_jv_clone(ti));
         bf_jv_set(a, "fallback_provider", fp ? bf_jv_clone(fp) : S("bonfyre-native")); *tool = "canary_route_decide";
-    } else if (!strcmp(first, "outcome")) {
+    } else if (first_id == CAN_OUTCOME) {
         const Spec s[] = { { "--latency-ms", "latency_ms", 'n', NULL }, { "--receipt-digest", "receipt_digest", 's', NULL }, { 0 } };
         if (options(0, argv + 1, argc - 1, s, found, &nf, pos, &np, err) || positional(np, 2, "outcome", err)) goto out;
         if (!in_list(pos[1], OUTCOME_STATES)) { snprintf(err, ERR_MAX, "unsupported outcome state"); goto out; }
@@ -552,12 +583,12 @@ static int canary_parse(int argc, char **argv, const bf_jv *tools, const char **
         if (lm) bf_jv_set(a, "latency_ms", bf_jv_clone(lm));
         if (jsx_truthy(rd)) bf_jv_set(a, "receipt_digest", bf_jv_clone(rd));
         *tool = "canary_outcome_record";
-    } else if (!strcmp(first, "decisions") || !strcmp(first, "outcomes")) {
+    } else if (first_id == CAN_DECISIONS || first_id == CAN_OUTCOMES) {
         const Spec s[] = { { "--limit", "limit", 'i', NULL }, { 0 } };
         if (options(0, argv + 1, argc - 1, s, found, &nf, pos, &np, err) || positional(np, 0, first, err)) goto out;
         bf_jv *l = found_get(found, nf, "limit");
         a = bf_jv_obj(); bf_jv_set(a, "limit", l ? bf_jv_clone(l) : N(100));
-        *tool = !strcmp(first, "decisions") ? "canary_decision_list" : "canary_outcome_list";
+        *tool = first_id == CAN_DECISIONS ? "canary_decision_list" : "canary_outcome_list";
     } else { snprintf(err, ERR_MAX, "unknown or incomplete canary command"); goto out; }
     {
         const bf_jv *def = catalog_tool(tools, *tool);

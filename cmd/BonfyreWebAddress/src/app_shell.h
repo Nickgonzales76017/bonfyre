@@ -9,15 +9,16 @@
  * styles in /assets/authoring-reader.css. Callers print the HTTP head. */
 static void ak_app_open_with_head(const char *title, const char *pattern, const char *route_class,
                                   void (*emit_head)(void *), void *head_context) {
-    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
-          "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-          "<meta name=\"theme-color\" content=\"#0f1511\"><title>", stdout);
+    ui_lit(stdout,"<!doctype html>");ui_start(stdout,"html");ui_attr(stdout,"lang","en");ui_gt(stdout);
+    ui_open(stdout,"head",NULL);ui_open_a(stdout,"meta","charset","utf-8");
+    ui_open_a(stdout,"meta","name","viewport","content","width=device-width,initial-scale=1");
+    ui_open_a(stdout,"meta","name","theme-color","content","#0f1511");ui_open(stdout,"title",NULL);
     html(title && *title ? title : "Aurekai");
-    fputs(" \xc2\xb7 Aurekai</title>"
-          "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">"
-          "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap\">"
-          "<link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\">"
-          "<link rel=\"stylesheet\" href=\"/assets/composition.css\">", stdout);
+    fputs(" \xc2\xb7 Aurekai",stdout);ui_close(stdout,"title");
+    ui_open_a(stdout,"link","rel","preconnect","href","https://fonts.googleapis.com");
+    ui_elem(stdout,"link",(const UiAttr[]){{"rel","stylesheet"},{"href","https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&amp;display=swap"}},2,0);
+    ui_open_a(stdout,"link","rel","stylesheet","href","/assets/authoring-reader.css");
+    ui_open_a(stdout,"link","rel","stylesheet","href","/assets/composition.css");
     if (emit_head) emit_head(head_context);
     ui_close(stdout,"head");ui_start(stdout,"body");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-app");
     if (route_class && *route_class) { fputc(' ', stdout); html(route_class); }
@@ -29,7 +30,7 @@ static void ak_app_open(const char *title, const char *pattern, const char *rout
     ak_app_open_with_head(title, pattern, route_class, NULL, NULL);
 }
 static void ak_app_close(void) {
-    fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
+    ui_close(stdout,"main");fputs(BF_ESTATE_FOOT,stdout);ui_close(stdout,"body");ui_close(stdout,"html");
 }
 static void ak_app_http(int code, int personal) {
     printf("HTTP/1.1 %d %s\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: %s\r\n"

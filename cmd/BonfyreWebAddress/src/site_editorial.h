@@ -129,11 +129,11 @@ static void site_editorial_sources(FILE *out,sqlite3 *db,const McpSite *site,
         if(body&&*body){ui_open(out,"p",NULL);htext(out,body);ui_close(out,"p");}
         if(site_editorial_source_href(href)){ui_start(out,"a");ui_attr(out,"rel","noopener noreferrer");ui_attr_open(out,"href");
             htext(out,href);fputs("\">Read the source</a>",out);}
-        if(ref&&*ref){fputs("<details class=\"source-record\"><summary>Source record</summary>"
-                             "<p>Identifier: <code>",out);htext(out,ref);ui_close(out,"code");ui_close(out,"p");
+        if(ref&&*ref){ui_section_open(out,"source-record","Source record");
+            ui_open(out,"p",NULL);ui_copy(out,"Identifier: ");ui_open(out,"code",NULL);htext(out,ref);ui_close(out,"code");ui_close(out,"p");
             if(digest&&*digest){ui_open(out,"p",NULL);ui_copy(out,"Supplied digest: ");ui_open(out,"code",NULL);
                 htext(out,digest);ui_close(out,"code");ui_close(out,"p");}
-            fputs("</details>",out);}
+            ui_section_close(out);}
         ui_close(out,"li");
     }
     if(index){ui_close(out,"ol");ui_close(out,"section");}

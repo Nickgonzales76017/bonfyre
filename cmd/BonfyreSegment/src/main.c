@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
 
 /* ── Utilities ────────────────────────────────────────────────────── */
@@ -536,6 +537,16 @@ static void print_usage(void) {
         "       (whisper audio.wav --output_format json)\n");
 }
 
+/* Verb vocabulary, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+enum { SEG_ALL, SEG_BOUNDARIES, SEG_GRAPH, SEG_RHYTHM };
+static const BfCommandEntry segment_commands[] = {
+    {"all", SEG_ALL, 0, NULL},
+    {"boundaries", SEG_BOUNDARIES, 0, NULL},
+    {"graph", SEG_GRAPH, 0, NULL},
+    {"rhythm", SEG_RHYTHM, 0, NULL},
+};
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 4) { print_usage(); return 1; }
@@ -584,18 +595,20 @@ int main(int argc, char **argv) {
 
     int rc = 0;
 
-    if (strcmp(mode, "graph") == 0 || strcmp(mode, "all") == 0) {
+    const int mode_id = bf_command_id(segment_commands,
+        BF_COMMAND_COUNT(segment_commands), mode, -1);
+    if (mode_id == SEG_GRAPH || mode_id == SEG_ALL) {
         rc |= emit_graph(doc, bounds, nb, out_dir);
     }
-    if (strcmp(mode, "boundaries") == 0 || strcmp(mode, "all") == 0) {
+    if (mode_id == SEG_BOUNDARIES || mode_id == SEG_ALL) {
         rc |= emit_boundaries(doc, bounds, nb, out_dir);
     }
-    if (strcmp(mode, "rhythm") == 0 || strcmp(mode, "all") == 0) {
+    if (mode_id == SEG_RHYTHM || mode_id == SEG_ALL) {
         rc |= emit_rhythm(doc, out_dir);
     }
 
-    if (strcmp(mode, "graph") != 0 && strcmp(mode, "boundaries") != 0 &&
-        strcmp(mode, "rhythm") != 0 && strcmp(mode, "all") != 0) {
+    if (mode_id != SEG_GRAPH && mode_id != SEG_BOUNDARIES &&
+        mode_id != SEG_RHYTHM && mode_id != SEG_ALL) {
         fprintf(stderr, "error: unknown mode '%s'\n", mode);
         print_usage();
         free(doc);

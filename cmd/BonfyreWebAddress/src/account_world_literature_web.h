@@ -110,7 +110,7 @@ static int wl_is_poem(const char *kind){return !strcmp(kind,"poem");}
 /* Markers for the glosses on one unit; *seq numbers them in reading order. */
 static void wl_markers(const WlText *t,const char *passage,int unit,int *seq){
     for(int g=0;g<t->ng;g++){const WlGloss *x=&t->g[g];if(x->unit!=unit||strcmp(x->passage,passage))continue;(*seq)++;
-        printf("<sup class=\"aw-fn\"><a href=\"#n-%lld\" id=\"r-%lld\" aria-label=\"%s %d\">%d</a></sup>",x->id,x->id,!strcmp(x->kind,"footnote")?"Footnote":"Note",*seq,*seq);}
+        ui_open(stdout,"sup","aw-fn");ui_start(stdout,"a");printf(" href=\"#n-%lld\" id=\"r-%lld\" aria-label=\"%s %d\">%d",x->id,x->id,!strcmp(x->kind,"footnote")?"Footnote":"Note",*seq,*seq);ui_close(stdout,"a");ui_close(stdout,"sup");}
 }
 /* The passage text. Poems keep every line, blank lines and leading spaces;
  * prose becomes paragraphs. Units carry ids l-N or p-N for places. */
@@ -121,8 +121,8 @@ static void wl_text(const WlText *t,int pi,int marks){
         for(const char *p=body;*p||p==body;){
             const char *e=strchr(p,'\n');size_t len=e?(size_t)(e-p):strlen(p);unit++;
             int blank=strspn(p," \t")>=len;
-            printf("<span class=\"aw-line%s\" id=\"l-%d\" data-unit=\"%d\">",blank?" aw-gap":"",unit,unit);
-            if(unit%5==0&&!blank)printf("<span class=\"aw-ln\" aria-hidden=\"true\">%d</span>",unit);
+            ui_start(stdout,"span");printf(" class=\"aw-line%s\" id=\"l-%d\" data-unit=\"%d\">",blank?" aw-gap":"",unit,unit);
+            if(unit%5==0&&!blank){ui_open_a(stdout,"span","class","aw-ln","aria-hidden","true");printf("%d",unit);ui_close(stdout,"span");}
             wl_inline(p,len);if(marks)wl_markers(t,t->p[pi].passage,unit,&seq);ui_close(stdout,"span"); fputs("\n",stdout);
             if(!e||!e[1])break;p=e+1;
         }
@@ -133,7 +133,7 @@ static void wl_text(const WlText *t,int pi,int marks){
     for(const char *p=body;*p;){
         const char *e=strchr(p,'\n');size_t len=e?(size_t)(e-p):strlen(p);int blank=strspn(p," \t")>=len;
         if(blank){if(open){if(marks)wl_markers(t,t->p[pi].passage,unit,&seq);ui_close(stdout,"p");open=0;}}
-        else{size_t lead=strspn(p," \t");if(!open){unit++;printf("<p id=\"p-%d\" data-unit=\"%d\">",unit,unit);open=1;}else fputc(' ',stdout);wl_inline(p+lead,len-lead);}
+        else{size_t lead=strspn(p," \t");if(!open){unit++;ui_start(stdout,"p");printf(" id=\"p-%d\" data-unit=\"%d\">",unit,unit);open=1;}else fputc(' ',stdout);wl_inline(p+lead,len-lead);}
         if(!e)break;p=e+1;
     }
     if(open){if(marks)wl_markers(t,t->p[pi].passage,unit,&seq);ui_close(stdout,"p");}
@@ -146,7 +146,7 @@ static void wl_notes(const WlText *t,int pi){
     ui_open_a(stdout,"section","class","aw-notes","aria-labelledby","aw-notes-h"); ui_open_a(stdout,"h2","id","aw-notes-h","class","region-label"); fputs("Notes",stdout); ui_close(stdout,"h2"); ui_open(stdout,"ol",NULL);
     /* the same order the markers were numbered in: unit, then kind, then id */
     for(int g=0;g<t->ng;g++){const WlGloss *x=&t->g[g];if(strcmp(x->passage,passage))continue;seq++;
-        printf("<li id=\"n-%lld\" value=\"%d\" data-gloss=\"%s\"><span class=\"aw-at\">%s %d</span> ",x->id,seq,x->kind,wl_is_poem(t->w.kind)?"Line":"Paragraph",x->unit);
+        ui_start(stdout,"li");printf(" id=\"n-%lld\" value=\"%d\" data-gloss=\"%s\">",x->id,seq,x->kind);ui_open(stdout,"span","aw-at");printf("%s %d",wl_is_poem(t->w.kind)?"Line":"Paragraph",x->unit);ui_close(stdout,"span");ui_copy(stdout," ");
         html(x->body);printf(" <a href=\"#r-%lld\" aria-label=\"Back to the text\">&#8617;</a></li>",x->id);}
     ui_close(stdout,"ol"); ui_close(stdout,"section");
 }
@@ -187,7 +187,7 @@ static void world_lit_public(sqlite3 *db,const PhSite *site,sqlite3_int64 world,
         for(int i=0;i<n;i++){
             if(strcmp(group,w[i].collection)){if(group[0]!='\x01')ui_close(stdout,"ol");snprintf(group,sizeof(group),"%s",w[i].collection);
                 ui_open(stdout,"h3","aw-month");html(group[0]?group:"Works");ui_close(stdout,"h3"); ui_open(stdout,"ol","aw-bib");}
-            fputs("<li data-work=\"",stdout);html(w[i].work);fputs("\"><a href=\"",stdout);wl_read_href(space,w[i].work,NULL);fputs("\">",stdout);html(w[i].title);
+            ui_start(stdout,"li");ui_attr_open(stdout,"data-work");html(w[i].work);ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");wl_read_href(space,w[i].work,NULL);ui_attr_close(stdout);ui_gt(stdout);html(w[i].title);
             ui_close(stdout,"a"); fputs(" ",stdout); ui_open(stdout,"span","aw-kind");html(wl_kind_word(w[i].kind));if(strcmp(w[i].language,"en")){fputs(" &middot; ",stdout);html(wl_language_word(w[i].language));}
             ui_close(stdout,"span"); ui_open(stdout,"span","by");html(w[i].author);if(w[i].translator[0]){fputs(", translated by ",stdout);html(w[i].translator);}ui_close(stdout,"span"); ui_close(stdout,"li");
         }
@@ -199,11 +199,11 @@ static void world_lit_public(sqlite3 *db,const PhSite *site,sqlite3_int64 world,
 static void world_lit_piece(sqlite3 *db,const PhSite *site,sqlite3_int64 world,int position,const char *ref,const char *role,const char *note){
     char home[65],work[65];WlText t;
     if(awl_public_key(db,site->id,world,ref+6,home,work)!=1||!wl_load(db,NULL,site->id,world,home,work,&t)){
-        printf("<article class=\"aw-piece aw-gone\" id=\"piece-%d\" data-kind=\"gone\"><div class=\"aw-words\"><p class=\"aw-body\">This writing is not published right now.</p></div></article>",position);return;}
+        ui_start(stdout,"article");ui_attr(stdout,"class","aw-piece aw-gone");printf(" id=\"piece-%d\"",position);ui_attr(stdout,"data-kind","gone");ui_gt(stdout);ui_open(stdout,"div","aw-words");ui_open(stdout,"p","aw-body");ui_copy(stdout,"This writing is not published right now.");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"article");return;}
     char today[11];wl_today(today);int pi=-1;
     if(!strcmp(t.w.kind,"interactive"))pi=wl_first(&t);else for(int i=0;i<t.np&&pi<0;i++)if(wl_open(&t.p[i],today))pi=i;
-    printf("<article class=\"aw-piece aw-work\" id=\"piece-%d\" data-kind=\"text\" data-world-piece=\"",position);html(ref);fputs("\" data-work-kind=\"",stdout);html(t.w.kind);
-    fputs("\" data-shown=\"text\">",stdout); ui_open(stdout,"div","aw-words"); ui_open(stdout,"p","aw-role");world_web_words(role);fputs("</p><h2><a href=\"",stdout);wl_read_href(home,work,NULL);fputs("\">",stdout);html(t.w.title);ui_close(stdout,"a"); ui_close(stdout,"h2");
+    ui_start(stdout,"article");ui_attr(stdout,"class","aw-piece aw-work");printf(" id=\"piece-%d\"",position);ui_attr(stdout,"data-kind","text");ui_attr_open(stdout,"data-world-piece");html(ref);ui_attr_close(stdout);ui_attr_open(stdout,"data-work-kind");html(t.w.kind);
+    ui_attr_close(stdout);ui_attr(stdout,"data-shown","text");ui_gt(stdout); ui_open(stdout,"div","aw-words"); ui_open(stdout,"p","aw-role");world_web_words(role);ui_close(stdout,"p");ui_open(stdout,"h2",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");wl_read_href(home,work,NULL);ui_attr_close(stdout);ui_gt(stdout);html(t.w.title);ui_close(stdout,"a"); ui_close(stdout,"h2");
     wl_credit(&t.w);if(note&&*note){ui_text(stdout, "p", "aw-note", note);}
     wl_recitation(db,&t.w);
     if(pi>=0&&wl_is_poem(t.w.kind))wl_text(&t,pi,0);
@@ -213,7 +213,7 @@ static void world_lit_piece(sqlite3 *db,const PhSite *site,sqlite3_int64 world,i
         for(size_t i=0;i<len;i++){if(b[i]=='\n'){if(i+1<len)fputc(' ',stdout);}else wl_esc(b+i,1);}
         if(len==700)fputs("&hellip;",stdout);ui_close(stdout,"p");
     }
-    fputs("<p class=\"aw-listen\"><a href=\"",stdout);wl_read_href(home,work,NULL);fputs("\">",stdout);
+    ui_open(stdout,"p","aw-listen");ui_start(stdout,"a");ui_attr_open(stdout,"href");wl_read_href(home,work,NULL);ui_attr_close(stdout);ui_gt(stdout);
     fputs(wl_is_poem(t.w.kind)?"Open it in the reader":!strcmp(t.w.kind,"interactive")?"Begin the story":!strcmp(t.w.kind,"serial")?"Read the chapters":"Keep reading",stdout);
     ui_close(stdout,"a"); ui_close(stdout,"p");wl_terms(&t.w);ui_close(stdout,"div"); ui_close(stdout,"article");wl_free(&t);
 }
@@ -229,9 +229,9 @@ static void wl_controls(int poem){
     ui_close(stdout,"div");
 }
 static void wl_place_link(const PhSite *site,const char *space,const char *work,const char *passage,const char *path,int poem){
-    fputs("<p class=\"aw-place\"><a data-place data-unit-kind=\"",stdout);fputs(poem?"l":"p",stdout);fputs("\" href=\"https://aurekai.",stdout);html(site->territory);
-    fputs("/workspace/worlds/reading?site=",stdout);url_query_value(site->id);fputs("&amp;space=",stdout);url_query_value(space);fputs("&amp;work=",stdout);url_query_value(work);
-    fputs("&amp;passage=",stdout);url_query_value(passage);if(path&&*path){fputs("&amp;path=",stdout);url_query_value(path);}fputs("&amp;unit=0\">Keep my place in your account</a></p>",stdout);
+    ui_open(stdout,"p","aw-place");ui_start(stdout,"a");ui_flag(stdout,"data-place");ui_attr_open(stdout,"data-unit-kind");fputs(poem?"l":"p",stdout);ui_attr_close(stdout);ui_attr_open(stdout,"href");ui_copy(stdout,"https://aurekai.");html(site->territory);
+    ui_copy(stdout,"/workspace/worlds/reading?site=");url_query_value(site->id);ui_copy(stdout,"&amp;space=");url_query_value(space);ui_copy(stdout,"&amp;work=");url_query_value(work);
+    ui_copy(stdout,"&amp;passage=");url_query_value(passage);if(path&&*path){ui_copy(stdout,"&amp;path=");url_query_value(path);}ui_copy(stdout,"&amp;unit=0");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Keep my place in your account");ui_close(stdout,"a");ui_close(stdout,"p");
 }
 static void wl_script(void){
     ui_open(stdout,"script",NULL); fputs("(()=>{const b=document.body,k='aw-read-size',get=n=>{try{return localStorage.getItem(n)}catch(e){return null}},put=(n,v)=>{try{localStorage.setItem(n,v)}catch(e){}};let size=+(get(k)||0);const apply=()=>{b.style.setProperty('--aw-read-step',size)};apply();document.querySelectorAll('[data-size]').forEach(x=>x.addEventListener('click',()=>{size=Math.max(-2,Math.min(4,size+ +x.dataset.size));put(k,size);apply()}));const num=document.querySelector('[data-numbers]');if(num){const on=get('aw-read-numbers')==='1';b.toggleAttribute('data-numbered',on);num.setAttribute('aria-pressed',on);num.addEventListener('click',()=>{const v=!b.hasAttribute('data-numbered');b.toggleAttribute('data-numbered',v);num.setAttribute('aria-pressed',v);put('aw-read-numbers',v?'1':'0')})}const keep=document.querySelector('[data-place]'),units=[...document.querySelectorAll('[data-unit]')],work=document.querySelector('[data-world-reader]');if(work){const store='aw-place:'+location.host+work.dataset.worldReader;let unit=0;const save=()=>{if(keep){const u=new URL(keep.href);u.searchParams.set('unit',unit);keep.href=u}put(store,JSON.stringify({href:location.pathname+location.search+(unit?'#'+(keep?keep.dataset.unitKind:'p')+'-'+unit:''),unit}))};if(units.length&&'IntersectionObserver' in window){const io=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting){unit=+e.target.dataset.unit;save();break}},{rootMargin:'0px 0px -70% 0px'});units.forEach(u=>io.observe(u))}if(work.dataset.readerPage==='contents'){const back=document.querySelector('[data-continue]');let saved=null;try{saved=JSON.parse(get(store)||'null')}catch(e){}if(back&&saved&&saved.href){back.href=saved.href;back.hidden=false}}else save()}})()",stdout); ui_close(stdout,"script");
@@ -287,32 +287,32 @@ static int serve_world_lit_public(const char *method,const char *target,const ch
     printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: public, no-cache\r\nVary: Host\r\n"
            "X-Content-Type-Options: nosniff\r\nReferrer-Policy: strict-origin-when-cross-origin\r\nConnection: close\r\n\r\n");
     world_room_open(pi>=0&&t.p[pi].title[0]&&t.np>1?t.p[pi].title:t.w.title,site.name,character,"aw-reader",0);
-    fputs("<main class=\"wrap aw-read\" data-world-reader=\"",stdout);
-    wl_read_href(space,work,NULL);fputs("\" data-reader-page=\"",stdout);fputs(pi<0?"contents":"passage",stdout);fputs("\" data-work-kind=\"",stdout);html(t.w.kind);fputs("\" lang=\"",stdout);html(t.w.language);fputs("\">",stdout);
+    ui_start(stdout,"main");ui_attr(stdout,"class","wrap aw-read");ui_attr_open(stdout,"data-world-reader");
+    wl_read_href(space,work,NULL);ui_attr_close(stdout);ui_attr_open(stdout,"data-reader-page");fputs(pi<0?"contents":"passage",stdout);ui_attr_close(stdout);ui_attr_open(stdout,"data-work-kind");html(t.w.kind);ui_attr_close(stdout);ui_attr_open(stdout,"lang");html(t.w.language);ui_attr_close(stdout);ui_gt(stdout);
     wl_reader_bar(&site,space,stitle,pi>=0&&t.np>1?work:NULL,t.w.title);
     /* The monograph head: kicker, title, credit; what to hear on the right;
      * the work's facts in one strip beneath. */
     ui_open(stdout,"header","hero aw-readhead"); ui_open(stdout,"div","aw-readhead-main"); ui_open(stdout,"p","aw-role");html(wl_kind_word(t.w.kind));if(t.w.collection[0]){fputs(" &middot; ",stdout);html(t.w.collection);}
     ui_close(stdout,"p"); ui_open(stdout,"h1",NULL);html(t.w.title);ui_close(stdout,"h1");wl_credit(&t.w);
-    if(pi>=0&&t.np>1&&t.p[pi].title[0]){ui_open(stdout,"h2","aw-chapter");if(!interactive)printf("<span>%d</span> ",t.p[pi].number);html(t.p[pi].title);ui_close(stdout,"h2");}
+    if(pi>=0&&t.np>1&&t.p[pi].title[0]){ui_open(stdout,"h2","aw-chapter");if(!interactive){ui_open(stdout,"span",NULL);printf("%d",t.p[pi].number);ui_close(stdout,"span");ui_copy(stdout," ");}html(t.p[pi].title);ui_close(stdout,"h2");}
     ui_close(stdout,"div"); ui_open(stdout,"div","aw-readhead-acts");
     if(pi>=0){wl_recitation(db,&t.w);ui_open_a(stdout,"button","type","button","class","ak-btn","data-ak-track",(const char *)NULL,"data-narrate","#aw-text",UI_DYN,"data-title","",(t.w.title),UI_DYN,"data-by","",(t.w.author)); fputs("Read it aloud",stdout); ui_close(stdout,"button");}
     wl_controls(poem);
     ui_close(stdout,"div"); ui_open(stdout,"dl","aw-facts"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Form"); ui_open(stdout,"dd",NULL);html(wl_kind_word(t.w.kind));ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Language"); ui_open(stdout,"dd",NULL);html(wl_language_word(t.w.language));
-    printf("</dd></div><div><dt>%s</dt><dd>%d</dd></div><div><dt>Terms</dt><dd>",poem?"Parts":"Passages",t.np);
+    ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);printf("%s",poem?"Parts":"Passages");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);printf("%d",t.np);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Terms");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);
     if(!strcmp(t.w.rights,"own")){fputs("&copy; ",stdout);html(t.w.author);}else html(t.w.licence[0]?t.w.licence:t.w.rights);
     ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl"); ui_close(stdout,"header");
     if(pi<0){ /* contents */
         ui_open_a(stdout,"nav","class","aw-contents","aria-label","Contents"); ui_open(stdout,"p",NULL); ui_open_a(stdout,"a","class","aw-door","data-continue",(const char *)NULL,"hidden",(const char *)NULL,"href","#"); fputs("Continue where you left off",stdout); ui_close(stdout,"a"); ui_close(stdout,"p"); ui_open(stdout,"ol",NULL);
         int first_open=-1,next_wait=-1;
         for(int i=0;i<t.np;i++){int o=wl_open(&t.p[i],today);if(o&&first_open<0)first_open=i;
-            printf("<li data-passage=\"%s\" data-open=\"%d\"><span class=\"aw-at\">%d</span> ",t.p[i].passage,o,t.p[i].number);
-            if(o){fputs("<a href=\"",stdout);wl_read_href(space,work,t.p[i].passage);fputs("\">",stdout);html(t.p[i].title[0]?t.p[i].title:t.w.title);ui_close(stdout,"a");
+            ui_start(stdout,"li");printf(" data-passage=\"%s\" data-open=\"%d\">",t.p[i].passage,o);ui_open(stdout,"span","aw-at");printf("%d",t.p[i].number);ui_close(stdout,"span");ui_copy(stdout," ");
+            if(o){ui_start(stdout,"a");ui_attr_open(stdout,"href");wl_read_href(space,work,t.p[i].passage);ui_attr_close(stdout);ui_gt(stdout);html(t.p[i].title[0]?t.p[i].title:t.w.title);ui_close(stdout,"a");
                 if(t.p[i].release_on[0]){fputs(" <time class=\"aw-when\" datetime=\"",stdout);html(t.p[i].release_on);fputs("\">",stdout);cine_when(t.p[i].release_on);ui_close(stdout,"time");}}
             else{if(next_wait<0)next_wait=i;html(t.p[i].title[0]?t.p[i].title:"A chapter to come");fputs(" <span class=\"aw-when\">Arrives <time datetime=\"",stdout);html(t.p[i].release_on);fputs("\">",stdout);cine_when(t.p[i].release_on);ui_close(stdout,"time"); ui_close(stdout,"span");}
             ui_close(stdout,"li");}
         ui_close(stdout,"ol");
-        if(first_open>=0){fputs("<p><a class=\"aw-door\" href=\"",stdout);wl_read_href(space,work,t.p[first_open].passage);fputs("\">Start reading</a></p>",stdout);}
+        if(first_open>=0){ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","aw-door");ui_attr_open(stdout,"href");wl_read_href(space,work,t.p[first_open].passage);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Start reading");ui_close(stdout,"a");ui_close(stdout,"p");}
         else ui_text(stdout, "p", "aw-note", "Nothing is out yet.");
         ui_close(stdout,"nav");
     }else{
@@ -320,10 +320,10 @@ static int serve_world_lit_public(const char *method,const char *target,const ch
         if(interactive){
             int choices=0;for(int c=0;c<t.nc;c++)if(!strcmp(t.c[c].passage,t.p[pi].passage)){int to=wl_find(&t,t.c[c].target);if(to<0)continue;
                 if(!choices++)do{ ui_open_a(stdout,"nav","class","aw-choices","aria-label","What happens next","data-world-choices",(const char *)NULL); ui_open(stdout,"ol",NULL); }while(0);
-                fputs("<li><a href=\"",stdout);wl_read_href(space,work,t.c[c].target);fputs("?path=",stdout);
-                char next[sizeof(path)+70];snprintf(next,sizeof(next),"%s.%s",path,t.c[c].target);url_query_value(next);fputs("\">",stdout);html(t.c[c].label);ui_close(stdout,"a"); ui_close(stdout,"li");}
+                ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");wl_read_href(space,work,t.c[c].target);ui_copy(stdout,"?path=");
+                char next[sizeof(path)+70];snprintf(next,sizeof(next),"%s.%s",path,t.c[c].target);url_query_value(next);ui_attr_close(stdout);ui_gt(stdout);html(t.c[c].label);ui_close(stdout,"a"); ui_close(stdout,"li");}
             if(choices)do{ ui_close(stdout,"ol"); ui_close(stdout,"nav"); }while(0);
-            else{fputs("<p class=\"aw-ending\" data-world-ending>This is one of the endings. <a href=\"",stdout);wl_read_href(space,work,NULL);fputs("\">Begin again</a></p>",stdout);}
+            else{ui_open_a(stdout,"p","class","aw-ending","data-world-ending",(const char *)NULL);ui_copy(stdout,"This is one of the endings. ");ui_start(stdout,"a");ui_attr_open(stdout,"href");wl_read_href(space,work,NULL);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Begin again");ui_close(stdout,"a");ui_close(stdout,"p");}
             ui_open_a(stdout,"p","class","aw-terms aw-path",UI_DYN,"data-world-path","",(path)); fputs("Your way here: ",stdout);
             const char *p=path;int first=1;char step[65];
             while(*p){const char *dot=strchr(p,'.');size_t len=dot?(size_t)(dot-p):strlen(p);if(len>64)break;memcpy(step,p,len);step[len]=0;int at=wl_find(&t,step);
@@ -333,9 +333,9 @@ static int serve_world_lit_public(const char *method,const char *target,const ch
             int prev=-1,next=-1,wait=-1;for(int i=pi-1;i>=0&&prev<0;i--)if(wl_open(&t.p[i],today))prev=i;
             for(int i=pi+1;i<t.np&&next<0&&wait<0;i++){if(wl_open(&t.p[i],today))next=i;else wait=i;}
             ui_open_a(stdout,"nav","class","aw-turn","aria-label","Chapters");
-            if(prev>=0){fputs("<a rel=\"prev\" href=\"",stdout);wl_read_href(space,work,t.p[prev].passage);fputs("\">&larr; ",stdout);html(t.p[prev].title[0]?t.p[prev].title:"Before");ui_close(stdout,"a");}
-            fputs("<a href=\"",stdout);wl_read_href(space,work,NULL);fputs("\">Contents</a>",stdout);
-            if(next>=0){fputs("<a rel=\"next\" href=\"",stdout);wl_read_href(space,work,t.p[next].passage);fputs("\">",stdout);html(t.p[next].title[0]?t.p[next].title:"Next");fputs(" &rarr;</a>",stdout);}
+            if(prev>=0){ui_start(stdout,"a");ui_attr(stdout,"rel","prev");ui_attr_open(stdout,"href");wl_read_href(space,work,t.p[prev].passage);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"&larr; ");html(t.p[prev].title[0]?t.p[prev].title:"Before");ui_close(stdout,"a");}
+            ui_start(stdout,"a");ui_attr_open(stdout,"href");wl_read_href(space,work,NULL);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Contents");ui_close(stdout,"a");
+            if(next>=0){ui_start(stdout,"a");ui_attr(stdout,"rel","next");ui_attr_open(stdout,"href");wl_read_href(space,work,t.p[next].passage);ui_attr_close(stdout);ui_gt(stdout);html(t.p[next].title[0]?t.p[next].title:"Next");ui_copy(stdout," &rarr;");ui_close(stdout,"a");}
             else if(wait>=0){ui_open_a(stdout,"span","class","aw-when","data-next-release",(const char *)NULL); fputs("The next chapter arrives ",stdout); ui_open_a(stdout,"time",UI_DYN,"datetime","",(t.p[wait].release_on));cine_when(t.p[wait].release_on);ui_close(stdout,"time"); ui_close(stdout,"span");}
             ui_close(stdout,"nav");
         }
@@ -347,7 +347,7 @@ static int serve_world_lit_public(const char *method,const char *target,const ch
     for(int i=0;i<n;i++){WlWork *o=&all[i];if(!strcmp(o->work,t.w.work))continue;
         int related=!strcmp(o->original,t.w.work)||!strcmp(t.w.original,o->work)||(t.w.original[0]&&!strcmp(o->original,t.w.original));if(!related)continue;
         if(!shown++)do{ ui_open_a(stdout,"nav","class","aw-editions","aria-label","Other editions"); ui_open(stdout,"h2","region-label"); fputs("Other editions",stdout); ui_close(stdout,"h2"); ui_open(stdout,"ul",NULL); }while(0);
-        fputs("<li><a href=\"",stdout);wl_read_href(space,o->work,NULL);fputs("\" hreflang=\"",stdout);html(o->language);fputs("\">",stdout);html(o->title);ui_close(stdout,"a"); fputs(" ",stdout); ui_open(stdout,"span",NULL);html(wl_language_word(o->language));
+        ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");wl_read_href(space,o->work,NULL);ui_attr_close(stdout);ui_attr_open(stdout,"hreflang");html(o->language);ui_attr_close(stdout);ui_gt(stdout);html(o->title);ui_close(stdout,"a"); fputs(" ",stdout); ui_open(stdout,"span",NULL);html(wl_language_word(o->language));
         if(!strcmp(t.w.original,o->work))fputs(", the original",stdout);else if(o->translator[0]){fputs(", translated by ",stdout);html(o->translator);}ui_close(stdout,"span"); ui_close(stdout,"li");}
     if(shown)do{ ui_close(stdout,"ul"); ui_close(stdout,"nav"); }while(0);free(all);
     ui_open(stdout,"div","src");wl_terms(&t.w);ui_close(stdout,"div");wl_script();world_room_close();
@@ -474,7 +474,7 @@ static int serve_world_reading(const char *method,const char *query,const char *
           "X-Content-Type-Options: nosniff\r\nReferrer-Policy: same-origin\r\nConnection: close\r\n\r\n",stdout);
     world_room_open(title,"your reading",character,"aw-clubroom aw-readingroom",1);
     ui_open_a(stdout,"main","class","wrap aw-room",UI_DYN,"data-world-reading","",(space));
-    fputs("<nav class=\"aw-crumb\" aria-label=\"Where you are\"><a class=\"home\" href=\"https://",stdout);html(site.host);fputs("/worlds/",stdout);html(space);fputs("\">",stdout);html(title);
+    ui_open_a(stdout,"nav","class","aw-crumb","aria-label","Where you are");ui_start(stdout,"a");ui_attr(stdout,"class","home");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");html(site.host);ui_copy(stdout,"/worlds/");html(space);ui_attr_close(stdout);ui_gt(stdout);html(title);
     ui_close(stdout,"a"); ui_open(stdout,"span","ch"); fputs("your reading",stdout); ui_close(stdout,"span"); ui_close(stdout,"nav"); ui_open(stdout,"header","hero"); ui_open(stdout,"h1",NULL); fputs("Your place in ",stdout);html(title);
     ui_close(stdout,"h1"); ui_text(stdout,"p","lede","Where you stopped in each piece, kept with your account so you can pick up on any device. Only you can see this page."); ui_close(stdout,"header");
     WlWork *works=NULL;int nw=wl_works(db,NULL,site_id,world,space,&works);
@@ -493,8 +493,8 @@ static int serve_world_reading(const char *method,const char *query,const char *
     if(awl_places(db,viewer,site_id,space,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
         const char *w=wl_col(s,0),*p=wl_col(s,1),*pa=wl_col(s,3);int u=sqlite3_column_int(s,2);const WlWork *x=NULL;
         for(int i=0;i<nw;i++)if(!strcmp(works[i].work,w))x=&works[i];if(!x)continue;have++;
-        fputs("<li data-reading-place=\"",stdout);html(w);fputs("\"><div class=\"aw-words\"><h3><a href=\"https://",stdout);html(site.host);wl_read_href(space,w,p);
-        if(*pa){fputs("?path=",stdout);url_query_value(pa);}if(u)printf("#%s-%d",wl_is_poem(x->kind)?"l":"p",u);fputs("\">",stdout);html(x->title);ui_close(stdout,"a"); ui_close(stdout,"h3"); ui_open(stdout,"p","by");
+        ui_start(stdout,"li");ui_attr_open(stdout,"data-reading-place");html(w);ui_attr_close(stdout);ui_gt(stdout);ui_open(stdout,"div","aw-words");ui_open(stdout,"h3",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");html(site.host);wl_read_href(space,w,p);
+        if(*pa){ui_copy(stdout,"?path=");url_query_value(pa);}if(u)printf("#%s-%d",wl_is_poem(x->kind)?"l":"p",u);ui_attr_close(stdout);ui_gt(stdout);html(x->title);ui_close(stdout,"a"); ui_close(stdout,"h3"); ui_open(stdout,"p","by");
         if(u)printf("%s %d &middot; ",wl_is_poem(x->kind)?"Line":"Paragraph",u);fputs("kept ",stdout);cine_when(wl_col(s,4));ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"div","aw-acts");
         ui_open_a(stdout,"form","method","post","action","/workspace/world-literature");ph_hidden("site",site_id);ph_hidden("space",space);ph_hidden("operation","unplace");ph_hidden("work",w);ph_hidden("return","reading");
         ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Forget",stdout); ui_close(stdout,"button"); ui_close(stdout,"form"); ui_close(stdout,"div"); ui_close(stdout,"li");
@@ -505,7 +505,7 @@ static int serve_world_reading(const char *method,const char *query,const char *
 
 /* ------------------------------------------------------------- studio */
 static void wl_form(const char *site,sqlite3_int64 world,const char *space,const char *op,long long revision,const char *name){
-    fputs("<form method=\"post\" action=\"/workspace/world-literature\"",stdout);if(name){fputs(" data-lit-form=\"",stdout);html(name);fputs("\"",stdout);}fputs(">",stdout);
+    ui_start(stdout,"form");ui_attr(stdout,"method","post");ui_attr(stdout,"action","/workspace/world-literature");if(name){ui_attr_open(stdout,"data-lit-form");html(name);ui_attr_close(stdout);}ui_gt(stdout);
     char n[24];ph_hidden("site",site);snprintf(n,sizeof(n),"%lld",(long long)world);ph_hidden("world",n);ph_hidden("space",space);ph_hidden("operation",op);
     snprintf(n,sizeof(n),"%lld",revision);ph_hidden("revision",n);ph_hidden("return","studio");
 }
@@ -530,21 +530,21 @@ static void wl_diff(const char *old,const char *now){
 static void wl_work_fields(const WlWork *w,const WlWork *all,int n,const PhSite *site){
     const char *kinds[]={"poem","story","essay","memoir","serial","interactive"};
     ui_open(stdout,"div","aw-row"); ui_open(stdout,"label",NULL); fputs("Title",stdout); ui_open_a(stdout,"input","name","title","required",(const char *)NULL,"maxlength","256",UI_DYN,"value","",(w?w->title:"")); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("What it is",stdout); ui_open_a(stdout,"select","name","kind");
-    for(int i=0;i<6;i++){fputs("<option value=\"",stdout);fputs(kinds[i],stdout);fputs("\"",stdout);if(w&&!strcmp(w->kind,kinds[i]))fputs(" selected",stdout);fputs(">",stdout);html(wl_kind_word(kinds[i]));ui_close(stdout,"option");}
-    fputs("</select></label></div><div class=\"aw-row\"><label>Written by<input name=\"author\" required maxlength=\"160\" value=\"",stdout);html(w?w->author:site->name);
-    fputs("\"></label><label>Translated by<small>Optional</small><input name=\"translator\" maxlength=\"160\" value=\"",stdout);html(w?w->translator:"");
-    fputs("\"></label><label>Language<small>A code such as en or es</small><input name=\"language\" required maxlength=\"16\" pattern=\"[A-Za-z-]{2,16}\" value=\"",stdout);html(w?w->language:"en");
-    fputs("\"></label></div><div class=\"aw-row\"><label>Collection<small>Optional. Works are grouped under it</small><input name=\"collection\" maxlength=\"80\" value=\"",stdout);html(w?w->collection:"");
+    for(int i=0;i<6;i++){ui_start(stdout,"option");ui_attr_open(stdout,"value");fputs(kinds[i],stdout);ui_attr_close(stdout);if(w&&!strcmp(w->kind,kinds[i]))ui_flag(stdout,"selected");ui_gt(stdout);html(wl_kind_word(kinds[i]));ui_close(stdout,"option");}
+    ui_close(stdout,"select");ui_close(stdout,"label");ui_close(stdout,"div");ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"Written by");ui_start(stdout,"input");ui_attr(stdout,"name","author");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","160");ui_attr_open(stdout,"value");html(w?w->author:site->name);
+    ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Translated by");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","translator");ui_attr(stdout,"maxlength","160");ui_attr_open(stdout,"value");html(w?w->translator:"");
+    ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Language");ui_open(stdout,"small",NULL);ui_copy(stdout,"A code such as en or es");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","language");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","16");ui_attr(stdout,"pattern","[A-Za-z-]{2,16}");ui_attr_open(stdout,"value");html(w?w->language:"en");
+    ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_close(stdout,"div");ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"Collection");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional. Works are grouped under it");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","collection");ui_attr(stdout,"maxlength","80");ui_attr_open(stdout,"value");html(w?w->collection:"");
     fputs("\">",stdout); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("Translation of",stdout); ui_open(stdout,"small",NULL); fputs("Optional",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"select","name","original"); ui_open_a(stdout,"option","value",""); fputs("Not a translation",stdout); ui_close(stdout,"option");
-    for(int i=0;i<n;i++){if(w&&!strcmp(all[i].work,w->work))continue;fputs("<option value=\"",stdout);html(all[i].work);fputs("\"",stdout);if(w&&!strcmp(w->original,all[i].work))fputs(" selected",stdout);fputs(">",stdout);html(all[i].title);ui_close(stdout,"option");}
+    for(int i=0;i<n;i++){if(w&&!strcmp(all[i].work,w->work))continue;ui_start(stdout,"option");ui_attr_open(stdout,"value");html(all[i].work);ui_attr_close(stdout);if(w&&!strcmp(w->original,all[i].work))ui_flag(stdout,"selected");ui_gt(stdout);html(all[i].title);ui_close(stdout,"option");}
     char pos[8];snprintf(pos,sizeof(pos),"%d",w?w->position:n+1);
     ui_close(stdout,"select"); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); fputs("Order",stdout); ui_open_a(stdout,"input","type","number","name","position","min","1","max","999","required",(const char *)NULL,UI_DYN,"value","",(pos)); ui_close(stdout,"label"); ui_close(stdout,"div");
-    fputs("<div class=\"aw-row\"><label>Whose text<select name=\"rights\"><option value=\"own\"",stdout);if(!w||!strcmp(w->rights,"own"))fputs(" selected",stdout);
-    fputs(">My own writing</option><option value=\"public-domain\"",stdout);if(w&&!strcmp(w->rights,"public-domain"))fputs(" selected",stdout);
-    fputs(">A public-domain text</option></select></label><label>Terms<small>Yours, such as All rights reserved or CC BY 4.0. For a public-domain text, begin with Public domain</small><input name=\"licence\" required maxlength=\"128\" value=\"",stdout);
-    html(w?w->licence:"All rights reserved");fputs("\"></label></div><div class=\"aw-row\"><label>Taken from<small>Required for a public-domain text: the https page, such as Wikisource or Project Gutenberg</small><input name=\"provenance\" maxlength=\"512\" value=\"",stdout);
-    html(w?w->provenance:"");fputs("\"></label><label>Name of that page<small>Optional</small><input name=\"source_label\" maxlength=\"160\" value=\"",stdout);html(w?w->provenance_label:"");
-    fputs("\"></label><label>Recording of it read aloud<small>Optional. The address after /o/ of the recording. It plays only if its source states open terms</small><input name=\"recitation\" maxlength=\"99\" value=\"",stdout);
+    ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"Whose text");ui_open_a(stdout,"select","name","rights");ui_start(stdout,"option");ui_attr(stdout,"value","own");if(!w||!strcmp(w->rights,"own"))ui_flag(stdout,"selected");
+    ui_gt(stdout);ui_copy(stdout,"My own writing");ui_close(stdout,"option");ui_start(stdout,"option");ui_attr(stdout,"value","public-domain");if(w&&!strcmp(w->rights,"public-domain"))ui_flag(stdout,"selected");
+    ui_gt(stdout);ui_copy(stdout,"A public-domain text");ui_close(stdout,"option");ui_close(stdout,"select");ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Terms");ui_open(stdout,"small",NULL);ui_copy(stdout,"Yours, such as All rights reserved or CC BY 4.0. For a public-domain text, begin with Public domain");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","licence");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","128");ui_attr_open(stdout,"value");
+    html(w?w->licence:"All rights reserved");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_close(stdout,"div");ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"Taken from");ui_open(stdout,"small",NULL);ui_copy(stdout,"Required for a public-domain text: the https page, such as Wikisource or Project Gutenberg");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","provenance");ui_attr(stdout,"maxlength","512");ui_attr_open(stdout,"value");
+    html(w?w->provenance:"");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Name of that page");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","source_label");ui_attr(stdout,"maxlength","160");ui_attr_open(stdout,"value");html(w?w->provenance_label:"");
+    ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Recording of it read aloud");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional. The address after /o/ of the recording. It plays only if its source states open terms");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","recitation");ui_attr(stdout,"maxlength","99");ui_attr_open(stdout,"value");
     html(w?w->recitation:"");fputs("\">",stdout); ui_close(stdout,"label"); ui_close(stdout,"div");
 }
 static void world_lit_studio(sqlite3 *db,const char *subject,const char *site_id,sqlite3_int64 world,const char *space,long long revision){
@@ -570,16 +570,16 @@ static void world_lit_studio(sqlite3 *db,const char *subject,const char *site_id
         /* passages */
         char *reach=calloc((size_t)t.np+1,1);int *parent=calloc((size_t)t.np+1,sizeof(int));if(inter&&reach&&parent)wl_reach(&t,reach,parent);
         for(int p=0;p<t.np;p++){const WlPassage *x=&t.p[p];
-            printf("<details data-lit-passage=\"%s\"><summary>%d. ",x->passage,x->number);html(x->title[0]?x->title:x->passage);
+            ui_start(stdout,"details");printf(" data-lit-passage=\"%s\">",x->passage);ui_open(stdout,"summary",NULL);printf("%d. ",x->number);html(x->title[0]?x->title:x->passage);
             if(x->release_on[0]){fputs(" &middot; out ",stdout);cine_when(x->release_on);}if(x->start)fputs(" &middot; first passage",stdout);
             if(inter&&reach&&!reach[p])fputs(" &middot; <span class=\"aw-warn\">readers cannot reach this yet</span>",stdout);ui_close(stdout,"summary");
             wl_form(site_id,world,space,"passage",revision,"passage");ph_hidden("work",w->work);ph_hidden("passage",x->passage);
             char num[8];snprintf(num,sizeof(num),"%d",x->number);
-            fputs("<div class=\"aw-row\"><label>Number<input type=\"number\" name=\"number\" min=\"1\" max=\"9999\" required value=\"",stdout);html(num);
-            fputs("\"></label><label>Title<small>Optional for a single poem</small><input name=\"title\" maxlength=\"256\" value=\"",stdout);html(x->title);
-            fputs("\"></label><label>Out on<small>Optional. Hidden from readers until this day</small><input type=\"date\" name=\"release_on\" value=\"",stdout);html(x->release_on);fputs("\"></label></div>",stdout);
+            ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"Number");ui_start(stdout,"input");ui_attr(stdout,"type","number");ui_attr(stdout,"name","number");ui_attr(stdout,"min","1");ui_attr(stdout,"max","9999");ui_flag(stdout,"required");ui_attr_open(stdout,"value");html(num);
+            ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Title");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional for a single poem");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","title");ui_attr(stdout,"maxlength","256");ui_attr_open(stdout,"value");html(x->title);
+            ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Out on");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional. Hidden from readers until this day");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"type","date");ui_attr(stdout,"name","release_on");ui_attr_open(stdout,"value");html(x->release_on);fputs("\"></label></div>",stdout);
             ui_open(stdout,"label",NULL); fputs("Text",stdout); ui_open_a(stdout,"textarea","class","aw-text","name","body","rows","12","required",(const char *)NULL,"maxlength","60000","spellcheck","true"); fputs("\n",stdout);html(x->body);ui_close(stdout,"textarea"); ui_close(stdout,"label");
-            if(inter){fputs("<label class=\"aw-check\"><input type=\"checkbox\" name=\"start\" value=\"1\"",stdout);if(x->start)fputs(" checked",stdout);fputs("> Readers begin here</label>",stdout);}
+            if(inter){ui_open(stdout,"label","aw-check");ui_start(stdout,"input");ui_attr(stdout,"type","checkbox");ui_attr(stdout,"name","start");ui_attr(stdout,"value","1");if(x->start)ui_flag(stdout,"checked");ui_gt(stdout);ui_copy(stdout," Readers begin here");ui_close(stdout,"label");}
             ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Save this text",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form");
             if(inter){int nc=0,used[AWL_CHOICE_LIMIT+1]={0};
                 for(int c=0;c<t.nc;c++)if(!strcmp(t.c[c].passage,x->passage)){used[t.c[c].number]=1;
@@ -595,36 +595,36 @@ static void world_lit_studio(sqlite3 *db,const char *subject,const char *site_id
                     ui_close(stdout,"select"); ui_close(stdout,"label"); ui_close(stdout,"div"); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Add the choice",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form");}}
             /* glosses on this passage */
             int ng=0;for(int g=0;g<t.ng;g++)if(!strcmp(t.g[g].passage,x->passage)){if(!ng++)ui_open_a(stdout,"ol","class","aw-items","data-lit-glosses",(const char *)NULL);
-                printf("<li><div><strong>%s %s %d</strong><br>",!strcmp(t.g[g].kind,"footnote")?"Footnote,":"Note,",wl_is_poem(w->kind)?"line":"paragraph",t.g[g].unit);html(t.g[g].body);ui_close(stdout,"div");
+                ui_open(stdout,"li",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"strong",NULL);printf("%s %s %d",!strcmp(t.g[g].kind,"footnote")?"Footnote,":"Note,",wl_is_poem(w->kind)?"line":"paragraph",t.g[g].unit);ui_close(stdout,"strong");ui_open(stdout,"br",NULL);html(t.g[g].body);ui_close(stdout,"div");
                 wl_form(site_id,world,space,"ungloss",revision,NULL);char id[24];snprintf(id,sizeof(id),"%lld",t.g[g].id);ph_hidden("id",id);ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Remove",stdout); ui_close(stdout,"button"); ui_close(stdout,"form"); ui_close(stdout,"li");}
             if(ng)ui_close(stdout,"ol");
             wl_form(site_id,world,space,"gloss",revision,"gloss");ph_hidden("work",w->work);ph_hidden("passage",x->passage);
-            printf("<div class=\"aw-row\"><label>%s<input type=\"number\" name=\"unit\" min=\"1\" max=\"%d\" required value=\"1\"></label>",wl_is_poem(w->kind)?"On line":"On paragraph",awl_units(w->kind,x->body));
+            ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);printf("%s",wl_is_poem(w->kind)?"On line":"On paragraph");ui_start(stdout,"input");ui_attr(stdout,"type","number");ui_attr(stdout,"name","unit");ui_attr(stdout,"min","1");printf(" max=\"%d\"",awl_units(w->kind,x->body));ui_flag(stdout,"required");ui_attr(stdout,"value","1");ui_gt(stdout);ui_close(stdout,"label");
             ui_open(stdout,"label",NULL); fputs("Kind",stdout); ui_open_a(stdout,"select","name","note_kind"); ui_open_a(stdout,"option","value","footnote"); fputs("Footnote",stdout); ui_close(stdout,"option"); ui_open_a(stdout,"option","value","note"); fputs("Note",stdout); ui_close(stdout,"option"); ui_close(stdout,"select"); ui_close(stdout,"label"); ui_close(stdout,"div"); ui_open(stdout,"label",NULL); fputs("The note",stdout); ui_open_a(stdout,"input","name","label","required",(const char *)NULL,"maxlength","1000"); ui_close(stdout,"label"); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Add the note",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form");
             /* earlier versions */
             sqlite3_stmt *v=NULL;int nv=0;
             if(awl_versions(db,subject,site_id,world,space,w->work,x->passage,&v)==1)while(sqlite3_step(v)==SQLITE_ROW){
                 if(!nv++)do{ ui_open_a(stdout,"details","data-lit-versions",(const char *)NULL); ui_open(stdout,"summary",NULL); fputs("Earlier versions",stdout); ui_close(stdout,"summary"); }while(0);
-                printf("<p class=\"aw-state\">Before change %d, compared with the text now</p>",sqlite3_column_int(v,0));wl_diff(wl_col(v,1),x->body);}
+                ui_open(stdout,"p","aw-state");printf("Before change %d, compared with the text now",sqlite3_column_int(v,0));ui_close(stdout,"p");wl_diff(wl_col(v,1),x->body);}
             sqlite3_finalize(v);if(nv)ui_close(stdout,"details");
             wl_form(site_id,world,space,"unpassage",revision,NULL);ph_hidden("work",w->work);ph_hidden("passage",x->passage);ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Remove this passage",stdout); ui_close(stdout,"button"); ui_close(stdout,"form"); ui_close(stdout,"details");
         }
         if(inter&&t.np){int endings=0,lost=0;for(int p=0;p<t.np;p++){int out=0;for(int c=0;c<t.nc;c++)if(!strcmp(t.c[c].passage,t.p[p].passage))out++;if(!out&&reach&&reach[p])endings++;if(reach&&!reach[p])lost++;}
-            printf("<p data-lit-structure>%d ending%s readers can reach.",endings,endings==1?"":"s");if(lost)printf(" <span class=\"aw-warn\">%d passage%s cannot be reached from the first one.</span>",lost,lost==1?"":"s");ui_close(stdout,"p");}
+            ui_open_a(stdout,"p","data-lit-structure",(const char *)NULL);printf("%d ending%s readers can reach.",endings,endings==1?"":"s");if(lost)printf(" <span class=\"aw-warn\">%d passage%s cannot be reached from the first one.</span>",lost,lost==1?"":"s");ui_close(stdout,"p");}
         free(reach);free(parent);
         /* new passage */
         int next=1;for(int p=0;p<t.np;p++)if(t.p[p].number>=next)next=t.p[p].number+1;
         if(t.np<AWL_PASSAGE_LIMIT){wl_form(site_id,world,space,"passage",revision,"new-passage");ph_hidden("work",w->work);char num[8];snprintf(num,sizeof(num),"%d",next);
-            ui_open(stdout,"h4",NULL);fputs(!strcmp(w->kind,"serial")?"Next chapter":inter?"New passage":t.np?"Another part":"The text",stdout);fputs("</h4><div class=\"aw-row\"><label>Short name<small>Lowercase, used in the link</small><input name=\"passage\" required maxlength=\"64\" pattern=\"[a-z0-9][a-z0-9-]*\" value=\"",stdout);
-            if(!t.np)fputs("text",stdout);fputs("\"></label><label>Number<input type=\"number\" name=\"number\" min=\"1\" max=\"9999\" required value=\"",stdout);html(num);
-            fputs("\"></label><label>Title<small>Optional</small><input name=\"title\" maxlength=\"256\"></label><label>Out on<small>Optional</small><input type=\"date\" name=\"release_on\"></label></div>"
-                  "<label>Text<textarea class=\"aw-text\" name=\"body\" rows=\"10\" required maxlength=\"60000\"></textarea></label>",stdout);
+            ui_open(stdout,"h4",NULL);fputs(!strcmp(w->kind,"serial")?"Next chapter":inter?"New passage":t.np?"Another part":"The text",stdout);ui_close(stdout,"h4");ui_open(stdout,"div","aw-row");ui_open(stdout,"label",NULL);ui_copy(stdout,"Short name");ui_open(stdout,"small",NULL);ui_copy(stdout,"Lowercase, used in the link");ui_close(stdout,"small");ui_start(stdout,"input");ui_attr(stdout,"name","passage");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","64");ui_attr(stdout,"pattern","[a-z0-9][a-z0-9-]*");ui_attr_open(stdout,"value");
+            if(!t.np)fputs("text",stdout);ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Number");ui_start(stdout,"input");ui_attr(stdout,"type","number");ui_attr(stdout,"name","number");ui_attr(stdout,"min","1");ui_attr(stdout,"max","9999");ui_flag(stdout,"required");ui_attr_open(stdout,"value");html(num);
+            ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Title");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional");ui_close(stdout,"small");ui_open_a(stdout,"input","name","title","maxlength","256");ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Out on");ui_open(stdout,"small",NULL);ui_copy(stdout,"Optional");ui_close(stdout,"small");ui_open_a(stdout,"input","type","date","name","release_on");ui_close(stdout,"label");ui_close(stdout,"div");
+            ui_open(stdout,"label",NULL);ui_copy(stdout,"Text");ui_open_a(stdout,"textarea","class","aw-text","name","body","rows","10","required",(const char *)NULL,"maxlength","60000");ui_close(stdout,"textarea");ui_close(stdout,"label");
             if(inter&&!t.np)ui_open_a(stdout,"input","type","hidden","name","start","value","1");
             ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Add",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form");}
         wl_form(site_id,world,space,"unwork",revision,NULL);ph_hidden("work",w->work);ui_open_a(stdout,"button","type","submit","class","aw-quiet"); fputs("Remove this work",stdout); ui_close(stdout,"button"); ui_close(stdout,"form"); ui_close(stdout,"details");
         wl_free(&t);
     }
-    if(n<AWL_WORK_LIMIT){fputs("<details data-lit-new",stdout);if(!n)fputs(" open",stdout);fputs("><summary>Add a work</summary>",stdout);
+    if(n<AWL_WORK_LIMIT){ui_start(stdout,"details");ui_flag(stdout,"data-lit-new");if(!n)ui_flag(stdout,"open");ui_gt(stdout);ui_open(stdout,"summary",NULL);ui_copy(stdout,"Add a work");ui_close(stdout,"summary");
         wl_form(site_id,world,space,"work",revision,"new-work");
         ui_open(stdout,"label",NULL); fputs("Short name",stdout); ui_open(stdout,"small",NULL); fputs("Lowercase, used in the link",stdout); ui_close(stdout,"small"); ui_open_a(stdout,"input","name","work","required",(const char *)NULL,"maxlength","64","pattern","[a-z0-9][a-z0-9-]*"); ui_close(stdout,"label");
         wl_work_fields(NULL,works,n,&site);ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Add the work",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form"); ui_close(stdout,"details");}
@@ -635,9 +635,9 @@ static void world_lit_studio(sqlite3 *db,const char *subject,const char *site_id
           "Open a circle and readers can join from the public page once the space is published. Members propose what to read and talk about it; you can hide posts and take people out.",stdout);
     ui_close(stdout,"p"); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"form","method","post","action","/workspace/world/film","data-lit-form","circle");
     {char wn[24];ph_hidden("site",site_id);snprintf(wn,sizeof(wn),"%lld",(long long)world);ph_hidden("world",wn);ph_hidden("operation","club");ph_hidden("space",space);ph_hidden("return","studio");}
-    ph_hidden("state",!strcmp(club,"open")?"closed":"open");fputs("<button type=\"submit\"",stdout);if(!strcmp(club,"open"))fputs(" class=\"aw-quiet\"",stdout);
-    fputs(">",stdout);fputs(!strcmp(club,"open")?"Close the circle":"Open a reading circle",stdout);ui_close(stdout,"button"); ui_close(stdout,"form");
-    if(!strcmp(club,"open")){fputs("<a class=\"ph-button\" href=\"/workspace/worlds/club?site=",stdout);url_query_value(site_id);fputs("&amp;space=",stdout);url_query_value(space);fputs("\">Go to the circle</a>",stdout);}
+    ph_hidden("state",!strcmp(club,"open")?"closed":"open");ui_start(stdout,"button");ui_attr(stdout,"type","submit");if(!strcmp(club,"open"))ui_attr(stdout,"class","aw-quiet");
+    ui_gt(stdout);fputs(!strcmp(club,"open")?"Close the circle":"Open a reading circle",stdout);ui_close(stdout,"button"); ui_close(stdout,"form");
+    if(!strcmp(club,"open")){ui_start(stdout,"a");ui_attr(stdout,"class","ph-button");ui_attr_open(stdout,"href");ui_copy(stdout,"/workspace/worlds/club?site=");url_query_value(site_id);ui_copy(stdout,"&amp;space=");url_query_value(space);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Go to the circle");ui_close(stdout,"a");}
     ui_close(stdout,"div"); ui_close(stdout,"section");free(works);
 }
 
@@ -650,7 +650,7 @@ static void wl_club_options(sqlite3 *db,const char *ns,sqlite3_int64 world,const
 static int wl_club_title(sqlite3 *db,const PhSite *site,sqlite3_int64 world,const char *ref,int link){
     char home[65],work[65];if(!ref||strncmp(ref,"works/",6)||awl_public_key(db,site->id,world,ref+6,home,work)!=1)return 0;
     WlText t;if(!wl_load(db,NULL,site->id,world,home,work,&t))return 0;
-    if(link){fputs("<a href=\"https://",stdout);html(site->host);wl_read_href(home,work,NULL);fputs("\">",stdout);}html(t.w.title);if(link)ui_close(stdout,"a");
+    if(link){ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");html(site->host);wl_read_href(home,work,NULL);ui_attr_close(stdout);ui_gt(stdout);}html(t.w.title);if(link)ui_close(stdout,"a");
     wl_free(&t);return 1;
 }
 

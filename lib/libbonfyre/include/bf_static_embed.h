@@ -39,4 +39,20 @@ int bf_static_embed(const BfStaticModel *model, const char *text, float *out);
 /* Writes count unit vectors (count x dims floats) as a .bfsi index. */
 int bf_static_index_write(const char *path, const BfStaticModel *model, int count, const float *vectors);
 
+/* A .bfsi index mapped read-only, for scoring a query against every row
+ * without copying it. NULL with a reason in err when the file is not a
+ * version 1 index, its width differs from the model's, or its rows were made
+ * by another .bfse (vectors from two models are not comparable). */
+typedef struct BfStaticIndex BfStaticIndex;
+BfStaticIndex *bf_static_index_map(const char *path, const BfStaticModel *model, char *err, size_t err_size);
+void bf_static_index_unmap(BfStaticIndex *index);
+int bf_static_index_count(const BfStaticIndex *index);
+
+/* The best k rows for a unit query vector, best first, written as row
+ * numbers and cosine scores. accept (may be NULL) is asked about each row
+ * before it is ranked, so a caller can leave rows out (one source, newer
+ * than a date) without a second pass. Returns how many were written. */
+int bf_static_index_top(const BfStaticIndex *index, const float *query, int k,
+                        int (*accept)(int row, void *ctx), void *ctx, int *rows, float *scores);
+
 #endif

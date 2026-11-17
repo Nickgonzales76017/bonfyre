@@ -1,5 +1,6 @@
 #ifndef BONFYRE_FRONT_BRAND_H
 #define BONFYRE_FRONT_BRAND_H
+#include "ui_tree.h"
 /* Public brand identity on the four institution-owned apex fronts only.
  * The editorial stream and its retained source ownership stay untouched.
  * These are real navigational destinations, not a client endorsement,
@@ -27,10 +28,10 @@ static void front_brand_emit(const char *territory){
     for(size_t i=0;i<sizeof(front_brand_cuts)/sizeof(front_brand_cuts[0]);i++)
         if(!strcmp(front_brand_cuts[i].territory,territory)){selected=&front_brand_cuts[i];break;}
     if(!selected)return;
-    fputs("<section class=\"af-brand\" data-brand-masthead data-brand-territory=\"",stdout);
+    ui_start(stdout,"section");ui_attr(stdout,"class","af-brand");ui_flag(stdout,"data-brand-masthead");ui_attr_open(stdout,"data-brand-territory");
     html(selected->territory);
-    fputs("\" aria-labelledby=\"af-brand-title\"><div class=\"af-brand-top\">"
-          "<div class=\"af-brand-mark\">AUREKAI<span>",stdout);
+    ui_attr_close(stdout);ui_attr(stdout,"aria-labelledby","af-brand-title");ui_gt(stdout);
+    ui_open(stdout,"div","af-brand-top");ui_open(stdout,"div","af-brand-mark");ui_copy(stdout,"AUREKAI");ui_open(stdout,"span",NULL);
     html(selected->index);
     (ui_lit(stdout, " &middot; THE OPERATING BUSINESS"), ui_close(stdout, "span"), ui_close(stdout, "div"), ui_open(stdout, "span", "af-brand-signature"));
     html(front_brand_signature_first);
@@ -42,20 +43,21 @@ static void front_brand_emit(const char *territory){
     html(selected->headline);
     (ui_close(stdout, "h1"), ui_close(stdout, "div"), ui_open(stdout, "div", "af-brand-side"), ui_open(stdout, "p", NULL));
     html(selected->description);
-    fputs("</p><div class=\"af-brand-links\"><a href=\"",stdout);
+    ui_close(stdout,"p");ui_open(stdout,"div","af-brand-links");ui_start(stdout,"a");ui_attr_open(stdout,"href");
     html(selected->action);
     ui_lit(stdout, "\">");
     html(selected->label);
-    fputs(" &rarr;</a><a href=\"https://nickgonzales76017.github.io/bonfyre/about/\">"
-          "About Aurekai</a></div></div></div>"
-          "<nav class=\"af-brand-nav\" aria-label=\"Aurekai destinations\">",stdout);
+    ui_copy(stdout," &rarr;");ui_close(stdout,"a");
+    ui_open_a(stdout,"a","href","https://nickgonzales76017.github.io/bonfyre/about/");
+    ui_copy(stdout,"About Aurekai");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"div");
+    ui_start(stdout,"nav");ui_attr(stdout,"class","af-brand-nav");ui_attr(stdout,"aria-label","Aurekai destinations");ui_gt(stdout);
     static const char *const domains[]={"work","life","live","shop"};
     static const char *const names[]={"Work","Life","Live","Shop"};
     for(size_t i=0;i<4;i++){
-        fputs("<a href=\"https://aurekai.",stdout);
-        html(domains[i]);ui_lit(stdout, "/\"");
-        if(!strcmp(domains[i],territory))ui_lit(stdout, " aria-current=\"page\"");
-        (ui_lit(stdout, ">"), ui_open(stdout, "strong", NULL));html(names[i]);(ui_close(stdout, "strong"), ui_open(stdout, "span", NULL));
+        ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://aurekai.");
+        html(domains[i]);ui_copy(stdout,"/");ui_attr_close(stdout);
+        if(!strcmp(domains[i],territory))ui_attr(stdout,"aria-current","page");
+        ui_gt(stdout);ui_open(stdout,"strong",NULL);html(names[i]);(ui_close(stdout, "strong"), ui_open(stdout, "span", NULL));
         printf("%02zu",i+1);ui_close_n(stdout, "span", "a", NULL);
     }
     ui_close_n(stdout, "nav", "section", NULL);

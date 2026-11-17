@@ -78,7 +78,7 @@ architecture model-representation-passport-registry
   purpose ModelCatalog stores one normalized representation passport per physical/runtime form with a receipt digest, operation scope, quality envelope and ADMIT/DEFER/REJECT state. It forwards typed compute advertisements through AddressPlane but never turns a model declaration, transform receipt or physical fit into runnable inference.
   maturity implemented
   owns ModelRepresentationPassport
-  consumes ModelPassport
+  consumes ModelRepresentationPassport
   publishes CandidateAdvertisement
   node_types ModelRepresentationPassport
   edge_types represented_as
@@ -172,8 +172,8 @@ architecture model-commons
   node_types CatalogueRelation
   node_types AccountModelReview
   node_types ModelPhysicalAttempt
-  consumes CatalogueModel
-  consumes NativeModelCandidate
+  consumes ModelRepresentationPassport
+  consumes CandidateAdvertisement
   publishes AccountScopedModelRequest
   native_format MessagePack browser activity carrier, private review intents and retained native execution receipts
   native_format existing llama-compatible JSON protocol is confined to the current MoE adapter; it is not the Aurekai or Fabric account transport

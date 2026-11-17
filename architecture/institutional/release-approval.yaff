@@ -35,7 +35,7 @@ architecture release-approval-mcp
   semantic_question Can the owner approve an offered release from an MCP client instead of the work board button?
   purpose bonfyre-release-approval lists open release-approval goals and approves one by writing the same <release>.approved file the work board writes; MCP clients reach it through native_tool_invoke (family BonfyreReleaseApproval), so no new MCP surface or JS is added. The existing release watcher verifies again and activates.
   maturity implemented
-  consumes release-approval
+  consumes ReleaseApproval
   publishes ReleaseApproval
   source_path cmd/BonfyreReleaseApproval/src/main.c
   source_path cmd/BonfyreReleaseApproval/tests/release_approval_test.sh

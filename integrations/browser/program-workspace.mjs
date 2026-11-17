@@ -67,6 +67,9 @@ let surfaceId=0;
 
 export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
  const context=root.dataset.context,canWrite=root.dataset.canWrite==='true';
+ // An authored link can address a private context without adding another page.
+ // The owning native program validates the reference, never granting venue rights.
+ const programContext=root.dataset.programContext||new URLSearchParams(location.hash.slice(1)).get('context_ref')||'';
  const destinationLabel=root.querySelector('#program-context option:checked')?.textContent||(context==='self'?'your personal workspace':'this workspace');
  requireValue(contextPattern.test(context),'Choose one account or organization.');
  const target=root.querySelector('[data-program-app]');requireValue(target,'The program surface is missing.');
@@ -100,7 +103,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
    const id=mode==='templates'?row.template_id:row.instance_id,name=row.name||templates.find(t=>t.template_id===row.template_id)?.name||row.template_id;
    if(query&&!(name+' '+(row.archetype||'')+' '+(row.description||'')).toLowerCase().includes(query))continue;
    const item=el('li'),open=button('',()=>void select(id));open.disabled=busy||sourceBusy||!!pendingChange;open.setAttribute('aria-current',String(id===selected));
-   open.append(el('strong',name),el('small',human(row.archetype||'Program')));if(mode==='saved'&&Array.isArray(row.requirements)){const openCount=row.requirements.filter(r=>!done(r.state)).length;open.append(el('span',openCount+' open · '+(row.work_links?.length||0)+' saved records','program-index-count'));}item.append(open);index.append(item);
+   open.append(el('strong',name),el('small',(row.context_ref?row.context_ref+' · ':'')+human(row.archetype||'Program')));if(mode==='saved'&&Array.isArray(row.requirements)){const openCount=row.requirements.filter(r=>!done(r.state)).length;open.append(el('span',openCount+' open · '+(row.work_links?.length||0)+' saved records','program-index-count'));}item.append(open);index.append(item);
   }
   if(!index.childElementCount)index.append(el('li',query?'No programs match this search.':mode==='templates'?'No templates are available.':'Choose a template to prepare your first program.','program-empty'));
  }
@@ -126,6 +129,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
  function showTemplate(template,{reviewed=false}={}){
   clearDetail();setIndexOpen(false);
   main.replaceChildren(el('p',human(template.archetype),'program-eyebrow'),el('h2',template.name),el('p',template.description||'Review the requirements before preparing this program.','program-description'));
+  if(programContext)main.append(el('p','Context: '+programContext+'. Preparing private work does not verify ownership, presence or bookings.','program-context'));
   main.append(names('Work to prepare',template.capability_families),names('Parts of this program',template.semantic_slots));
   if(template.funding_candidates.length){const funding=names('Funding sources to investigate',template.funding_candidates);funding.append(el('p','Each source needs its own eligibility, scope and cost review.'));main.append(funding);}
   const actions=el('div','','program-actions ak-actions');
@@ -306,14 +310,14 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
  }
  async function reviewProgram(template){
   const ticket=generation,expected=binding;busy=true;controls();main.querySelectorAll('button').forEach(node=>node.disabled=true);status.textContent='Reviewing the current template and workspace…';
-  try{const value=await call(context,'review',{body:{template_id:template.template_id,expectedBinding:expected},signal:controller.signal});if(!current(ticket))return;requireBinding(sameActivityBinding(expected,value.binding));requireValue(hex(value.review_digest)&&preparedPattern.test(value.instance_id),'The review is incomplete.');
+  try{const value=await call(context,'review',{body:{template_id:template.template_id,expectedBinding:expected,...(programContext?{context_ref:programContext}:{})},signal:controller.signal});if(!current(ticket))return;requireBinding(sameActivityBinding(expected,value.binding));requireValue(hex(value.review_digest)&&preparedPattern.test(value.instance_id),'The review is incomplete.');
    review=value;busy=false;showTemplate(programTemplate(value.template),{reviewed:true});status.textContent='Review ready. Preparation will use this exact template.';delete status.dataset.error;
   }catch(error){if(current(ticket)){review=null;busy=false;if(!accessFailure(error))showTemplate(template);fail(error);}}finally{if(current(ticket)){busy=false;controls();}}
  }
  async function prepareProgram(template){
   if(!review||busy||uncertain)return;const retained=review,ticket=generation,expected=binding;
   busy=true;controls();main.querySelectorAll('button').forEach(node=>node.disabled=true);status.textContent='Preparing this program…';
-  try{const value=await call(context,'prepare',{body:{template_id:template.template_id,review_digest:retained.review_digest,expectedBinding:expected},signal:controller.signal});if(!current(ticket))return;
+  try{const value=await call(context,'prepare',{body:{template_id:template.template_id,review_digest:retained.review_digest,expectedBinding:expected,...(programContext?{context_ref:programContext}:{})},signal:controller.signal});if(!current(ticket))return;
    requireBinding(sameActivityBinding(expected,value.binding));requireValue(object(value.instance)&&value.instance.instance_id===retained.instance_id,'The preparation acknowledgement is incomplete.');
    busy=false;setMode('saved');selected=value.instance.instance_id;if(!instances.some(r=>r.instance_id===selected))instances.push(value.instance);review=null;
    showInstance(value.instance);renderIndex();status.textContent=value.created?'Program prepared. Its requirements are ready to continue.':'The same prepared program is open.';delete status.dataset.error;
@@ -334,7 +338,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
    requireBinding(sameActivityBinding(binding,saved.value.binding));requireValue(list(saved.value.instances,256),'The saved program list is incomplete.');instances=saved.value.instances;
    toolsUnavailable=false;if(installed.status==='fulfilled')try{tools=installedProgramTools(installed.value,binding);}catch(error){if(accessFailure(error))throw error;toolsUnavailable=true;}else {if(accessFailure(installed.reason))throw installed.reason;toolsUnavailable=true;}
    busy=false;setMode(instances.length?'saved':'templates');renderIndex();controls();status.textContent=toolsUnavailable?'Programs loaded. Installed tools could not be checked; reopen Your work to continue.':instances.length+' prepared programs · '+templates.length+' reusable templates';
-   const initial=previous&&sameActivityBinding(previous,binding)&&previousSelection?previousSelection:root.dataset.instance,wanted=!initial&&templateId(root.dataset.template)?root.dataset.template:'',kept=wanted?instances.find(r=>r.template_id===wanted)?.instance_id:'',offered=wanted&&!kept?templates.find(t=>t.template_id===wanted):null,open=kept||initial;if(open&&instances.some(r=>r.instance_id===open)){selected=open;setMode('saved');showInstance(instances.find(r=>r.instance_id===open));renderIndex();}
+   const initial=previous&&sameActivityBinding(previous,binding)&&previousSelection?previousSelection:root.dataset.instance,wanted=!initial&&templateId(root.dataset.template)?root.dataset.template:'',kept=wanted?instances.find(r=>r.template_id===wanted&&(r.context_ref||'')===programContext)?.instance_id:'',offered=wanted&&!kept?templates.find(t=>t.template_id===wanted):null,open=kept||initial;if(open&&instances.some(r=>r.instance_id===open)){selected=open;setMode('saved');showInstance(instances.find(r=>r.instance_id===open));renderIndex();}
    else if(offered){selected=wanted;setMode('templates');renderIndex();showTemplate(offered);status.textContent='Review this template before preparing a program for '+destinationLabel+'.';}else if(initial||root.dataset.template){main.replaceChildren(el('p',initial?'That program is not available in this workspace.':'That template is not offered in this workspace.'));}
    else {setIndexOpen(true);main.replaceChildren(el('h2',instances.length?'Continue where you left off':'Choose a starting point'),el('p',instances.length?'Open a program to review its requirements and continue in your tools.':'Pick a template, review its setup, then prepare a private program for this workspace.'));}
   }catch(error){if(current(ticket)){templates=[];instances=[];tools=[];binding=null;memories.clear();clearDetail();index.replaceChildren(el('li','Programs could not be read. Refresh after access is available.','program-empty'));fail(error);}}finally{if(current(ticket)){busy=false;controls();}}
@@ -342,7 +346,7 @@ export function mountPrograms(root,{call=programRequest,readPacket=packet}={}){
  const accountChanged=()=>{invalidate('Your account changed. Refresh to read its programs.');};
  const activityInvalidated=()=>invalidate('Checking your account…');
  const destinationChanged=event=>{const next=event.detail?.context;if(!contextPattern.test(next)||suspended)return;
-  if(next!==context){invalidate('Opening that workspace…');location.assign('/programs?'+new URLSearchParams({context:next,...(templateId(root.dataset.template)?{template:root.dataset.template}:{})}));}
+  if(next!==context){invalidate('Opening that workspace…');location.assign('/programs?'+new URLSearchParams({context:next,...(templateId(root.dataset.template)?{template:root.dataset.template}:{})})+(programContext?location.hash:''));}
   else {if(binding&&event.detail?.binding&&!sameActivityBinding(binding,event.detail.binding))invalidate('Checking the current account…');if(!binding&&!busy)void load();}
  };
  const hide=()=>{suspended=true;invalidate('Reopen Programs to check the current account.');},show=()=>{if(suspended){suspended=false;void load();}};

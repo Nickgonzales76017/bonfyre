@@ -957,7 +957,7 @@ architecture protocol-facet-compiler
   source_path cmd/BonfyreFacet/tests/facet_test.sh
   source_path cmd/BonfyreExperienceMap/src/protocol_derivation_bridge.c
   source_path cmd/BonfyreExperienceMap/tools/participation_report.mjs
-  consumes ExternalEstateIndex
+  consumes CandidateExternalSource
   consumes ProtocolContract
   publishes ProtocolFacetContract
   internal_calculus a facet is the intersection of three things: a phenotype the occurrence carries, a relation the protocol offers, and that relation being meaningful for that phenotype. Drop the phenotype and this is domain matching; drop the protocol's own offer and it invents capability; drop the meaningfulness table and a payment protocol acquires a relation over a weather field

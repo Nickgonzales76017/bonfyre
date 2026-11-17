@@ -74,6 +74,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/select.h>
 #include <sqlite3.h>
 
@@ -112,7 +113,7 @@ static const char *page_nav_glyph(const char *route);
 "<form class=\"ak-find\" action=\"/search\" method=\"get\" role=\"search\"><label>" BF_ICON_SEARCH "<input type=\"search\" name=\"q\" placeholder=\"Search\" aria-label=\"Search\"></label></form>" \
 "<div class=\"ak-session-slot\" data-account-slot><!--BF_SESSION_BEGIN--><a class=\"ak-account\" id=\"session-link\" href=\"/login\">" BF_ICON_LOGIN "<span>Sign in</span></a><!--BF_SESSION_END--></div></div>" \
 "<nav class=\"ak-sections\" aria-label=\"Sections\"><a href=\"/discover\">" BF_ICON_COMPASS "<span>Discover</span></a><a href=\"/whats-on\">" BF_ICON_CALENDAR "<span>What&#039;s on</span></a>" \
-"<a href=\"/s/work/all\">" BF_ICON_BRIEFCASE "<span>Work board</span></a><a href=\"/watch\">" BF_ICON_PLAY "<span>Watch</span></a><a href=\"/listen\">" BF_ICON_HEADPHONES "<span>Listen</span></a><a href=\"/board\">" BF_ICON_BOARD "<span>Collections</span></a>" \
+"<a href=\"/s/work/all\">" BF_ICON_BRIEFCASE "<span>Work board</span></a><a href=\"/watch\">" BF_ICON_PLAY "<span>Watch</span></a><a href=\"/listen\">" BF_ICON_HEADPHONES "<span>Listen</span></a><a href=\"/companions\">" BF_ICON_USER "<span>Companions</span></a><a href=\"/board\">" BF_ICON_BOARD "<span>Collections</span></a>" \
 "<span class=\"ak-out\"><a href=\"" BF_ORIGIN_DOCS "/\">" BF_ICON_BOOK "<span>Guides</span></a></span></nav>" \
 "<script>(function(){var b=document.currentScript.parentNode,h=location.hostname.split('.').slice(-2).join('.'),p=location.pathname;b.querySelectorAll('.ak-places a').forEach(function(a){if(a.hostname===h)a.setAttribute('aria-current','page')});b.querySelectorAll('.ak-sections>a').forEach(function(a){var r=a.getAttribute('href');if(p===r||p.indexOf(r+'/')===0)a.setAttribute('aria-current','page')});})();</script>" \
 BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH \
@@ -126,7 +127,7 @@ BF_ACCOUNT_STYLE BF_ACCOUNT_REFRESH \
 "<footer class=\"ak-foot\"><div class=\"ak-foot-grid\"><div><b>Aurekai</b><p>Reading, listening, making and trading in one place, from the sources and people who made them.</p></div>" \
 "<div><h2>Territories</h2><ul><li><a href=\"" BF_ORIGIN_LIVE "/\">Live: what&#039;s on, watch, listen</a></li><li><a href=\"" BF_ORIGIN_LIFE "/\">Life: stories, food, places</a></li>" \
 "<li><a href=\"" BF_ORIGIN_SHOP "/\">Shop: things worth buying</a></li><li><a href=\"" BF_ORIGIN_WORK "/\">Work: jobs, tools, business</a></li></ul></div>" \
-"<div><h2>Find</h2><ul><li><a href=\"/discover\">Discover</a></li><li><a href=\"/whats-on\">What&#039;s on</a></li><li><a href=\"/listen\">Listen</a></li><li><a href=\"/people\">People</a></li><li><a href=\"/blog/\">Journal</a></li></ul></div>" \
+"<div><h2>Find</h2><ul><li><a href=\"/discover\">Discover</a></li><li><a href=\"/whats-on\">What&#039;s on</a></li><li><a href=\"/listen\">Listen</a></li><li><a href=\"/people\">People</a></li><li><a href=\"/companions\">Companions</a></li><li><a href=\"/blog/\">Journal</a></li></ul></div>" \
 "<div><h2>Yours</h2><ul><li><a href=\"/profile\">Your page</a></li><li><a href=\"/apps\">Your tools</a></li><li><a href=\"/studio\">Studio</a></li><li><a href=\"/account/devices\">Your devices</a></li><li><a href=\"/account/agents\">Agent access</a></li><li><a href=\"/dispatch\">Field visits</a></li><li><a href=\"" BF_ORIGIN_DOCS "/\">Guides</a></li></ul></div></div>" \
 "<div class=\"ak-foot-base\"><span>&copy; Aurekai</span><span>Every item links back to the source that published it.</span></div></footer>" \
 "<div class=\"ak-player\" data-ak-player hidden role=\"region\" aria-label=\"Player\"><button class=\"ak-prev\" type=\"button\" aria-label=\"Previous in queue\" hidden>&#9664;&#9664;</button><button class=\"ak-play\" type=\"button\" aria-label=\"Play\"><svg viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\"/></svg></button><button class=\"ak-next\" type=\"button\" aria-label=\"Next in queue\" hidden>&#9654;&#9654;</button>" \
@@ -541,6 +542,17 @@ static int serve(BfMatrix *m, int argc, char **argv) {
      * outcome, never grounds to terminate the public origin and strand every
      * remaining static-export coordinate behind it. */
     if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) { close(fd); return 2; }
+    /* Warm before the first visitor: the meaning model and the archive's
+     * index are loaded and read through once here, so no request pays for
+     * faulting them in. A host without them simply has nothing to warm. */
+    {
+        const PageArchiveIndex *x = page_archive_index();
+        const BfStaticModel *model = bf_route_static_model();
+        if (x && model) {
+            float q[1024] = {0}; int row; float score;
+            if (bf_static_dims(model) <= 1024) { q[0] = 1.0f; (void)bf_static_index_top(x->index, q, 1, NULL, NULL, &row, &score); }
+        }
+    }
     BfHttpReadiness *requests = bf_http_readiness_create(BF_WEB_MAX_REQUEST_BYTES);
     if (!requests || bf_http_readiness_narrow(requests, BF_WEB_LEGACY_REQUEST_BYTES, "/apps/")) { bf_http_readiness_destroy(requests); close(fd); return 2; }
     bf_store_leases_serve();
@@ -1566,9 +1578,30 @@ static int archive_items_cli(const char *path) {
         if (sqlite3_prepare_v2(archive, "SELECT COUNT(*) FROM item", -1, &count, NULL) == SQLITE_OK && sqlite3_step(count) == SQLITE_ROW)
             total = sqlite3_column_int(count, 0);
         sqlite3_finalize(count);
-        printf("{\"read\":%d,\"kept\":%d}\n", kept, total);
+        /* The meaning index is the archive's too: rebuilt here when it is
+         * missing or an hour behind, so nobody has to run anything. */
+        {
+            char bfsi[1100], rows[1100]; struct stat st; int indexed = -1, skipped = 0;
+            if (page_archive_index_paths(bfsi, sizeof bfsi, rows, sizeof rows) &&
+                (stat(bfsi, &st) || time(NULL) - st.st_mtime > 3600) && bf_route_static_model())
+                if (page_archive_index_build(archive, &indexed, &skipped) != 0) indexed = -1;
+            if (indexed >= 0) printf("{\"read\":%d,\"kept\":%d,\"indexed\":%d,\"unreadable\":%d}\n", kept, total, indexed, skipped);
+            else printf("{\"read\":%d,\"kept\":%d}\n", kept, total);
+        }
     }
     sqlite3_close(archive);
+    return 0;
+}
+
+/* Rebuild the archive's meaning index now. */
+static int archive_index_cli(void) {
+    sqlite3 *archive = page_archive_open(1); int indexed = 0, skipped = 0, rc;
+    if (!archive) { fprintf(stderr, "archive-index: BONFYRE_ITEM_ARCHIVE_DB is not set\n"); return 2; }
+    if (!bf_route_static_model()) { fprintf(stderr, "archive-index: no static model (BONFYRE_STATIC_MODEL)\n"); sqlite3_close(archive); return 2; }
+    rc = page_archive_index_build(archive, &indexed, &skipped);
+    sqlite3_close(archive);
+    if (rc != 0) { fprintf(stderr, "archive-index: the index could not be written\n"); return 1; }
+    printf("{\"indexed\":%d,\"unreadable\":%d}\n", indexed, skipped);
     return 0;
 }
 
@@ -1576,6 +1609,7 @@ static int archive_items_cli(const char *path) {
     X("--help", WC_HELP) \
     X("address", WC_ADDRESS) \
     X("alias", WC_ALIAS) \
+    X("archive-index", WC_ARCHIVE_INDEX) \
     X("archive-items", WC_ARCHIVE_ITEMS) \
     X("bootstrap-owned", WC_BOOTSTRAP_OWNED) \
     X("census-items", WC_CENSUS_ITEMS) \
@@ -1683,6 +1717,7 @@ int main(int argc, char **argv) {
         return publish_static_cli(opt(argc, argv, "--site-root"), opt(argc, argv, "--out"), opt(argc, argv, "--routes"),
                                   opt(argc, argv, "--shard"), opt(argc, argv, "--only"));
     case WC_ARCHIVE_ITEMS: return archive_items_cli(opt(argc, argv, "--items"));
+    case WC_ARCHIVE_INDEX: return archive_index_cli();
     case WC_PUBLIC_PROJECTION_INVALIDATE: {
         const char *cache = opt(argc, argv, "--cache-db");
         const char *dependency = opt(argc, argv, "--dependency");

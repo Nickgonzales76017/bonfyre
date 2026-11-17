@@ -224,3 +224,4 @@ site/matrix/authoring-editor.css
 cmd/BonfyreWebAddress/tests/affinity-projection-test
 cmd/BonfyreWebAddress/tests/club-projection-test
 cmd/BonfyreWebAddress/tests/dateplan-projection-test
+cmd/BonfyreWebAddress/tests/participant-journey-test

@@ -65,28 +65,29 @@ int main(void){
        "Content-Length: 2\r\n\r\n";
     setenv("BONFYRE_BUN_BINARY","/bin/sh",1);
     setenv("BONFYRE_NATIVE_COMMAND_DISPATCH","/bin/sh",1);
+    BfRequest route = { .as = "native_command" };
     status=0;require(serve_native_command_work("POST","/apps/_native-command",NULL,
-       "{}",good,"aurekai.work",accepted,"/fixture/auth"),202,"valid account packet");
+       "{}",good,"aurekai.work",accepted,"/fixture/auth",&route),202,"valid account packet");
     if(forwarded!=1||mismatch){fputs("native command packet mismatch\n",stderr);return 1;}
     status=0;require(serve_native_command_work("POST","/apps/_native-command",NULL,
-       "{}",good,"aurekai.work",NULL,"/fixture/auth"),403,"anonymous");
+       "{}",good,"aurekai.work",NULL,"/fixture/auth",&route),403,"anonymous");
     status=0;require(serve_native_command_work("GET","/apps/_native-command",NULL,
-       NULL,good,"aurekai.work",accepted,"/fixture/auth"),405,"wrong method");
+       NULL,good,"aurekai.work",accepted,"/fixture/auth",&route),405,"wrong method");
     status=0;require(serve_native_command_work("POST","/apps/_native-command","redirect=1",
-       "{}",good,"aurekai.work",accepted,"/fixture/auth"),405,"query injection");
+       "{}",good,"aurekai.work",accepted,"/fixture/auth",&route),405,"query injection");
     const char *foreign="POST /apps/_native-command HTTP/1.1\r\n"
       "Origin: https://another.example\r\nContent-Type: application/json\r\n"
       "Content-Length: 2\r\n\r\n";
     status=0;require(serve_native_command_work("POST","/apps/_native-command",NULL,
-       "{}",foreign,"aurekai.work",accepted,"/fixture/auth"),403,"foreign origin");
+       "{}",foreign,"aurekai.work",accepted,"/fixture/auth",&route),403,"foreign origin");
     const char *wrong="POST /apps/_native-command HTTP/1.1\r\n"
       "Origin: https://aurekai.work\r\nContent-Type: text/plain\r\n"
       "Content-Length: 2\r\n\r\n";
     status=0;require(serve_native_command_work("POST","/apps/_native-command",NULL,
-       "{}",wrong,"aurekai.work",accepted,"/fixture/auth"),400,"content type");
+       "{}",wrong,"aurekai.work",accepted,"/fixture/auth",&route),400,"content type");
     unsetenv("BONFYRE_NATIVE_COMMAND_DISPATCH");
     status=0;require(serve_native_command_work("POST","/apps/_native-command",NULL,
-       "{}",good,"aurekai.work",accepted,"/fixture/auth"),503,"uninstalled native owner");
+       "{}",good,"aurekai.work",accepted,"/fixture/auth",&route),503,"uninstalled native owner");
     if(forwarded!=1||mismatch){fputs("refused call reached native owner\n",stderr);return 1;}
     puts("native command WebAddress: PASS");return 0;
 }

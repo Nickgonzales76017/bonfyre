@@ -166,6 +166,7 @@ architecture closure-algebra
   state_types SATISFIED
   state_types UNKNOWN
   state_types BLOCKED
+  publishes ClosureAlgebra
   invariant an unknown condition is not an unmet one; collapsing the two reports a wall where there is only silence, and nobody asked is a different answer from refused
   invariant a resolver below the admitting rung is real and not yet load-bearing; a list of expressions of interest must not present itself as a feasible world, and the ladder has eleven rungs rather than two
   invariant a resolver held below the rung is not also reported as blocked; not yet committed and blocked on a condition have different fixes

@@ -1,3 +1,4 @@
+#include <time.h>
 #include "ui_tree.h"
 #include "club_projection.h"
 #include "bf_lex.h"
@@ -343,7 +344,10 @@ static int viewer_rsvp(sqlite3 *db, const char *viewer, const char *post) {
 
 int bf_events_page(FILE *out, sqlite3 *db, const char *viewer, const char *club) {
     static const char *sql =
-        "SELECT p.post, p.title, p.event_at, p.venue, p.community,"
+        /* People read the community's name, never its key. */
+        "SELECT p.post, p.title, p.event_at, p.venue,"
+        " COALESCE((SELECT b.title FROM community_body b WHERE b.community=p.community"
+        "  AND b.namespace='root' AND b.status='published' LIMIT 1), ''),"
         " (SELECT count(*) FROM community_reaction r WHERE r.post=p.post AND r.kind='rsvp'"
         "  AND r.state='active' AND r.status='published'"
         "  AND r.id=(SELECT MAX(id) FROM community_reaction"
@@ -384,7 +388,15 @@ int bf_events_page(FILE *out, sqlite3 *db, const char *viewer, const char *club)
         if (!ft_card(tree, id, NULL, n, title && *title ? title : post, body, NULL, 0)) goto done;
         if (at && *at) {
             snprintf(child, sizeof(child), "event-%d-when", n);
-            if (!ft_badge(tree, child, id, pos++, at)) goto done;
+            /* A planned time reads as people write it: Thu, Nov 19 · 6:30 pm. */
+            char when[48]; struct tm tm; memset(&tm, 0, sizeof tm);
+            if (strlen(at) >= 16 && sscanf(at, "%4d-%2d-%2dT%2d:%2d", &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min) == 5) {
+                int h = tm.tm_hour % 12 ? tm.tm_hour % 12 : 12;
+                tm.tm_year -= 1900; tm.tm_mon -= 1; tm.tm_isdst = -1; (void)mktime(&tm);
+                char day[24]; strftime(day, sizeof day, "%a, %b %e", &tm);
+                snprintf(when, sizeof when, "%s \u00B7 %d:%02d %s", day, h, tm.tm_min, tm.tm_hour < 12 ? "am" : "pm");
+            } else snprintf(when, sizeof when, "%s", at);
+            if (!ft_badge(tree, child, id, pos++, when)) goto done;
         }
         snprintf(going, sizeof(going), "%d going", count);
         snprintf(child, sizeof(child), "event-%d-going", n);

@@ -9,6 +9,7 @@ architecture decision-plane
   consumes ExactCandidateSet
   consumes InformationPolicy
   publishes DecisionProposal
+  publishes ExactCandidateSet
   family optimization
   domain Optimization / Typed semantic decisions
   layer execution
@@ -90,6 +91,7 @@ architecture native-joint-decision-head
   consumes JointSchemaBackboneActivations
   consumes OutputEmbeddingOptionMeans
   publishes TypedOptionLogits
+  publishes OutputEmbeddingOptionMeans
   family optimization
   domain Optimization / Native typed decision computation
   layer execution
@@ -138,7 +140,7 @@ architecture decision-cut
   canonical_name DecisionCut
   owns DerivedContextCut
   consumes DiagnosticDecisionReceipt
-  consumes ContextCut
+  consumes ContextCutManifest
   publishes DerivedContextCut
   family optimization
   domain Optimization / Context representation

@@ -67,20 +67,20 @@ static void spo_page_links(const char *q,const char *state,unsigned page,
     if(!at&&!more)return;
     const char *anchor=view==0?"subscriptions":view==1?"material-demands":"fact-handoffs";
     const char *labels[]={"subscription","material demand","FactDelta handoff"};
-    fputs("<nav class=\"spo-paging\" aria-label=\"",stdout);html(labels[view]);
-    fputs(" pages\">",stdout);
+    ui_start(stdout,"nav");ui_attr(stdout,"class","spo-paging");ui_attr_open(stdout,"aria-label");html(labels[view]);
+    ui_copy(stdout," pages");ui_attr_close(stdout);ui_gt(stdout);
     for(int dir=-1;dir<=1;dir+=2){
         if((dir<0&&!at)||(dir>0&&!more))continue;
         unsigned step=dir<0?at-1:at+1;
         unsigned sp=view==0?step:page,dp=view==1?step:dpage,fp=view==2?step:fpage;
-        fputs("<a href=\"/sources/push?state=",stdout);url_query_value(state);
+        ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/sources/push?state=");url_query_value(state);
         fputs("&amp;q=",stdout);url_query_value(q);
         fputs("&amp;page=",stdout);printf("%u",sp);
         fputs("&amp;dpage=",stdout);printf("%u",dp);
         fputs("&amp;fpage=",stdout);printf("%u",fp);
         fputs("#",stdout);html(anchor);fputs("\">",stdout);
         fputs(dir<0?"Previous ":"More ",stdout);html(labels[view]);
-        fputs("s</a>",stdout);
+        fputs("s",stdout);ui_close(stdout,"a");
     }
     ui_close(stdout,"nav");
 }
@@ -229,14 +229,27 @@ static int serve_source_push_operations(const BfRequest *r) {
         sqlite3_finalize(c);
     }
     ak_app_http(200,1);ak_app_open("WebSub delivery","connections","route-push");
-    printf("<div class=\"ak-wb-strip\"><span>WebSub</span><span>HMAC-SHA256 callbacks</span><span>Subscriptions <b>%lld</b></span>"
-           "<span class=\"ak-live%s\">%s</span></div>",n_total,n_expired?" is-off":"",n_expired?"Leases past expiry":"Leases current");
+    ui_open(stdout,"div","ak-wb-strip");ui_open(stdout,"span",NULL);ui_copy(stdout,"WebSub");ui_close(stdout,"span");
+    ui_open(stdout,"span",NULL);ui_copy(stdout,"HMAC-SHA256 callbacks");ui_close(stdout,"span");
+    ui_open(stdout,"span",NULL);ui_copy(stdout,"Subscriptions ");ui_open(stdout,"b",NULL);printf("%lld",n_total);ui_close(stdout,"b");ui_close(stdout,"span");
+    ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-live");if(n_expired)ui_copy(stdout," is-off");ui_attr_close(stdout);ui_gt(stdout);
+    fputs(n_expired?"Leases past expiry":"Leases current",stdout);ui_close(stdout,"span");ui_close(stdout,"div");
     ui_open_a(stdout,"section","class","ak-wb-hero is-solo","data-source-push-operations",(const char *)NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); ui_open_a(stdout,"a","href","/sources"); fputs("Sources",stdout); ui_close(stdout,"a"); fputs(" &middot; Push delivery",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Lease renewal and signature console",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede"); fputs("Every feed that pushes to us: its hub, how long its lease has left, whether the hub answered the challenge, and how many signed callbacks were accepted or refused. A challenge proves the hub knows the topic; a valid signature admits a callback. Neither publishes anything.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_close(stdout,"section");
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Active leases</dt><dd class=\"is-on\">%lld<small style=\"display:inline\"> / %lld</small></dd><small>%lld past expiry</small></div>"
-           "<div><dt>Accepted deliveries</dt><dd>%lld</dd><small>signed callbacks admitted</small></div>"
-           "<div><dt>Refused callbacks</dt><dd>%lld</dd><small>subscriptions with a signature mismatch</small></div>"
-           "<div><dt>Sources changed</dt><dd>%lld</dd><small>waiting for a separate read</small></div></dl>",
-           n_active,n_total,n_expired,n_deliv,n_rejected,n_dirty);
+    ui_open(stdout,"dl","ak-stats is-row");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Active leases");ui_close(stdout,"dt");
+    ui_open(stdout,"dd","is-on");printf("%lld",n_active);
+    ui_start(stdout,"small");ui_attr(stdout,"style","display:inline");ui_gt(stdout);ui_copy(stdout," / ");printf("%lld",n_total);ui_close(stdout,"small");ui_close(stdout,"dd");
+    ui_open(stdout,"small",NULL);printf("%lld",n_expired);ui_copy(stdout," past expiry");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Accepted deliveries");ui_close(stdout,"dt");
+    ui_open(stdout,"dd",NULL);printf("%lld",n_deliv);ui_close(stdout,"dd");
+    ui_open(stdout,"small",NULL);ui_copy(stdout,"signed callbacks admitted");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Refused callbacks");ui_close(stdout,"dt");
+    ui_open(stdout,"dd",NULL);printf("%lld",n_rejected);ui_close(stdout,"dd");
+    ui_open(stdout,"small",NULL);ui_copy(stdout,"subscriptions with a signature mismatch");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Sources changed");ui_close(stdout,"dt");
+    ui_open(stdout,"dd",NULL);printf("%lld",n_dirty);ui_close(stdout,"dd");
+    ui_open(stdout,"small",NULL);ui_copy(stdout,"waiting for a separate read");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_close(stdout,"dl");
     ui_open(stdout,"div","spo-layout"); ui_open(stdout,"div","spo-main");
     ui_open_a(stdout,"nav","class","spo-rail","aria-label","Native source pipeline"); ui_open_a(stdout,"a","href","#subscriptions"); fputs("Subscriptions",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","href","#material-demands"); fputs("Material observation demands",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","href","#fact-handoffs"); fputs("FactDelta handoffs",stdout); ui_close(stdout,"a"); ui_close(stdout,"nav");
     spo_filters(q,state);

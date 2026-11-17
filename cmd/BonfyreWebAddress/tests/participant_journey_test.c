@@ -6,10 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sqlite3.h>
-#include <openssl/sha.h>
-static void bf_sha256_hex(const unsigned char *p,size_t n,char out[65]){
-    unsigned char d[32];SHA256(p,n,d);for(size_t i=0;i<32;i++)snprintf(out+2*i,3,"%02x",d[i]);
-}
+#include "bonfyre.h"
 static void html(const char *s){for(const unsigned char *p=(const unsigned char*)(s?s:"");*p;p++){
     if(*p=='&')fputs("&amp;",stdout);else if(*p=='<')fputs("&lt;",stdout);else if(*p=='>')fputs("&gt;",stdout);
     else if(*p=='\"')fputs("&quot;",stdout);else if(*p=='\'')fputs("&#39;",stdout);else putchar(*p);
@@ -39,6 +36,16 @@ static sqlite3 *cms_open_rw(void){return open_store(SQLITE_OPEN_READWRITE);}
 static sqlite3 *cms_open_ro(void){return open_store(SQLITE_OPEN_READONLY);}
 #include "../src/participant_state.h"
 #include "../src/web_request.h"
+/* Fixture mirror of app_shell.h ak_app_tabs (dating only). If the product
+ * table gains a tab, mirror it here or this harness under-tests redirects. */
+typedef struct PjAkAppTab { const char *tab; const char *views[6]; const char *peer_view; const char *icon; } PjAkAppTab;
+static const PjAkAppTab pj_dating_tab = {"dating", {"discover", "matches", "chat", "studio", NULL}, "chat", ""};
+static const PjAkAppTab *ak_app_tab(const char *tab) { return tab && !strcmp(tab, "dating") ? &pj_dating_tab : NULL; }
+static int ak_app_tab_view(const PjAkAppTab *app, const char *view) {
+    if (!app || !view) return 0;
+    for (size_t i = 0; i < 6 && app->views[i]; i++) if (!strcmp(view, app->views[i])) return 1;
+    return 0;
+}
 #include "../src/participant_journey.h"
 int main(int argc,char **argv){
     if(argc==2&&!strcmp(argv[1],"--headers")){
@@ -65,10 +72,10 @@ int main(int argc,char **argv){
         pj_profile_list(db,!strcmp(actor,"user:1")?1:2,site,pj_kind(kind),q,*cursor?strtoll(cursor,NULL,10):0);
         fputs("</main></body></html>",stdout);sqlite3_close(db);return 0;
     }
-    if(pj_legacy(argv[1],argv[2],argv[4],raw,argv[5],argv[6],"fixture-auth"))return 0;
     const char *accept=getenv("PJ_ACCEPT");if(!accept)accept="text/html";
     BfRequest request={.method=argv[1],.target=argv[2],.query=argv[3],.body=argv[4],.raw=raw,.host=argv[5],.bearer=argv[6],.auth_db="fixture-auth",.accept=accept,
         .as=!strcmp(argv[2],"/participation/change")?"change":!strcmp(argv[2],"/participation")?"page":NULL};
+    if(pj_legacy(argv[1],&request,argv[4],raw,argv[5],argv[6],"fixture-auth"))return 0;
     if(!request.as)return 1;
     if(serve_participant_journey(&request))return 0;
     protocol_reply(404,"text/plain","Fixture route not found");return 0;

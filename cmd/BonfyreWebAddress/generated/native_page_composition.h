@@ -238,58 +238,61 @@ static const unsigned char bf_page_program_26_regions[] = {4,11};
 static const char *const bf_page_program_26_sections[] = {NULL};
 static const char *const bf_page_program_27_families[] = {"news","attention","wikimedia","books","space","history","institutions","datasets","live-music","commerce","gaming","vulnerabilities","food","science","sports"};
 static const unsigned char bf_page_program_27_regions[] = {0,13,1,9,8,4,16,11,12};
-static const char *const bf_page_program_27_sections[] = {NULL};
-static const char *const bf_page_program_28_families[] = {"video","films"};
-static const unsigned char bf_page_program_28_regions[] = {14,1,13,4,11};
+static const char *const bf_page_program_27_sections[] = {"/today","/local","/whats-on","/food","/books","/sports","/music","/film","/ideas","/watch","/listen"};
+static const char *const bf_page_program_28_families[] = {"news"};
+static const unsigned char bf_page_program_28_regions[] = {0,9,1,13,4,16,11};
 static const char *const bf_page_program_28_sections[] = {NULL};
-static const char *const bf_page_program_29_families[] = {"news","attention","podcasts","commons"};
-static const unsigned char bf_page_program_29_regions[] = {4};
+static const char *const bf_page_program_29_families[] = {"video","films"};
+static const unsigned char bf_page_program_29_regions[] = {14,1,13,4,11};
 static const char *const bf_page_program_29_sections[] = {NULL};
-static const char *const bf_page_program_30_families[] = {"news","institutions","commons"};
+static const char *const bf_page_program_30_families[] = {"news","attention","podcasts","commons"};
 static const unsigned char bf_page_program_30_regions[] = {4};
 static const char *const bf_page_program_30_sections[] = {NULL};
-static const char *const bf_page_program_31_families[] = {"forums","hacker-attention"};
-static const unsigned char bf_page_program_31_regions[] = {8,4,11,12};
+static const char *const bf_page_program_31_families[] = {"news","institutions","commons"};
+static const unsigned char bf_page_program_31_regions[] = {4};
 static const char *const bf_page_program_31_sections[] = {NULL};
-static const char *const bf_page_program_32_families[] = {"fediverse","atproto"};
-static const unsigned char bf_page_program_32_regions[] = {15,10,4,11,12};
+static const char *const bf_page_program_32_families[] = {"forums","hacker-attention"};
+static const unsigned char bf_page_program_32_regions[] = {8,4,11,12};
 static const char *const bf_page_program_32_sections[] = {NULL};
-static const char *const bf_page_program_33_families[] = {"commons","museums","images"};
-static const unsigned char bf_page_program_33_regions[] = {13,2,14,4,11};
+static const char *const bf_page_program_33_families[] = {"fediverse","atproto"};
+static const unsigned char bf_page_program_33_regions[] = {15,10,4,11,12};
 static const char *const bf_page_program_33_sections[] = {NULL};
-static const char *const bf_page_program_34_families[] = {"hazards","nature","mobility"};
-static const unsigned char bf_page_program_34_regions[] = {3,2,4,11};
+static const char *const bf_page_program_34_families[] = {"commons","museums","images"};
+static const unsigned char bf_page_program_34_regions[] = {13,2,14,4,11};
 static const char *const bf_page_program_34_sections[] = {NULL};
-static const char *const bf_page_program_35_families[] = {"packages","ai-models","gaming","github"};
-static const unsigned char bf_page_program_35_regions[] = {16,4,11,12};
+static const char *const bf_page_program_35_families[] = {"hazards","nature","mobility"};
+static const unsigned char bf_page_program_35_regions[] = {3,2,4,11};
 static const char *const bf_page_program_35_sections[] = {NULL};
-static const char *const bf_page_program_36_families[] = {"vulnerabilities","security","standards","rulemaking","recalls"};
-static const unsigned char bf_page_program_36_regions[] = {0,16,4,11};
+static const char *const bf_page_program_36_families[] = {"packages","ai-models","gaming","github"};
+static const unsigned char bf_page_program_36_regions[] = {16,4,11,12};
 static const char *const bf_page_program_36_sections[] = {NULL};
-static const char *const bf_page_program_37_families[] = {"literature","government-spending","local-government"};
-static const unsigned char bf_page_program_37_regions[] = {4,16,11,12};
+static const char *const bf_page_program_37_families[] = {"vulnerabilities","security","standards","rulemaking","recalls"};
+static const unsigned char bf_page_program_37_regions[] = {0,16,4,11};
 static const char *const bf_page_program_37_sections[] = {NULL};
-static const char *const bf_page_program_38_families[] = {"music","live-music","podcasts"};
-static const unsigned char bf_page_program_38_regions[] = {18,9,13,4,11};
+static const char *const bf_page_program_38_families[] = {"literature","government-spending","local-government"};
+static const unsigned char bf_page_program_38_regions[] = {4,16,11,12};
 static const char *const bf_page_program_38_sections[] = {NULL};
-static const char *const bf_page_program_39_families[] = {"podcasts"};
-static const unsigned char bf_page_program_39_regions[] = {18,9,4,11};
+static const char *const bf_page_program_39_families[] = {"music","live-music","podcasts"};
+static const unsigned char bf_page_program_39_regions[] = {18,9,13,4,11};
 static const char *const bf_page_program_39_sections[] = {NULL};
-static const char *const bf_page_program_40_families[] = {"history","commons","attention"};
-static const unsigned char bf_page_program_40_regions[] = {0,2,13,4,11};
+static const char *const bf_page_program_40_families[] = {"podcasts"};
+static const unsigned char bf_page_program_40_regions[] = {18,9,4,11};
 static const char *const bf_page_program_40_sections[] = {NULL};
-static const char *const bf_page_program_41_families[] = {"events"};
-static const unsigned char bf_page_program_41_regions[] = {7,6,2,4,11};
+static const char *const bf_page_program_41_families[] = {"history","commons","attention"};
+static const unsigned char bf_page_program_41_regions[] = {0,2,13,4,11};
 static const char *const bf_page_program_41_sections[] = {NULL};
 static const char *const bf_page_program_42_families[] = {"events"};
-static const unsigned char bf_page_program_42_regions[] = {5,6,7};
+static const unsigned char bf_page_program_42_regions[] = {7,6,2,4,11};
 static const char *const bf_page_program_42_sections[] = {NULL};
-static const char *const bf_page_program_43_families[] = {"places","events","local-voices","local-photos","local-nature"};
-static const unsigned char bf_page_program_43_regions[] = {3,7,2,13,4,11,12};
+static const char *const bf_page_program_43_families[] = {"events"};
+static const unsigned char bf_page_program_43_regions[] = {5,6,7};
 static const char *const bf_page_program_43_sections[] = {NULL};
-static const char *const bf_page_program_44_families[] = {"news","attention","wikimedia","books","space","video","forums","hacker-attention","fediverse","atproto","museums","images","hazards","nature","packages","ai-models","gaming","vulnerabilities","security","literature","history","films","music","commons","places","local-photos","live-music","podcasts","local-nature","local-voices","institutions","events","food","science","sports","recalls","rulemaking"};
-static const unsigned char bf_page_program_44_regions[] = {17};
+static const char *const bf_page_program_44_families[] = {"places","events","local-voices","local-photos","local-nature"};
+static const unsigned char bf_page_program_44_regions[] = {3,7,2,13,4,11,12};
 static const char *const bf_page_program_44_sections[] = {NULL};
+static const char *const bf_page_program_45_families[] = {"news","attention","wikimedia","books","space","video","forums","hacker-attention","fediverse","atproto","museums","images","hazards","nature","packages","ai-models","gaming","vulnerabilities","security","literature","history","films","music","commons","places","local-photos","live-music","podcasts","local-nature","local-voices","institutions","events","food","science","sports","recalls","rulemaking"};
+static const unsigned char bf_page_program_45_regions[] = {17};
+static const char *const bf_page_program_45_sections[] = {NULL};
 static const BfPageProgram bf_page_programs[] = {
   {"/","life","Today","Dallas, food, home and the ideas worth your evening.","scrapbook",bf_page_program_0_families,1,1,bf_page_program_0_regions,1,bf_page_program_0_sections,8,"a front page is an arrangement by time, not a ranking of importance or an endorsement"},
   {"/","live","Live","What's on, and what everyone is watching, hearing and playing.","journal",bf_page_program_1_families,1,1,bf_page_program_1_regions,1,bf_page_program_1_sections,8,"a report shown here is what its source published, not a warning, advice or a verified event"},
@@ -318,24 +321,25 @@ static const BfPageProgram bf_page_programs[] = {
   {"/jobs","any","Jobs","Open roles you can apply for now.","dossier",bf_page_program_24_families,1,8,bf_page_program_24_regions,2,bf_page_program_24_sections,0,"a listing is the employer's"},
   {"/business","any","Small business","Starting, running and growing one.","journal",bf_page_program_25_families,2,12,bf_page_program_25_regions,3,bf_page_program_25_sections,0,"coverage is the publisher's"},
   {"/money","any","Money","Saving, spending and what it costs.","journal",bf_page_program_26_families,1,8,bf_page_program_26_regions,2,bf_page_program_26_sections,0,"money coverage is not financial advice"},
-  {"/discover","any","Discover","Stories, the day's most-read pages, books and the sky, in one stream as they arrive.","scrapbook",bf_page_program_27_families,15,8,bf_page_program_27_regions,9,bf_page_program_27_sections,0,"a story shown here is not endorsed, verified or ranked by importance; order is by time"},
-  {"/watch","any","Watch","Video published on people's own servers, and films old enough to belong to everyone, playing right here.","journal",bf_page_program_28_families,2,64,bf_page_program_28_regions,5,bf_page_program_28_sections,0,"a video listed here is not hosted, licensed or endorsed by this estate; it plays from its own server"},
-  {"/people","any","People","Everyone this estate has read: the names publishers printed beside the things they published, and what else each one made.","dossier",bf_page_program_29_families,4,8,bf_page_program_29_regions,1,bf_page_program_29_sections,0,"a name here is what a publisher printed, never an account on this estate, a verified identity, or proof that two identical names are one person"},
-  {"/organisations","any","Institutions","The publishers whose channels this estate actually reads, and how much of each one it has taken in.","dossier",bf_page_program_30_families,3,8,bf_page_program_30_regions,1,bf_page_program_30_sections,0,"being listed is this estate's own decision to read a publisher; it is never a relationship either party agreed to, nor an endorsement"},
-  {"/channels","any","Channels","Public threads, grouped by where they are happening. Pick a place to read its topics.","journal",bf_page_program_31_families,2,64,bf_page_program_31_regions,4,bf_page_program_31_sections,0,"a public thread is not local speech, membership or moderation by this estate"},
-  {"/community","any","Community","People and communities posting in the open, gathered by who is posting.","scrapbook",bf_page_program_32_families,2,64,bf_page_program_32_regions,5,bf_page_program_32_sections,0,"a post from another community is not a post in this one"},
-  {"/board","any","Boards","Pictures from museums, agencies and the photographers of Wikimedia Commons, pinned wall to wall. Open one to see it large and to use it.","scrapbook",bf_page_program_33_families,3,96,bf_page_program_33_regions,5,bf_page_program_33_sections,0,"a picture shown here is not a copy, a licence or a claim about who is depicted"},
-  {"/parcels","any","Map","Where things are being reported: earthquakes, species sightings and bike networks, placed where their sources say.","atlas",bf_page_program_34_families,3,16,bf_page_program_34_regions,4,bf_page_program_34_sections,0,"a point is where a source placed a report, not a verified location, a warning or advice"},
-  {"/releases","any","Releases","What registries, studios and model hubs just published, one line each.","ticker",bf_page_program_35_families,4,20,bf_page_program_35_regions,4,bf_page_program_35_sections,0,"a release listed here is not reviewed, safe to install or endorsed"},
-  {"/advisories","any","Advisories","Vulnerabilities, security writing, standards and rules as they were filed.","dossier",bf_page_program_36_families,5,16,bf_page_program_36_regions,4,bf_page_program_36_sections,0,"an advisory does not say whether you are affected; nothing here is security or legal advice"},
-  {"/research","any","Research","Papers, preprints and datasets registered in the last hours, with where each can be cited from.","journal",bf_page_program_37_families,3,18,bf_page_program_37_regions,4,bf_page_program_37_sections,0,"a preprint listed here is not peer reviewed unless its index says so"},
-  {"/listen","any","Listen","Music anyone may hear and recordings the area's own publishers put out — symphonies, 78 rpm blues, concerts taped in Dallas, talk and reporting — playing here one after another, with where each is kept.","journal",bf_page_program_38_families,3,96,bf_page_program_38_regions,5,bf_page_program_38_sections,0,"a recording listed here is not hosted, licensed or endorsed by this estate; it plays from Wikimedia Commons under the terms its own page states"},
-  {"/podcasts","any","Podcasts","Shows that publish their chapters, transcripts and guests, playing right here.","journal",bf_page_program_39_families,1,16,bf_page_program_39_regions,4,bf_page_program_39_sections,0,"an episode is its show's own statement; a guest named or a place mentioned is not verified here"},
-  {"/on-this-day","any","On this day","The article Wikipedia's editors chose for today, the picture of the day, what happened on this date in other years, and what people are reading.","almanac",bf_page_program_40_families,3,12,bf_page_program_40_regions,5,bf_page_program_40_sections,0,"an event listed for this date is what an encyclopedia records, not a verified account; the picture of the day is Wikimedia's choice, not this estate's"},
-  {"/whats-on","any","What's on","Events the organizers themselves publish: what starts soon, what is on today, and what is coming, with where each one is.","almanac",bf_page_program_41_families,1,96,bf_page_program_41_regions,5,bf_page_program_41_sections,0,"an event is listed as its organizer published it: a time, a place or a ticket may have changed since, and nothing here is a reservation"},
-  {"/stage","any","Stage","What is happening around this event now: where it is and what its organizers have published.","journal",bf_page_program_42_families,1,96,bf_page_program_42_regions,3,bf_page_program_42_sections,0,"a stage is a live composition around organizer-published events, not proof of attendance, capacity, availability, a reservation or an invitation"},
-  {"/nearby","any","Around Fort Worth and Dallas","Landmarks, neighbourhoods and the month's wildlife sightings on the map, the best photographs of the two cities, and what their cities, schools and institutions are saying.","atlas",bf_page_program_43_families,5,96,bf_page_program_43_regions,7,bf_page_program_43_sections,0,"a place on this map is where Wikidata or a photographer placed it, not a survey, a boundary, a property record or a recommendation to visit"},
-  {"/search","any","Search","Everything Aurekai is reading right now, searched by what it says and who made it.","journal",bf_page_program_44_families,37,64,bf_page_program_44_regions,1,bf_page_program_44_sections,0,"a search result is a match on retained public text, not a ranking by truth or importance"},
+  {"/discover","any","Discover","Stories, the day's most-read pages, books and the sky, in one stream as they arrive.","scrapbook",bf_page_program_27_families,15,32,bf_page_program_27_regions,9,bf_page_program_27_sections,11,"a story shown here is not endorsed, verified or ranked by importance; order is by time"},
+  {"/explore","any","Explore","Everything this estate has read about it, from every source it has ever followed, to read, hear, watch and look at.","scrapbook",bf_page_program_28_families,1,1,bf_page_program_28_regions,7,bf_page_program_28_sections,0,"pieces placed together here share words or meaning; that is not the same story, a shared source or an endorsement, and each is what its source published when it was read"},
+  {"/watch","any","Watch","Video published on people's own servers, and films old enough to belong to everyone, playing right here.","journal",bf_page_program_29_families,2,64,bf_page_program_29_regions,5,bf_page_program_29_sections,0,"a video listed here is not hosted, licensed or endorsed by this estate; it plays from its own server"},
+  {"/people","any","People","Everyone this estate has read: the names publishers printed beside the things they published, and what else each one made.","dossier",bf_page_program_30_families,4,8,bf_page_program_30_regions,1,bf_page_program_30_sections,0,"a name here is what a publisher printed, never an account on this estate, a verified identity, or proof that two identical names are one person"},
+  {"/organisations","any","Institutions","The publishers whose channels this estate actually reads, and how much of each one it has taken in.","dossier",bf_page_program_31_families,3,8,bf_page_program_31_regions,1,bf_page_program_31_sections,0,"being listed is this estate's own decision to read a publisher; it is never a relationship either party agreed to, nor an endorsement"},
+  {"/channels","any","Channels","Public threads, grouped by where they are happening. Pick a place to read its topics.","journal",bf_page_program_32_families,2,64,bf_page_program_32_regions,4,bf_page_program_32_sections,0,"a public thread is not local speech, membership or moderation by this estate"},
+  {"/community","any","Community","People and communities posting in the open, gathered by who is posting.","scrapbook",bf_page_program_33_families,2,64,bf_page_program_33_regions,5,bf_page_program_33_sections,0,"a post from another community is not a post in this one"},
+  {"/board","any","Boards","Pictures from museums, agencies and the photographers of Wikimedia Commons, pinned wall to wall. Open one to see it large and to use it.","scrapbook",bf_page_program_34_families,3,96,bf_page_program_34_regions,5,bf_page_program_34_sections,0,"a picture shown here is not a copy, a licence or a claim about who is depicted"},
+  {"/parcels","any","Map","Where things are being reported: earthquakes, species sightings and bike networks, placed where their sources say.","atlas",bf_page_program_35_families,3,16,bf_page_program_35_regions,4,bf_page_program_35_sections,0,"a point is where a source placed a report, not a verified location, a warning or advice"},
+  {"/releases","any","Releases","What registries, studios and model hubs just published, one line each.","ticker",bf_page_program_36_families,4,20,bf_page_program_36_regions,4,bf_page_program_36_sections,0,"a release listed here is not reviewed, safe to install or endorsed"},
+  {"/advisories","any","Advisories","Vulnerabilities, security writing, standards and rules as they were filed.","dossier",bf_page_program_37_families,5,16,bf_page_program_37_regions,4,bf_page_program_37_sections,0,"an advisory does not say whether you are affected; nothing here is security or legal advice"},
+  {"/research","any","Research","Papers, preprints and datasets registered in the last hours, with where each can be cited from.","journal",bf_page_program_38_families,3,18,bf_page_program_38_regions,4,bf_page_program_38_sections,0,"a preprint listed here is not peer reviewed unless its index says so"},
+  {"/listen","any","Listen","Music anyone may hear and recordings the area's own publishers put out — symphonies, 78 rpm blues, concerts taped in Dallas, talk and reporting — playing here one after another, with where each is kept.","journal",bf_page_program_39_families,3,96,bf_page_program_39_regions,5,bf_page_program_39_sections,0,"a recording listed here is not hosted, licensed or endorsed by this estate; it plays from Wikimedia Commons under the terms its own page states"},
+  {"/podcasts","any","Podcasts","Shows that publish their chapters, transcripts and guests, playing right here.","journal",bf_page_program_40_families,1,16,bf_page_program_40_regions,4,bf_page_program_40_sections,0,"an episode is its show's own statement; a guest named or a place mentioned is not verified here"},
+  {"/on-this-day","any","On this day","The article Wikipedia's editors chose for today, the picture of the day, what happened on this date in other years, and what people are reading.","almanac",bf_page_program_41_families,3,12,bf_page_program_41_regions,5,bf_page_program_41_sections,0,"an event listed for this date is what an encyclopedia records, not a verified account; the picture of the day is Wikimedia's choice, not this estate's"},
+  {"/whats-on","any","What's on","Events the organizers themselves publish: what starts soon, what is on today, and what is coming, with where each one is.","almanac",bf_page_program_42_families,1,96,bf_page_program_42_regions,5,bf_page_program_42_sections,0,"an event is listed as its organizer published it: a time, a place or a ticket may have changed since, and nothing here is a reservation"},
+  {"/stage","any","Stage","What is happening around this event now: where it is and what its organizers have published.","journal",bf_page_program_43_families,1,96,bf_page_program_43_regions,3,bf_page_program_43_sections,0,"a stage is a live composition around organizer-published events, not proof of attendance, capacity, availability, a reservation or an invitation"},
+  {"/nearby","any","Around Fort Worth and Dallas","Landmarks, neighbourhoods and the month's wildlife sightings on the map, the best photographs of the two cities, and what their cities, schools and institutions are saying.","atlas",bf_page_program_44_families,5,96,bf_page_program_44_regions,7,bf_page_program_44_sections,0,"a place on this map is where Wikidata or a photographer placed it, not a survey, a boundary, a property record or a recommendation to visit"},
+  {"/search","any","Search","Everything Aurekai is reading right now, searched by what it says and who made it.","journal",bf_page_program_45_families,37,64,bf_page_program_45_regions,1,bf_page_program_45_sections,0,"a search result is a match on retained public text, not a ranking by truth or importance"},
 };
 #define BF_PAGE_PROGRAM_COUNT (sizeof(bf_page_programs)/sizeof(bf_page_programs[0]))
 static const char *const bf_page_home_phase_0_sections[] = {"/local","/food","/health","/whats-on","/ideas","/home","/travel","/books"};
@@ -377,4 +381,6 @@ static const BfPageNavItem bf_page_nav[] = {
   {"/board","Collections"},
 };
 #define BF_PAGE_NAV_COUNT (sizeof(bf_page_nav)/sizeof(bf_page_nav[0]))
+static const char *const bf_page_timeless_families[] = {"food","recipes","literature","books","history","commons","museums","art","films","images"};
+#define BF_PAGE_TIMELESS_FAMILY_COUNT 10u
 #endif

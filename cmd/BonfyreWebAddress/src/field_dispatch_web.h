@@ -32,7 +32,7 @@ static void fd_page(const AcnViewer *v, const char *said) {
     if (said) { ui_start(stdout,"p");ui_attr(stdout,"class","cj-notice");ui_attr(stdout,"role","status");ui_gt(stdout); html(said); ui_close(stdout,"p"); }
     ui_start(stdout,"div");ui_attr(stdout,"class","ak-grid is-2");ui_attr(stdout,"style","align-items:start");ui_gt(stdout);
     /* Left: the queue of the viewer's own requests. */
-    fputs("<section><header style=\"margin-bottom:14px\"><span class=\"ak-kicker\">Your dispatch queue</span><h2 style=\"font:600 1.5rem/1.2 var(--ak-sans)\">Requests you made</h2></header>", stdout);
+    ui_open(stdout,"section",NULL);ui_open_a(stdout,"header","style","margin-bottom:14px");ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Your dispatch queue");ui_close(stdout,"span");ui_open_a(stdout,"h2","style","font:600 1.5rem/1.2 var(--ak-sans)");ui_copy(stdout,"Requests you made");ui_close(stdout,"h2");ui_close(stdout,"header");
     sqlite3_stmt *st = NULL; int shown = 0;
     if (db && sqlite3_prepare_v2(db, "SELECT id,place,needed_at,need,COALESCE(assignee_address,''),state,requested_at,COALESCE(answered_at,'') FROM field_dispatch "
                                      "WHERE namespace='root' AND requester_subject=?1 AND status='published' ORDER BY id DESC LIMIT 40", -1, &st, NULL) == SQLITE_OK) {
@@ -63,7 +63,7 @@ static void fd_page(const AcnViewer *v, const char *said) {
     if (!shown) {ui_open(stdout,"div","ak-panel");ui_open(stdout,"p","ak-empty");ui_copy(stdout,"No field requests yet. Write the first one with the form.");ui_close(stdout,"p");ui_close(stdout,"div");}
     ui_close(stdout,"section");
     /* Right: the intake form. */
-    fputs("<section class=\"ak-ask\"><p class=\"ak-kicker\">New field request</p><h2 style=\"margin:6px 0 14px\">Ask for a visit</h2>", stdout);
+    ui_open(stdout,"section","ak-ask");ui_open(stdout,"p","ak-kicker");ui_copy(stdout,"New field request");ui_close(stdout,"p");ui_open_a(stdout,"h2","style","margin:6px 0 14px");ui_copy(stdout,"Ask for a visit");ui_close(stdout,"h2");
     {
         BfAuthoringTree *t = calloc(1, sizeof(*t));
         FtField f[] = {{"operation", "request"}};
@@ -74,8 +74,7 @@ static void fd_page(const AcnViewer *v, const char *said) {
     }
     ui_open(stdout,"p","ak-empty");ui_copy(stdout,"Recording a request tells nobody. Offer it to a member by address, then reach them the way you usually do. Nothing here is a booking, a contract or a payment.");ui_close(stdout,"p");ui_close(stdout,"section");ui_close(stdout,"div");
     /* Asked of you */
-    fputs("<section class=\"ak-sec\"><header><div><span class=\"ak-kicker\">Asked of you</span><h2>Requests offered to you</h2></div>"
-          "<p>Each was offered to your member address by the person who wrote it. Accepting is your own word; it books nothing.</p></header>", stdout);
+    ui_open(stdout,"section","ak-sec");ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Asked of you");ui_close(stdout,"span");ui_open(stdout,"h2",NULL);ui_copy(stdout,"Requests offered to you");ui_close(stdout,"h2");ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_copy(stdout,"Each was offered to your member address by the person who wrote it. Accepting is your own word; it books nothing.");ui_close(stdout,"p");ui_close(stdout,"header");
     shown = 0;
     if (v->person[0] && db && sqlite3_prepare_v2(db, "SELECT id,place,needed_at,need,state,requested_at FROM field_dispatch WHERE namespace='root' AND assignee_subject=?1 "
                                                      "AND state IN ('offered','accepted') AND status='published' ORDER BY id DESC LIMIT 40", -1, &st, NULL) == SQLITE_OK) {

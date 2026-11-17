@@ -92,6 +92,10 @@ test: site-publication-placement-witness
 .PHONY: site-publication-placement-witness
 site-publication-placement-witness: $(TARGET)
 	bun test tests/site_publication_placement.test.mjs
+test: community-stewardship-witness
+.PHONY: community-stewardship-witness
+community-stewardship-witness: $(TARGET)
+	bun test tests/community_stewardship.test.mjs
 
 $(COMPACT_PROBE): tests/compact_probe.c src/compact_bindings.c src/compact_bindings.h src/bench_metrics.c src/bench_metrics.h $(LT_LIB)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -Isrc $(LT_INC) -o $(COMPACT_PROBE) tests/compact_probe.c src/compact_bindings.c src/bench_metrics.c $(LT_LIB) -lsqlite3 -lm

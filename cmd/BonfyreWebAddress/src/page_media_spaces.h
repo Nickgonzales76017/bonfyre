@@ -35,8 +35,8 @@ static void page_media_screening_record(sqlite3 *archive,const char *ref){
     if(!page_media_item_ref(ref,source,key))return;
     PageItem item={0};
     int have=archive&&page_archive_item(archive,source,key,&item,family,sizeof(family))&&item.title[0];
-    fputs("<p class=\"media-space-film\"><a data-media-source href=\"/o/",stdout);
-    page_url_escape(source);ui_lit(stdout, "/");page_url_escape(key);ui_lit(stdout, "\">");
+    ui_open(stdout,"p","media-space-film");ui_start(stdout,"a");ui_flag(stdout,"data-media-source");ui_attr_open(stdout,"href");ui_lit(stdout,"/o/");
+    page_url_escape(source);ui_lit(stdout, "/");page_url_escape(key);ui_attr_close(stdout);ui_gt(stdout);
     if(have)html(item.title);else ui_lit(stdout, "Open retained film item");
     ui_close_n(stdout, "a", "p", NULL);
 }
@@ -54,7 +54,7 @@ static void page_media_space_controls(int events){
 /* The control operates only on already rendered public cards; no network,
  * account selection, installation or CMS mutation follows from filtering. */
 static void page_media_space_script(void){
-    fputs("<script>(()=>{const section=document.currentScript?.previousElementSibling;"
+    ui_script(stdout,"(()=>{const section=document.currentScript?.previousElementSibling;"
           "if(!section?.matches('[data-media-space-catalogue]'))return;"
           "const input=section.querySelector('[data-media-space-search]'),"
           "count=section.querySelector('[data-media-space-count]'),"
@@ -68,7 +68,7 @@ static void page_media_space_script(void){
           "count.textContent='Showing '+shown+' of '+cards.length+' published records on this page.';}"
           "input.addEventListener('input',draw);"
           "for(const b of buttons)b.addEventListener('click',()=>{mode=b.dataset.mediaSpaceFilter;draw()});"
-          "draw()})();</script>",stdout);
+          "draw()})();");
 }
 static int page_emit_media_spaces(sqlite3 *db,const char *route,const char *query,const char *host){
     if(!db||!route||!host||strcmp(host,"aurekai.live"))return 0;
@@ -138,26 +138,26 @@ static int page_emit_media_spaces(sqlite3 *db,const char *route,const char *quer
                 time_t when=mktime(&stamp);if(when!=(time_t)-1){struct tm check={0};if(localtime_r(&when,&check)&&check.tm_year==y-1900&&check.tm_mon==m-1&&check.tm_mday==d)weekend=check.tm_wday==0||check.tm_wday==6;}
             }
         }
-        fputs("<li data-media-space-card data-weekend=\"",stdout);fputs(weekend?"1":"0",stdout);
-        (ui_lit(stdout, "\">"), ui_open(stdout, "small", NULL));html(events?"Announced screening":medium);
-        ui_lit(stdout, " &middot; ");html(publisher);fputs("</small><h3><a href=\"",stdout);
+        ui_start(stdout,"li");ui_flag(stdout,"data-media-space-card");ui_attr(stdout,"data-weekend",weekend?"1":"0");ui_gt(stdout);
+        (ui_open(stdout, "small", NULL));html(events?"Announced screening":medium);
+        ui_lit(stdout, " &middot; ");html(publisher);ui_close(stdout,"small");ui_open(stdout,"h3",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");
         page_media_space_link(publisher,space,events?screening:NULL);
-        ui_lit(stdout, "\">");html(title);ui_close_n(stdout, "a", "h3", NULL);
+        ui_attr_close(stdout);ui_gt(stdout);html(title);ui_close_n(stdout, "a", "h3", NULL);
         if(events){
-            fputs("<p><time datetime=\"",stdout);html(starts);ui_lit(stdout, "\">");html(starts);ui_close(stdout, "time");
+            ui_open(stdout,"p",NULL);ui_start(stdout,"time");ui_attr_open(stdout,"datetime");html(starts);ui_attr_close(stdout);ui_gt(stdout);html(starts);ui_close(stdout, "time");
             if(venue&&*venue){ui_lit(stdout, " &middot; ");html(venue);}ui_close(stdout, "p");
         }else if(lede&&*lede){ui_text(stdout, "p", NULL, lede);}
         if(events)page_media_screening_record(archive,film_ref);
-        fputs("<p><a href=\"",stdout);page_media_space_link(publisher,space,NULL);
-        fputs("\">Open published space</a> &middot; <a href=\"https://",stdout);html(publisher);
-        (ui_lit(stdout, "/\">Owner's public profile"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "li"));
+        ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");page_media_space_link(publisher,space,NULL);
+        ui_attr_close(stdout);ui_gt(stdout);ui_lit(stdout,"Open published space");ui_close(stdout,"a");ui_lit(stdout," &middot; ");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_lit(stdout,"https://");html(publisher);
+        (ui_lit(stdout, "/"), ui_attr_close(stdout), ui_gt(stdout), ui_lit(stdout,"Owner's public profile"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "li"));
     }
     sqlite3_finalize(rows);
     if(archive)sqlite3_close(archive);
     if(count){
         ui_close(stdout, "ol");
-        if(count==25&&page<1000)printf("<p class=\"media-space-next\"><a href=\"%s?spaces-page=%u\" rel=\"next\">More published spaces</a></p>",route,page+1);
-        if(page)printf("<p><a href=\"%s?spaces-page=%u\" rel=\"prev\">Previous spaces</a></p>",route,page-1);
+        if(count==25&&page<1000){ui_open(stdout,"p","media-space-next");ui_start(stdout,"a");ui_attr_open(stdout,"href");fputs(route,stdout);printf("?spaces-page=%u",page+1);ui_attr_close(stdout);ui_attr(stdout,"rel","next");ui_gt(stdout);ui_lit(stdout,"More published spaces");ui_close(stdout,"a");ui_close(stdout,"p");}
+        if(page){ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");fputs(route,stdout);printf("?spaces-page=%u",page-1);ui_attr_close(stdout);ui_attr(stdout,"rel","prev");ui_gt(stdout);ui_lit(stdout,"Previous spaces");ui_close(stdout,"a");ui_close(stdout,"p");}
         ui_close(stdout, "section");
         page_media_space_script();
     }
@@ -189,6 +189,14 @@ static int ms_mode(const char *host,const char *route){
     if(!strcmp(route,"/art"))return MS_ART;
     return MS_NONE;
 }
+/* Any subject in one of the screens: /explore?q=...&as=listen|watch|look
+ * gives what the archive holds on it the Listen, Cinema or Art composition,
+ * on every host. */
+static int ms_explore_mode(const char *route,const char *query){
+    char as[16]="";
+    if(!route||strcmp(route,"/explore")||!query||!query_value(query,"as",as,sizeof as))return MS_NONE;
+    return !strcmp(as,"listen")?MS_LISTEN:!strcmp(as,"watch")?MS_CINEMA:!strcmp(as,"look")?MS_ART:MS_NONE;
+}
 static int ms_has(const MsList *l,const PageItem *it){
     for(int i=0;i<l->count;i++){
         if(l->item[i]==it)return 1;
@@ -214,15 +222,23 @@ static void ms_img(const PageItem *it,int width,const char *cls){
     char sized[1024];
     page_picture_at(ms_picture(it),width,sized,sizeof(sized));
     if(page_image_url_safe(sized))page_emit_picture(sized,cls);
-    else{fputs("<span class=\"",stdout);html(cls);ui_lit(stdout, " ms-noart\" aria-hidden=\"true\">");page_glyph(it->kind==BF_PAGE_MATERIAL_VIDEO?"play":it->kind==BF_PAGE_MATERIAL_AUDIO?"listen":"discover");ui_close(stdout, "span");}
+    else{ui_start(stdout,"span");ui_attr_open(stdout,"class");html(cls);ui_lit(stdout," ms-noart");ui_attr_close(stdout);ui_attr(stdout,"aria-hidden","true");ui_gt(stdout);page_glyph(it->kind==BF_PAGE_MATERIAL_VIDEO?"play":it->kind==BF_PAGE_MATERIAL_AUDIO?"listen":"discover");ui_close(stdout, "span");}
 }
 static const char *ms_from(const PageItem *it){ return it->note[0]?it->note:it->group[0]?it->group:it->by; }
 /* The track attributes the shared player reads. A recording plays its file;
  * an article is read aloud from its own text block on this page. */
+/* Anything with words can be heard: a piece with no file of its own -- an
+ * article, or an episode or video kept without its file -- is read aloud
+ * from what it says, in the same queue as the recordings. */
+static int ms_narratable(const PageItem *it){
+    return it->key[0]&&it->body[0]&&!ms_playable(it)&&
+           (it->kind==BF_PAGE_MATERIAL_PUBLICATION||it->kind==BF_PAGE_MATERIAL_POST||
+            it->kind==BF_PAGE_MATERIAL_AUDIO||it->kind==BF_PAGE_MATERIAL_VIDEO);
+}
 static void ms_track(const PageItem *it,int dflt){
     if(ms_playable(it)){
         ui_lit(stdout, " data-ak-track data-src=\"");html(it->asset);
-    }else if(it->kind==BF_PAGE_MATERIAL_PUBLICATION&&it->key[0]&&it->body[0]){
+    }else if(ms_narratable(it)){
         ui_lit(stdout, " data-ak-track data-narrate=\"#ms-n-");html(it->key);
     }else return;
     ui_lit(stdout, "\" data-title=\"");html(it->title);
@@ -230,11 +246,11 @@ static void ms_track(const PageItem *it,int dflt){
     if(dflt)ui_lit(stdout, " data-ak-default");
 }
 static int ms_hearable(const PageItem *it){
-    return ms_playable(it)||(it->kind==BF_PAGE_MATERIAL_PUBLICATION&&it->key[0]&&it->body[0]);
+    return ms_playable(it)||ms_narratable(it);
 }
 static void ms_play_button(const PageItem *it,const char *label,int dflt){
     if(!ms_hearable(it))return;
-    fputs("<button type=\"button\" class=\"ms-play\" data-ak-queue=\"listen\"",stdout);ms_track(it,dflt);
+    ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-play");ui_attr(stdout,"data-ak-queue","listen");ms_track(it,dflt);
     ui_lit(stdout, " aria-label=\"");html(label);ui_lit(stdout, ": ");html(it->title);ui_lit(stdout, "\">");
     page_glyph("play");ui_close(stdout, "button");
 }
@@ -244,7 +260,9 @@ static void ms_play_button(const PageItem *it,const char *label,int dflt){
  * and back. Nothing is published by saving. */
 static int page_session_actor(const char *bearer,const char *auth_db,char *actor,size_t cap);
 static sqlite3 *ms_saved_db;static char ms_actor[64];
+static void ms_saved_close(void);
 static void ms_saved_open(void){
+    ms_saved_close();
     ms_actor[0]=0;ms_saved_db=NULL;
     if(page_session_actor(page_request_bearer,page_request_auth_db,ms_actor,sizeof(ms_actor)))ms_saved_db=cms_open_ro();
 }
@@ -269,7 +287,7 @@ static void ms_keep(const PageItem *it,const char *back,int compact){
 /* Making starts from what was heard: the person's own Audio Studio. */
 static void ms_make(void){ui_elem(stdout, "a", (const UiAttr[]){{"class", "ms-ghost"}, {"href", "/apps/audio"}}, 2, 0);page_glyph("edit");(ui_lit(stdout, "Make with it"), ui_close(stdout, "a"));}
 static void ms_narration_text(const PageItem *it){
-    if(it->kind!=BF_PAGE_MATERIAL_PUBLICATION||!it->key[0]||!it->body[0]||ms_playable(it))return;
+    if(!ms_narratable(it))return;
     (ui_open_a(stdout, "div", "class", "ms-narration", "hidden", NULL, UI_DYN, "id", "ms-n-", it->key), ui_open(stdout, "h3", NULL));
     html(it->title);(ui_close(stdout, "h3"), ui_open(stdout, "p", NULL));html(it->body);ui_close_n(stdout, "p", "div", NULL);
 }
@@ -304,17 +322,17 @@ static void ms_query_link(const char *route,const char *key,const char *value){
 /* Distinct publishers on this page, as links that narrow the route. */
 static void ms_chips(const MsList *l,const char *route,const char *from,const char *all_label,int limit){
     const char *seen[16];int n=0;
-    fputs("<nav class=\"ms-chips\" aria-label=\"Narrow by publisher\"><a href=\"",stdout);html(route);ui_lit(stdout, "\"");
+    ui_start(stdout,"nav");ui_attr(stdout,"class","ms-chips");ui_attr(stdout,"aria-label","Narrow by publisher");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");html(route);ui_attr_close(stdout);
     if(!from||!*from)ui_lit(stdout, " aria-current=\"page\"");
-    ui_lit(stdout, ">");html(all_label);ui_close(stdout, "a");
+    ui_gt(stdout);html(all_label);ui_close(stdout, "a");
     for(int i=0;i<l->count&&n<limit&&n<16;i++){
         const char *name=ms_from(l->item[i]);int dup=0;
         if(!name[0])continue;
         for(int j=0;j<n;j++)if(!strcasecmp(seen[j],name))dup=1;
         if(dup)continue;seen[n++]=name;
-        fputs("<a href=\"",stdout);ms_query_link(route,"from",name);ui_lit(stdout, "\"");
+        ui_start(stdout,"a");ui_attr_open(stdout,"href");ms_query_link(route,"from",name);ui_attr_close(stdout);
         if(from&&*from&&!strcasecmp(from,name))ui_lit(stdout, " aria-current=\"page\"");
-        ui_lit(stdout, ">");html(name);ui_close(stdout, "a");
+        ui_gt(stdout);html(name);ui_close(stdout, "a");
     }
     ui_close(stdout, "nav");
 }
@@ -360,9 +378,9 @@ static void ms_listen(const MsList *l,const char *route,const char *title,const 
     fputs(strcmp(host,"aurekai.work")?"Live &middot; listening queue":"Work &middot; listening queue",stdout);
     (ui_close(stdout, "p"), ui_open(stdout, "h1", NULL));html(title);ui_close(stdout, "h1");
     if(lede&&*lede){ui_text(stdout, "p", "ms-lede", lede);}
-    printf("<ul class=\"ms-stats\"><li><b>%d</b> publishers</li><li><b>%d</b> recordings</li>",ms_publishers(l),recordings);
-    if(narrated)printf("<li><b>%d</b> read aloud</li>",narrated);
-    if(total_ms>=60000)printf("<li><b>%ld</b> hours to hear</li>",total_ms/3600000+(total_ms%3600000>=1800000));
+    ui_open(stdout,"ul","ms-stats");ui_lit(stdout,"<li><b>");printf("%d",ms_publishers(l));ui_lit(stdout,"</b> publishers</li><li><b>");printf("%d",recordings);ui_lit(stdout,"</b> recordings</li>");
+    if(narrated){ui_lit(stdout,"<li><b>");printf("%d",narrated);ui_lit(stdout,"</b> read aloud</li>");}
+    if(total_ms>=60000){ui_lit(stdout,"<li><b>");printf("%ld",total_ms/3600000+(total_ms%3600000>=1800000));ui_lit(stdout,"</b> hours to hear</li>");}
     ui_close(stdout, "ul");
     ms_narrowed(route,from,q);
     ms_chips(l,route,from,"All audio",6);
@@ -385,8 +403,8 @@ static void ms_listen(const MsList *l,const char *route,const char *title,const 
     }
     ms_keep(lead,route,0);
     if(lead->by[0]&&lead->source[0]){
-        fputs("<a class=\"ms-ghost\" href=\"/people?who=",stdout);page_url_escape(lead->by);ui_lit(stdout, "&amp;source=");page_url_escape(lead->source);
-        ui_lit(stdout, "\">");page_glyph("group");ui_lit(stdout, "More from ");html(lead->by);ui_close(stdout, "a");
+        ui_start(stdout,"a");ui_attr(stdout,"class","ms-ghost");ui_attr_open(stdout,"href");ui_lit(stdout,"/people?who=");page_url_escape(lead->by);ui_lit(stdout, "&amp;source=");page_url_escape(lead->source);
+        ui_attr_close(stdout);ui_gt(stdout);page_glyph("group");ui_lit(stdout, "More from ");html(lead->by);ui_close(stdout, "a");
     }
     ui_close_n(stdout, "div", "div", "section", NULL);
     ms_narration_text(lead);
@@ -410,8 +428,8 @@ static void ms_listen(const MsList *l,const char *route,const char *title,const 
             (ui_close(stdout, "div"), ui_open(stdout, "p", "ms-row-meta"));ms_dur(it);ms_when(it,now);ui_close(stdout, "p");
             ms_keep(it,route,1);
             if(public_http_url(it->href)){
-                fputs("<a class=\"ms-icon\" rel=\"noopener\" target=\"_blank\" href=\"",stdout);html(it->href);
-                ui_lit(stdout, "\" aria-label=\"Open at the publisher\">");page_glyph("out");ui_close(stdout, "a");
+                ui_start(stdout,"a");ui_attr(stdout,"class","ms-icon");ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href");html(it->href);
+                ui_attr_close(stdout);ui_attr(stdout,"aria-label","Open at the publisher");ui_gt(stdout);page_glyph("out");ui_close(stdout, "a");
             }
             ms_narration_text(it);
             ui_close(stdout, "li");
@@ -435,7 +453,7 @@ static void ms_listen(const MsList *l,const char *route,const char *title,const 
             (ui_open(stdout, "article", NULL), ui_open(stdout, "p", "ms-meta"), ui_open(stdout, "span", "ms-tag"));html(ms_from(it));ui_close(stdout, "span");
             ms_when(it,now);(ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));ms_title_link(it);ui_close(stdout, "h3");ms_excerpt(it,"ms-long-text");
             ui_open(stdout, "footer", NULL);ms_wave(it,24);ms_dur(it);
-            fputs("<button type=\"button\" class=\"ms-pill\"",stdout);ms_track(it,0);ui_lit(stdout, ">");page_glyph("play");(ui_lit(stdout, "Play"), ui_close(stdout, "button"), ui_close(stdout, "footer"), ui_close(stdout, "article"));
+            ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-pill");ms_track(it,0);ui_gt(stdout);page_glyph("play");(ui_lit(stdout, "Play"), ui_close(stdout, "button"), ui_close(stdout, "footer"), ui_close(stdout, "article"));
         }
         ui_close_n(stdout, "div", "section", NULL);
     }
@@ -461,12 +479,12 @@ static void ms_music(const MsList *l,const char *route,const char *title,const c
             for(int j=0;j<n;j++)if(!strcasecmp(seen[j],name))at=j;
             if(at>=0)counts[at]++;else if(n<12){seen[n]=name;counts[n++]=1;}
         }
-        fputs("<li><a href=\"",stdout);html(route);ui_lit(stdout, "\"");if(!from||!*from)ui_lit(stdout, " aria-current=\"page\"");
-        printf(">All music<span>%d</span></a></li>",l->count);
+        ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");html(route);ui_attr_close(stdout);if(!from||!*from)ui_lit(stdout, " aria-current=\"page\"");
+        ui_gt(stdout);ui_lit(stdout,"All music<span>");printf("%d",l->count);ui_lit(stdout,"</span></a></li>");
         for(int j=0;j<n;j++){
-            fputs("<li><a href=\"",stdout);ms_query_link(route,"from",seen[j]);ui_lit(stdout, "\"");
+            ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ms_query_link(route,"from",seen[j]);ui_attr_close(stdout);
             if(from&&*from&&!strcasecmp(from,seen[j]))ui_lit(stdout, " aria-current=\"page\"");
-            ui_lit(stdout, ">");html(seen[j]);printf("<span>%d</span></a></li>",counts[j]);
+            ui_gt(stdout);html(seen[j]);ui_lit(stdout,"<span>");printf("%d",counts[j]);ui_lit(stdout,"</span></a></li>");
         }
     }
     (ui_close(stdout, "ul"), ui_close(stdout, "section"), ui_open(stdout, "section", NULL), ui_open(stdout, "p", "ms-kicker"), ui_lit(stdout, "Yours"), ui_close(stdout, "p"), ui_open(stdout, "ul", NULL), ui_open(stdout, "li", NULL), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/profile"}}, 1, 0), ui_lit(stdout, "Your page"), ui_close(stdout, "a"), ui_close(stdout, "li"), ui_open(stdout, "li", NULL), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/apps"}}, 1, 0), ui_lit(stdout, "Your tools"), ui_close(stdout, "a"), ui_close(stdout, "li"), ui_open(stdout, "li", NULL), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/listen"}}, 1, 0), ui_lit(stdout, "Listening queue"), ui_close(stdout, "a"), ui_close(stdout, "li"), ui_close(stdout, "ul"), ui_close(stdout, "section"), ui_close(stdout, "aside"));
@@ -478,11 +496,11 @@ static void ms_music(const MsList *l,const char *route,const char *title,const c
     ms_excerpt(lead,"ms-excerpt");
     if(lead->rights[0]){ui_text(stdout, "p", "ms-rights", lead->rights);}
     ui_open(stdout, "div", "ms-controls");
-    if(ms_playable(lead)){fputs("<button type=\"button\" class=\"ms-primary\"",stdout);ms_track(lead,1);ui_lit(stdout, ">");page_glyph("play");(ui_lit(stdout, "Play"), ui_close(stdout, "button"));}
+    if(ms_playable(lead)){ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-primary");ms_track(lead,1);ui_gt(stdout);page_glyph("play");(ui_lit(stdout, "Play"), ui_close(stdout, "button"));}
     ms_keep(lead,route,0);ms_make();
     if(page_item_has_page(lead)){
-        fputs("<a class=\"ms-ghost\" href=\"/o/",stdout);page_url_escape(lead->source);ui_lit(stdout, "/");page_url_escape(lead->key);
-        ui_lit(stdout, "\">");page_glyph("text");(ui_lit(stdout, "Notes"), ui_close(stdout, "a"));
+        ui_start(stdout,"a");ui_attr(stdout,"class","ms-ghost");ui_attr_open(stdout,"href");ui_lit(stdout,"/o/");page_url_escape(lead->source);ui_lit(stdout, "/");page_url_escape(lead->key);
+        ui_attr_close(stdout);ui_gt(stdout);page_glyph("text");(ui_lit(stdout, "Notes"), ui_close(stdout, "a"));
     }
     ui_close_n(stdout, "div", "div", "section", NULL);
     ui_elem(stdout, "section", (const UiAttr[]){{"class", "ms-tracks"}, {"aria-label", "Tracks"}}, 2, 0);
@@ -491,8 +509,8 @@ static void ms_music(const MsList *l,const char *route,const char *title,const c
     int no=0;
     for(int i=0;i<l->count&&no<30;i++){
         const PageItem *it=l->item[i];if(!ms_playable(it))continue;no++;
-        printf("<tr%s><td>",it==lead?" class=\"is-on\"":"");
-        fputs("<button type=\"button\" class=\"ms-no\"",stdout);ms_track(it,0);ui_lit(stdout, " aria-label=\"Play ");html(it->title);
+        ui_start(stdout,"tr");if(it==lead)ui_attr(stdout,"class","is-on");ui_gt(stdout);ui_open(stdout,"td",NULL);
+        ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-no");ms_track(it,0);ui_lit(stdout, " aria-label=\"Play ");html(it->title);
         printf("\"><span>%02d</span>",no);page_glyph("play");(ui_close(stdout, "button"), ui_close(stdout, "td"), ui_open(stdout, "td", NULL), ui_open(stdout, "b", NULL));ms_title_link(it);
         (ui_close(stdout, "b"), ui_open(stdout, "small", NULL));html(it->by);(ui_close(stdout, "small"), ui_close(stdout, "td"), ui_open(stdout, "td", "ms-col-src"));html(ms_from(it));
         (ui_close(stdout, "td"), ui_open(stdout, "td", "ms-col-when"));ms_when(it,now);(ui_close(stdout, "td"), ui_open(stdout, "td", NULL));ms_dur(it);(ui_close(stdout, "td"), ui_open(stdout, "td", "ms-col-keep"));ms_keep(it,route,1);ui_close_n(stdout, "td", "tr", NULL);
@@ -513,8 +531,8 @@ static void ms_music(const MsList *l,const char *route,const char *title,const c
             ui_open(stdout, "ul", "ms-cards ms-cards-3");
             for(int j=0;j<n;j++){
                 (ui_open(stdout, "li", NULL), ui_open(stdout, "div", "ms-card-art"));ms_img(st[j],420,"ms-cover");
-                if(ms_hearable(st[j])){fputs("<button type=\"button\" class=\"ms-play ms-on-art\"",stdout);ms_track(st[j],0);ui_lit(stdout, " aria-label=\"Play\">");page_glyph("play");ui_close(stdout, "button");}
-                fputs("</div><p class=\"ms-kicker\"><a href=\"",stdout);ms_query_link(route,"from",ms_from(st[j]));ui_lit(stdout, "\">");html(ms_from(st[j]));
+                if(ms_hearable(st[j])){ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-play ms-on-art");ms_track(st[j],0);ui_lit(stdout, " aria-label=\"Play\">");page_glyph("play");ui_close(stdout, "button");}
+                ui_lit(stdout,"</div>");ui_open(stdout,"p","ms-kicker");ui_start(stdout,"a");ui_attr_open(stdout,"href");ms_query_link(route,"from",ms_from(st[j]));ui_attr_close(stdout);ui_gt(stdout);html(ms_from(st[j]));
                 (ui_close(stdout, "a"), ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));ms_title_link(st[j]);ui_close(stdout, "h3");ms_excerpt(st[j],"ms-card-text");ui_close(stdout, "li");
             }
             ui_close_n(stdout, "ul", "section", NULL);
@@ -547,8 +565,8 @@ static void ms_cinema_card(const PageItem *it,time_t now,int width){
     (ui_close(stdout, "div"), ui_open(stdout, "p", "ms-kicker"));html(ms_from(it));(ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));ms_title_link(it);ui_close(stdout, "h3");
     ms_excerpt(it,"ms-card-text");
     (ui_open(stdout, "footer", NULL), ui_open(stdout, "span", NULL));if(it->by[0]&&strcmp(it->by,ms_from(it)))html(it->by);else ms_when(it,now);ui_close(stdout, "span");
-    if(ms_playable(it)){fputs("<button type=\"button\" class=\"ms-link\"",stdout);ms_track(it,0);(ui_lit(stdout, ">Listen"), ui_close(stdout, "button"));}
-    if(page_item_has_page(it)){fputs("<a class=\"ms-link\" href=\"/o/",stdout);page_url_escape(it->source);ui_lit(stdout, "/");page_url_escape(it->key);(ui_lit(stdout, "\">Watch"), ui_close(stdout, "a"));}
+    if(ms_playable(it)){ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-link");ms_track(it,0);(ui_gt(stdout),ui_lit(stdout, "Listen"), ui_close(stdout, "button"));}
+    if(page_item_has_page(it)){const char *mclose=page_emit_item_open(it,"ms-link");(ui_lit(stdout, "Watch"), fputs(mclose, stdout));}
     ui_close_n(stdout, "footer", "li", NULL);
 }
 /* Watch, Film, Stage, Sports: the cinema commons catalogue. */
@@ -575,14 +593,14 @@ static void ms_cinema(const MsList *l,const MsList *sound,const char *route,cons
     ui_close(stdout, "p");
     if(lead->body[0])ms_excerpt(lead,"ms-lede");else if(lede&&*lede){ui_text(stdout, "p", "ms-lede", lede);}
     ui_open(stdout, "div", "ms-controls");
-    if(page_item_has_page(lead)){fputs("<a class=\"ms-primary\" href=\"/o/",stdout);page_url_escape(lead->source);ui_lit(stdout, "/");page_url_escape(lead->key);ui_lit(stdout, "\">");page_glyph("play");(ui_lit(stdout, "Watch"), ui_close(stdout, "a"));}
+    if(page_item_has_page(lead)){const char *mclose=page_emit_item_open(lead,"ms-primary");page_glyph("play");(ui_lit(stdout, "Watch"), fputs(mclose, stdout));}
     else if(public_http_url(lead->href)){ui_open_a(stdout, "a", "class", "ms-primary", "rel", "noopener", "href", lead->href);page_glyph("play");(ui_lit(stdout, "Watch at the publisher"), ui_close(stdout, "a"));}
-    if(ms_playable(lead)){fputs("<button type=\"button\" class=\"ms-ghost\"",stdout);ms_track(lead,1);ui_lit(stdout, ">");page_glyph("listen");(ui_lit(stdout, "Listen"), ui_close(stdout, "button"));}
-    if(page_item_has_page(lead)){fputs("<a class=\"ms-ghost\" href=\"/o/",stdout);page_url_escape(lead->source);ui_lit(stdout, "/");page_url_escape(lead->key);ui_lit(stdout, "#item-keep\">");page_glyph("save");(ui_lit(stdout, "Keep for later"), ui_close(stdout, "a"));}
+    if(ms_playable(lead)){ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-ghost");ms_track(lead,1);ui_gt(stdout);page_glyph("listen");(ui_lit(stdout, "Listen"), ui_close(stdout, "button"));}
+    if(page_item_has_page(lead)){ui_start(stdout,"a");ui_attr(stdout,"class","ms-ghost");ui_attr_open(stdout,"href");ui_lit(stdout,"/o/");page_url_escape(lead->source);ui_lit(stdout, "/");page_url_escape(lead->key);ui_lit(stdout, "#item-keep");ui_attr_close(stdout);ui_gt(stdout);page_glyph("save");(ui_lit(stdout, "Keep for later"), ui_close(stdout, "a"));}
     if(lead->rights_href[0]&&public_http_url(lead->rights_href)){ui_open_a(stdout, "a", "class", "ms-ghost", "rel", "noopener", "href", lead->rights_href);page_glyph("text");(ui_lit(stdout, "Terms"), ui_close(stdout, "a"));}
     ui_close_n(stdout, "div", "div", "section", NULL);
     ui_open(stdout, "div", "ms-filter");ms_chips(l,route,from,"Everything",7);ms_narrowed(route,from,q);
-    printf("<p class=\"ms-aside\"><i class=\"ms-dot\"></i>%d releases from %d publishers</p></div>",l->count,ms_publishers(l));
+    ui_open(stdout,"p","ms-aside");ui_elem(stdout,"i",(const UiAttr[]){{"class","ms-dot"}},1,0);ui_close(stdout,"i");printf("%d",l->count);ui_lit(stdout," releases from ");printf("%d",ms_publishers(l));ui_lit(stdout," publishers");ui_close(stdout,"p");ui_lit(stdout,"</div>");
     int at=0;const PageItem *rest[MS_TAKE];int n=0;
     for(int i=0;i<l->count;i++)if(l->item[i]!=lead)rest[n++]=l->item[i];
     if(n){
@@ -629,7 +647,7 @@ static void ms_cinema(const MsList *l,const MsList *sound,const char *route,cons
             for(int i=0;i<sound->count&&shown<3;i++){
                 const PageItem *it=sound->item[i];if(!ms_hearable(it))continue;shown++;
                 (ui_open(stdout, "li", NULL), ui_open(stdout, "p", "ms-meta"), ui_open(stdout, "span", NULL));html(ms_from(it));ui_close(stdout, "span");ms_dur(it);(ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));ms_title_link(it);
-                ui_close(stdout, "h3");ms_excerpt(it,"ms-card-text");(ui_open(stdout, "footer", NULL), ui_open(stdout, "span", NULL));html(it->by);fputs("</span><button type=\"button\" class=\"ms-link\"",stdout);
+                ui_close(stdout, "h3");ms_excerpt(it,"ms-card-text");(ui_open(stdout, "footer", NULL), ui_open(stdout, "span", NULL));html(it->by);ui_close(stdout,"span");ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-link");
                 ms_track(it,0);ui_lit(stdout, ">");fputs(ms_playable(it)?"Listen":"Read aloud",stdout);ui_close_n(stdout, "button", "footer", NULL);ms_narration_text(it);ui_close(stdout, "li");
             }
             (ui_close(stdout, "ul"), ui_open(stdout, "p", "ms-more"), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/listen"}}, 1, 0), ui_lit(stdout, "The whole listening queue"), ui_close(stdout, "a"), ui_close(stdout, "p"), ui_close(stdout, "section"));
@@ -647,14 +665,14 @@ static void ms_art(const MsList *l,const char *route,const char *title,const cha
     html(title);ui_close(stdout, "h1");
     if(lede&&*lede){ui_text(stdout, "p", "ms-lede", lede);}
     ms_narrowed(route,from,q);
-    fputs("</div><div class=\"ms-controls ms-controls-col\"><button type=\"button\" class=\"ms-primary\" data-ak-track data-narrate=\".ms-art-text\" data-title=\"",stdout);
-    html(title);ui_lit(stdout, "\" data-by=\"Aurekai\">");page_glyph("listen");(ui_lit(stdout, "Hear this page read"), ui_close(stdout, "button"));
-    if(lead&&page_item_has_page(lead)){fputs("<a class=\"ms-ghost\" href=\"/o/",stdout);page_url_escape(lead->source);ui_lit(stdout, "/");page_url_escape(lead->key);ui_lit(stdout, "\">");page_glyph("eye");(ui_lit(stdout, "Open the first plate"), ui_close(stdout, "a"));}
+    ui_lit(stdout,"</div>");ui_open(stdout,"div","ms-controls ms-controls-col");ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ms-primary");ui_flag(stdout,"data-ak-track");ui_attr(stdout,"data-narrate",".ms-art-text");ui_attr_open(stdout,"data-title");
+    html(title);ui_attr_close(stdout);ui_attr(stdout,"data-by","Aurekai");ui_gt(stdout);page_glyph("listen");(ui_lit(stdout, "Hear this page read"), ui_close(stdout, "button"));
+    if(lead&&page_item_has_page(lead)){const char *mclose=page_emit_item_open(lead,"ms-ghost");page_glyph("eye");(ui_lit(stdout, "Open the first plate"), fputs(mclose, stdout));}
     ui_close(stdout, "div");
     {
         time_t newest=0;for(int i=0;i<l->count;i++)if(l->item[i]->at>newest)newest=l->item[i]->at;
         char when[48]="";page_when(newest,now,when,sizeof(when));
-        printf("<dl class=\"ms-facts-grid\"><div><dt>Plates</dt><dd>%d</dd></div><div><dt>Publishers</dt><dd>%d</dd></div><div><dt>Newest</dt><dd>",l->count,ms_publishers(l));
+        ui_open(stdout,"dl","ms-facts-grid");ui_lit(stdout,"<div><dt>Plates</dt><dd>");printf("%d",l->count);ui_lit(stdout,"</dd></div><div><dt>Publishers</dt><dd>");printf("%d",ms_publishers(l));ui_lit(stdout,"</dd></div><div><dt>Newest</dt><dd>");
         html(when[0]?when:"none yet");(ui_close(stdout, "dd"), ui_close(stdout, "div"), ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Narrow"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL));
         ms_chips(l,route,from,"All",3);ui_close_n(stdout, "dd", "div", "dl", NULL);
     }
@@ -677,7 +695,7 @@ static void ms_art(const MsList *l,const char *route,const char *title,const cha
         for(int i=0;i<l->count&&shown<12;i++){
             const PageItem *it=l->item[i];if(it==lead||!ms_picture(it)[0])continue;shown++;no++;
             (ui_open(stdout, "li", NULL), ui_open(stdout, "figure", NULL));const char *close=page_emit_item_open(it,"ms-art-link");ms_img(it,560,"ms-cover");fputs(close,stdout);
-            printf("<figcaption><span class=\"ms-kicker\">Plate %d &middot; ",no);html(ms_from(it));(ui_close(stdout, "span"), ui_open(stdout, "b", NULL));html(it->title);
+            ui_open(stdout,"figcaption",NULL);ui_open(stdout,"span","ms-kicker");ui_lit(stdout,"Plate ");printf("%d",no);ui_lit(stdout," &middot; ");html(ms_from(it));(ui_close(stdout, "span"), ui_open(stdout, "b", NULL));html(it->title);
             ui_close_n(stdout, "b", "figcaption", "figure", "li", NULL);
         }
         ui_close_n(stdout, "ul", "section", NULL);
@@ -690,7 +708,7 @@ static void ms_art(const MsList *l,const char *route,const char *title,const cha
         ui_open(stdout, "ol", "ms-lexicon");int no=0;
         for(int i=0;i<l->count&&no<32;i++){
             const PageItem *it=l->item[i];no++;
-            printf("<li><p class=\"ms-kicker\"><span>%02d</span>",no);html(ms_from(it));(ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));ms_title_link(it);ui_close(stdout, "h3");
+            ui_open(stdout,"li",NULL);ui_open(stdout,"p","ms-kicker");ui_open(stdout,"span",NULL);printf("%02d",no);ui_close(stdout,"span");html(ms_from(it));(ui_close(stdout, "p"), ui_open(stdout, "h3", NULL));ms_title_link(it);ui_close(stdout, "h3");
             ms_excerpt(it,"ms-card-text");ui_close(stdout, "li");
         }
         ui_close_n(stdout, "ol", "section", NULL);
@@ -703,6 +721,7 @@ static int page_media_screen(sqlite3 *db,const char *host,const char *route,cons
                              const char *title,const char *lede,const char *from,const char *q,
                              const PageMaterial *m,time_t now){
     int mode=ms_mode(host,route);
+    if(mode==MS_NONE)mode=ms_explore_mode(route,query);
     if(mode==MS_NONE||!m)return 0;
     MsList *l=calloc(1,sizeof(*l)),*sound=calloc(1,sizeof(*sound));
     if(!l||!sound){free(l);free(sound);return 0;}
@@ -722,7 +741,7 @@ static int page_media_screen(sqlite3 *db,const char *host,const char *route,cons
     }
     static const char *names[]={"","listen","music","cinema","art"};
     ms_saved_open();
-    fputs("<div class=\"ms ms-",stdout);fputs(names[mode],stdout);ui_lit(stdout, "\" data-media-screen=\"");fputs(names[mode],stdout);ui_lit(stdout, "\">");
+    ui_start(stdout,"div");ui_attr_open(stdout,"class");ui_lit(stdout,"ms ms-");fputs(names[mode],stdout);ui_attr_close(stdout);ui_attr_open(stdout,"data-media-screen");fputs(names[mode],stdout);ui_attr_close(stdout);ui_gt(stdout);
     if(mode==MS_LISTEN)ms_listen(l,route,title,lede,from,q,host,now);
     else if(mode==MS_MUSIC)ms_music(l,route,title,lede,from,q,now);
     else if(mode==MS_CINEMA)ms_cinema(l,sound,route,title,lede,from,q,host,now);

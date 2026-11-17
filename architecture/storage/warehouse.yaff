@@ -9,6 +9,7 @@ architecture warehouse
   maturity implemented
   consumes representation-manifold
   publishes WarehouseInspection
+  publishes representation-manifold
   node_types WarehouseHead
   node_types WarehouseQueryPlan
   state_types read_only

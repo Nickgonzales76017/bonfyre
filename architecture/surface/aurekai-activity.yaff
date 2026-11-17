@@ -13,14 +13,13 @@ architecture aurekai-activity
   maturity implemented
   semantic_question How can a person keep current work, its outputs, provider steps and personal notifications visible while moving through Aurekai?
   purpose Extend shared native navigation with one persistent Activity, Outputs and Inbox presentation. Existing SourceFrontier, Queue and Fabric owners retain work and recipient state; the surface reads their admitted projections and reopens exact work.
-  consumes WebWorkJob
+  consumes WorkState
   consumes AccountWorkGraph
   consumes QueueRecipientNotification
-  consumes FabricScopedTask
+  consumes WorkState
   consumes FabricRecipientNotification
   consumes FabricPushDelivery
-  consumes FabricModelRun
-  consumes NativeModelUsageReceipt
+  consumes ProviderModelUsageObservation
   publishes AccountActivityPresentation
   node_types ActivityRow
   node_types OutputContinuation

@@ -43,11 +43,11 @@ static int ph_cover_emit(const PhSite *site) {
                                    position/101,position%101};
     if (!bf_profile_cover_source_digest(&review, digest) || strcmp(digest, evidence)) goto done;
     ui_start(stdout,"figure");ui_attr(stdout,"class","ph-cover-art");ui_flag(stdout,"data-profile-cover");ui_gt(stdout);ui_start(stdout,"img");ui_attr_open(stdout,"src");
-    html(item->image); fputs("\" alt=\"",stdout); html(item->title);
-    printf("\" style=\"object-position:%d%% %d%%\" referrerpolicy=\"no-referrer\">",review.focal_x,review.focal_y);
-    ui_open(stdout,"figcaption","ph-cover-credit");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/o/"); html(source); fputc('/',stdout); html(key);
-    fputs("\">",stdout); html(item->title); if (item->by[0]) { fputs(" · ",stdout); html(item->by); }
-    fputs(" · CC0</a></figcaption></figure>",stdout);
+    html(item->image); ui_attr_close(stdout);ui_attr_open(stdout,"alt"); html(item->title);
+    ui_attr_close(stdout);ui_attr_open(stdout,"style");printf("object-position:%d%% %d%%",review.focal_x,review.focal_y);ui_attr_close(stdout);ui_attr(stdout,"referrerpolicy","no-referrer");ui_gt(stdout);
+    ui_open(stdout,"figcaption","ph-cover-credit");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/o/"); html(source); ui_copy(stdout,"/"); html(key);
+    ui_attr_close(stdout);ui_gt(stdout); html(item->title); if (item->by[0]) { ui_copy(stdout," · "); html(item->by); }
+    ui_copy(stdout," · CC0");ui_close(stdout,"a");ui_close(stdout,"figcaption");ui_close(stdout,"figure");
     result = 1;
 done:
     sqlite3_finalize(st); if (db) sqlite3_close(db); free(material); return result;
@@ -68,13 +68,13 @@ static void ph_cover_remove_form(const PhSite *site) {
     id=(int)rowid;sqlite3_finalize(st);st=NULL;
     if (!cms_snapshot_row(db,"site_fragment",id,site->id,digest)) goto done;
     snprintf(text,sizeof(text),"%d",id);
-    fputs("<details class=\"ph-cover-options\"><summary>Cover options</summary>",stdout);
-    if(ref[0]&&position>=0){ui_start(stdout,"a");ui_flag(stdout,"data-cover-adjust");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?site=");url_query_value(site->id);fputs("&amp;tab=artwork&amp;art=",stdout);url_query_value(ref);
-        printf("&amp;fx=%d&amp;fy=%d\">Move the focus point</a>",position/101,position%101);}
+    ui_section_open(stdout,"ph-cover-options","Cover options");
+    if(ref[0]&&position>=0){ui_start(stdout,"a");ui_flag(stdout,"data-cover-adjust");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?site=");url_query_value(site->id);ui_copy(stdout,"&amp;tab=artwork&amp;art=");url_query_value(ref);
+        ui_copy(stdout,"&amp;fx=");printf("%d",position/101);ui_copy(stdout,"&amp;fy=");printf("%d",position%101);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Move the focus point");ui_close(stdout,"a");}
     {const FtField hidden[]={{"site",site->id},{"id",text},{"expected",digest}};
      const FtForm f={.id="ph-cover-remove",.action="/profile/cover/remove",.label="Remove cover",.hook="cover-remove",.hidden=hidden,.nhidden=3};
      ft_form(stdout,&f);}
-    fputs("</details>",stdout);
+    ui_section_close(stdout);
 done:
     sqlite3_finalize(st);if(db)sqlite3_close(db);
 }

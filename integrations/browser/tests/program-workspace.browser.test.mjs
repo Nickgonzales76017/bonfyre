@@ -214,6 +214,37 @@ chromeTest('reviewed template drift refuses preparation and read-only members ca
  db.query('UPDATE program_template SET subject_kinds=?').run('["facility"]');const domain=await visit();try{await choose(domain);expect(await domain.run(button('Review setup')+'.disabled')).toBe(true);expect(await domain.text('.program-detail')).toContain('This template is for: facility. Choose that kind of workspace to prepare it.');}finally{await domain.close();}
 });
 
+chromeTest('authored contextual links open independent programs from one template and site',async visit=>{
+  const ref='venue:oak-room',url='template=learning#context_ref=venue%3Aoak-room';
+  const first=await visit(url);try{
+    await first.wait(visible(button('Review setup')));
+    expect(await first.text('.program-context')).toContain(ref);expect(count()).toBe(0);
+    await first.click(button('Review setup'));await first.click(button('Prepare this program'));
+    await first.wait(visible(heading('Requirements')));
+    expect(count()).toBe(1);
+    expect(db.query('SELECT status FROM program_instance').get().status).toBe('draft');
+    expect(db.query('SELECT context_ref FROM _program_workspace_preparation').get().context_ref).toBe(ref);
+  }finally{await first.close();}
+  const second=await visit('template=learning#context_ref=venue%3Ariver-room');try{
+    await second.wait(visible(button('Review setup')));
+    await second.click(button('Review setup'));await second.click(button('Prepare this program'));
+    await second.wait(visible(heading('Requirements')));expect(count()).toBe(2);
+    expect(db.query('SELECT COUNT(DISTINCT site_id) n FROM program_instance').get().n).toBe(1);
+  }finally{await second.close();}
+  const existing=await visit(url);try{
+    await existing.wait(visible(heading('Requirements')));
+    expect(await existing.text('.program-list')).toContain('venue:oak-room');
+    expect(await existing.text('.program-list')).toContain('venue:river-room');
+    expect(count()).toBe(2);
+  }finally{await existing.close();}
+  const defaults=await visit('template=learning');try{
+    await defaults.wait(visible(button('Review setup')));expect(count()).toBe(2);
+  }finally{await defaults.close();}
+  actor='user:20';const stranger=await visit(url);try{
+    await stranger.wait(visible(button('Review setup')));
+    expect(await stranger.run('Number(Boolean('+heading('Requirements')+'))')).toBe(0);
+  }finally{await stranger.close();}
+});
 chromeTest('a template link opens the reviewed template unprepared, then only this account\'s prepared program',async visit=>{
  const fresh=await visit('template=learning');try{await fresh.wait(visible(button('Review setup')));expect(await fresh.run('Boolean('+heading('Community learning')+')')).toBe(true);expect(await fresh.run('Number(Boolean('+heading('Requirements')+'))')).toBe(0);}finally{await fresh.close();}
  const instance=prepare(),kept=await visit('template=learning');try{await kept.wait(visible(heading('Requirements')));expect(await kept.run('location.search')).toContain('instance='+instance.instance_id);}finally{await kept.close();}

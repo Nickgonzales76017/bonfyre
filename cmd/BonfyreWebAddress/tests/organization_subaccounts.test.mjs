@@ -29,18 +29,19 @@ test('the live native organization view shows its own reviewed subaccount form',
  expect(page.body).toContain('data-org-subaccount-create');
  expect(page.body).not.toContain('data-org-subaccount="sub-');
 });
-test('creating a child uses Auth, retains parent and does not mint independent membership',async()=>{
+test('creating a child uses Auth, retains parent and grants only its creator administration',async()=>{
  const page=await f.request('/organizations?organization='+organization,{cookie:owner.cookie});
  const form={...inputs(page.body,'data-org-subaccount-create'),name:'Editorial journal'};
  const created=await f.request('/organizations',{cookie:owner.cookie,headers:secure,form});
  expect(created.status).toBe(200);
- expect(created.body).toContain('Child workspace recorded without inherited permissions or publication authority.');
+ expect(created.body).toContain('Child workspace recorded with creator administration. Nothing else is inherited, and nothing is published.');
  const row=f.authsql.query('SELECT subaccount,institution,label FROM institution_subaccounts WHERE institution=?').get(organization);
  expect(row.label).toBe('Editorial journal');
  expect(row.institution).toBe(organization);
  expect(row.subaccount).toMatch(/^sub-[a-f0-9]{32}$/);
  expect(created.body).toContain('data-org-subaccount="'+row.subaccount+'"');
- expect(f.authsql.query('SELECT count(*) n FROM institution_grants WHERE institution=?').get(row.subaccount).n).toBe(0);
+ expect(f.authsql.query('SELECT user_id,role,active FROM institution_grants WHERE institution=?').get(row.subaccount)).toEqual({user_id:owner.id,role:'admin',active:1});
+ expect(f.authsql.query('SELECT count(*) n FROM institution_grants WHERE institution=?').get(row.subaccount).n).toBe(1);
  const replay=await f.request('/organizations',{cookie:owner.cookie,headers:secure,form});
  expect(replay.status).toBe(200);
  expect(f.authsql.query('SELECT count(*) n FROM institution_subaccounts WHERE institution=?').get(organization).n).toBe(1);

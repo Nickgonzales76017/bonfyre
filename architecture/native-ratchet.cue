@@ -43,9 +43,9 @@ budget: {
 	// estate bridge/reader/publisher, editorial sound design and music library,
 	// connected-measurement MCP app, planner source review, release probes and
 	// their tests (+36 files / +4,963 lines). No superseded file was found to retire.
-	authored_mjs_files: 1682
+	authored_mjs_files: 1655
 	// 2026-11-14: app flow rebuilds in the browser modules (measured at commit).
-	authored_mjs_lines: 187969
+	authored_mjs_lines: 185581
 	// .js/.cjs/.ts/.tsx/.py: retiring .mjs must not move the code sideways.
 	// 53 after the Swarm transfer test and product-review renderer went to C.
 	// Merge 2026-11-10: reset to the merged actual; down only.
@@ -56,7 +56,7 @@ budget: {
 	// 2026-11-13 reviewed raise: deploy/tailwind/postcss.config.cjs, the
 	// PostCSS pipeline that now generates every served sheet (+1).
 	// merge of main 2026-11-13: editorial publication/audio .py tools and tests, blog reader/connections .js (+12)
-	other_script_files: 86
+	other_script_files: 81
 	// .mjs that bun compiles into an executable. Only browser code, tests and
 	// thin edges may stay JS; anything installed as a program is C.
 	bun_compile_sites: 0
