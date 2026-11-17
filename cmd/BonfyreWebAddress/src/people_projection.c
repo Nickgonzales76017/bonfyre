@@ -14,6 +14,7 @@
  * whose channels this estate reads, which says nothing about what it is like.
  */
 #include "ui_tree.h"
+#include "form_tree.h"
 #include "../generated/native_estate_hosts.h"
 #include "people_projection.h"
 #include "web_store.h"
@@ -190,7 +191,7 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
         if (!subject || !*subject || !host || !*host) continue;
         if (strcmp(current, subject)) {
             if ((unsigned)shown >= page_size) {has_next=1;break;}
-            if (open) { fputs("</p></div><a class='ak-btn is-primary' data-relationship-subject href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;subject=", out); url(out, current); fputs("'>Open relationship</a></li>", out); }
+            if (open) { ui_close(out,"p");ui_close(out,"div");ui_start(out,"a");ui_attr_sq(out,"class","ak-btn is-primary");ui_flag(out,"data-relationship-subject");ui_attr_open_sq(out,"href");ui_copy(out,BF_ORIGIN_SIGNIN "/relationships?context=self&amp;subject="); url(out, current); ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Open relationship");ui_close(out,"a");ui_close(out,"li"); }
             if (!shown)
                 {ui_start(out,"section");ui_attr_sq(out,"id","people-addressed");ui_attr_sq(out,"class","people-sec");ui_attr_sq(out,"aria-label","People on Aurekai");ui_gt(out);ui_start(out,"header");ui_attr_sq(out,"class","people-head");ui_gt(out);ui_open(out,"h2",NULL);ui_copy(out,"On Aurekai ");ui_open(out,"small",NULL);ui_copy(out,"Estate addresses");ui_close(out,"small");ui_close(out,"h2");ui_open(out,"p",NULL);ui_copy(out,"People who keep their own address here, with every page they publish under it.");ui_close(out,"p");ui_close(out,"header");ui_start(out,"ul");ui_attr_sq(out,"class","people-members");ui_gt(out);}
             snprintf(current, sizeof(current), "%s", subject);
@@ -198,9 +199,9 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
             label = label && label[1] ? label + 1 : subject;
             char canonical[128] = "";
             people_member_host(cms,subject,canonical,sizeof(canonical));
-            ui_start(out,"li");ui_attr_open_sq(out,"data-person-subject"); esc(out, subject); fputs("'><span class='people-avatar' aria-hidden='true'>", out);
+            ui_start(out,"li");ui_attr_open_sq(out,"data-person-subject"); esc(out, subject); ui_attr_close_sq(out);ui_gt(out);ui_start(out,"span");ui_attr_sq(out,"class","people-avatar");ui_attr_sq(out,"aria-hidden","true");ui_gt(out);
             fputs(BF_ICON_USER, out); ui_close(out,"span");ui_start(out,"div");ui_attr_sq(out,"class","people-member");ui_gt(out);ui_open(out,"strong",NULL);
-            if(canonical[0]){ui_start(out,"a");ui_flag(out,"data-profile-primary");ui_attr_open_sq(out,"href");ui_copy(out,"https://");esc(out,canonical);fputs("/'>",out);}
+            if(canonical[0]){ui_start(out,"a");ui_flag(out,"data-profile-primary");ui_attr_open_sq(out,"href");ui_copy(out,"https://");esc(out,canonical);ui_copy(out,"/");ui_attr_close_sq(out);ui_gt(out);}
             if (*label >= 'a' && *label <= 'z') { fputc(*label - 32, out); esc(out, label + 1); } else esc(out, label);
             if(canonical[0])ui_close(out,"a");
             ui_close(out,"strong");ui_copy(out," ");ui_start(out,"span");ui_attr_sq(out,"class","ak-tag is-on");ui_gt(out);ui_copy(out,"Resident");ui_close(out,"span");
@@ -208,25 +209,25 @@ static int members_standing(FILE *out, sqlite3 *cms, const char *needle, unsigne
                 ui_start(out,"nav");ui_flag(out,"data-person-profile-buckets");ui_attr_sq(out,"aria-label","Public profile");ui_gt(out);
                 static const char *const labels[]={"Posts","Gallery","Communities","Organizations"};
                 static const char *const tabs[]={"posts","gallery","communities","organizations"};
-                for(size_t i=0;i<4;i++){ui_start(out,"a");ui_attr_sq(out,"class","person-content-bucket");ui_flag(out,"data-person-bucket");ui_attr_open_sq(out,"href");ui_copy(out,"https://");esc(out,canonical);fputs("/?tab=",out);fputs(tabs[i],out);fputs("'>",out);esc(out,labels[i]);ui_close(out,"a");}
+                for(size_t i=0;i<4;i++){ui_start(out,"a");ui_attr_sq(out,"class","person-content-bucket");ui_flag(out,"data-person-bucket");ui_attr_open_sq(out,"href");ui_copy(out,"https://");esc(out,canonical);ui_copy(out,"/?tab=");ui_copy(out,tabs[i]);ui_attr_close_sq(out);ui_gt(out);esc(out,labels[i]);ui_close(out,"a");}
                 ui_close(out,"nav");
             }
             ui_start(out,"p");ui_attr_sq(out,"class","people-hosts");ui_gt(out);
             shown++; open = 1;
         }
-        ui_start(out,"a");ui_flag(out,"data-profile-surface");ui_attr_open_sq(out,"href");ui_copy(out,"https://"); esc(out, host); fputs("'>", out);
+        ui_start(out,"a");ui_flag(out,"data-profile-surface");ui_attr_open_sq(out,"href");ui_copy(out,"https://"); esc(out, host); ui_attr_close_sq(out);ui_gt(out);
         esc(out, host); ui_close(out,"a");
     }
     sqlite3_finalize(st);
-    if (open) { fputs("</p></div><a class='ak-btn is-primary' data-relationship-subject href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;subject=", out); url(out, current); fputs("'>Open relationship</a></li>", out); }
+    if (open) { ui_close(out,"p");ui_close(out,"div");ui_start(out,"a");ui_attr_sq(out,"class","ak-btn is-primary");ui_flag(out,"data-relationship-subject");ui_attr_open_sq(out,"href");ui_copy(out,BF_ORIGIN_SIGNIN "/relationships?context=self&amp;subject="); url(out, current); ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Open relationship");ui_close(out,"a");ui_close(out,"li"); }
     if (shown) {
         ui_close(out,"ul");ui_start(out,"nav");ui_attr_sq(out,"class","people-pager");ui_attr_sq(out,"aria-label","More published people");ui_gt(out);
         if(offset){ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/people?from=");fprintf(out,"%u",offset>page_size?offset-page_size:0);
-            if(needle&&*needle){fputs("&amp;q=",out);url(out,needle);}
-            fputs("#people-addressed' class='ak-btn'>Previous people</a>",out);}
+            if(needle&&*needle){ui_copy(out,"&amp;q=");url(out,needle);}
+            ui_copy(out,"#people-addressed");ui_attr_close_sq(out);ui_attr_sq(out,"class","ak-btn");ui_gt(out);ui_copy(out,"Previous people");ui_close(out,"a");}
         if(has_next){ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/people?from=");fprintf(out,"%u",offset+page_size);
-            if(needle&&*needle){fputs("&amp;q=",out);url(out,needle);}
-            fputs("#people-addressed' class='ak-btn'>More people</a>",out);}
+            if(needle&&*needle){ui_copy(out,"&amp;q=");url(out,needle);}
+            ui_copy(out,"#people-addressed");ui_attr_close_sq(out);ui_attr_sq(out,"class","ak-btn");ui_gt(out);ui_copy(out,"More people");ui_close(out,"a");}
         ui_close(out,"nav");ui_close(out,"section");
     }
     return shown;
@@ -338,8 +339,8 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
     ui_start(out,"nav");ui_attr_sq(out,"class","ak-chips");ui_attr_sq(out,"aria-label","People");ui_gt(out);
     ui_start(out,"a");ui_attr_sq(out,"class","ak-chip");ui_attr_sq(out,"href","#people-addressed");ui_gt(out);ui_copy(out,"On Aurekai");ui_close(out,"a");
     ui_start(out,"a");ui_attr_sq(out,"class","ak-chip");ui_attr_sq(out,"aria-current","page");ui_attr_sq(out,"href","#people-credits");ui_gt(out);ui_copy(out,"Credited makers ");ui_open(out,"b",NULL);fprintf(out,"%d",total);ui_close(out,"b");ui_close(out,"a");
-    fputs("<a class='ak-chip' href='/organisations'>Publishers</a>"
-          "<a class='ak-chip' href='" BF_ORIGIN_SIGNIN "/relationships?context=self'>Your relationships</a></nav>", out);
+    ui_start(out,"a");ui_attr_sq(out,"class","ak-chip");ui_attr_sq(out,"href","/organisations");ui_gt(out);ui_copy(out,"Publishers");ui_close(out,"a");
+    ui_start(out,"a");ui_attr_sq(out,"class","ak-chip");ui_attr_open_sq(out,"href");ui_copy(out,BF_ORIGIN_SIGNIN "/relationships?context=self");ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Your relationships");ui_close(out,"a");ui_close(out,"nav");
     member_shown=members_standing(out,cms,needle,offset,page_size);
     if (cms) sqlite3_close(cms);
 
@@ -358,18 +359,19 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
     sqlite3_bind_int(st, 3, (int)offset);
 
     ui_start(out,"section");ui_attr_sq(out,"id","people-credits");ui_attr_sq(out,"class","people-sec");ui_attr_sq(out,"aria-label","Credited makers");ui_gt(out);ui_start(out,"header");ui_attr_sq(out,"class","people-head");ui_gt(out);ui_open(out,"div",NULL);ui_open(out,"h2",NULL);ui_copy(out,"Credited makers");ui_close(out,"h2");ui_open(out,"p",NULL);ui_copy(out,"Writers, hosts and makers named on what this estate reads, most credited first. Each source that printed a name is listed and linked on its own.");ui_close(out,"p");ui_close(out,"div");
-    fputs("<form class='people-sort' method='get' action='",out);esc(out,route);
-    fputs("'><label for='people-sort-order'>Sort</label><select id='people-sort-order' name='sort' onchange='this.form.submit()'>",out);
-    fputs(recent_first ? "<option value='credit'>Most credited first</option><option value='recent' selected>Latest first</option>"
-                      : "<option value='credit' selected>Most credited first</option><option value='recent'>Latest first</option>",out);
-    fputs("</select>",out);
-    if(needle&&*needle){fputs("<input type='hidden' name='q' value='",out);esc(out,needle);fputs("'>",out);}
-    fputs("<noscript><button type='submit'>Sort</button></noscript></form></header>",out);
-    fputs("<form class='people-search' role='search' method='get' action='", out); esc(out, route);
-    fputs("'><label>", out); fputs(BF_ICON_SEARCH, out); fputs("<input type='search' name='q' value='", out);
-    esc(out, needle ? needle : "");
-    fprintf(out, "' placeholder='Find a credited maker or source' aria-label='Find a credited maker'></label>"
-            "<span class='people-total'><b>%d</b> %s</span></form>", total, needle && *needle ? "match" : "total");
+    ui_start(out,"form");ui_attr_sq(out,"class","people-sort");ui_attr_sq(out,"method","get");ui_attr_open_sq(out,"action");esc(out,route);ui_attr_close_sq(out);ui_gt(out);
+    ui_start(out,"label");ui_attr_sq(out,"for","people-sort-order");ui_gt(out);ui_copy(out,"Sort");ui_close(out,"label");
+    ui_start(out,"select");ui_attr_sq(out,"id","people-sort-order");ui_attr_sq(out,"name","sort");ui_attr_sq(out,"onchange","this.form.submit()");ui_gt(out);
+    if (recent_first) { ui_start(out,"option");ui_attr_sq(out,"value","credit");ui_gt(out);ui_copy(out,"Most credited first");ui_close(out,"option");ui_start(out,"option");ui_attr_sq(out,"value","recent");ui_flag(out,"selected");ui_gt(out);ui_copy(out,"Latest first");ui_close(out,"option"); }
+    else { ui_start(out,"option");ui_attr_sq(out,"value","credit");ui_flag(out,"selected");ui_gt(out);ui_copy(out,"Most credited first");ui_close(out,"option");ui_start(out,"option");ui_attr_sq(out,"value","recent");ui_gt(out);ui_copy(out,"Latest first");ui_close(out,"option"); }
+    ui_close(out,"select");
+    if(needle&&*needle){ui_start(out,"input");ui_attr_sq(out,"type","hidden");ui_attr_sq(out,"name","q");ui_attr_open_sq(out,"value");esc(out,ft_echo(needle));ui_attr_close_sq(out);ui_gt(out);}
+    ui_start(out,"noscript");ui_gt(out);ui_start(out,"button");ui_attr_sq(out,"type","submit");ui_gt(out);ui_copy(out,"Sort");ui_close(out,"button");ui_close(out,"noscript");ui_close(out,"form");ui_close(out,"header");
+    ui_start(out,"form");ui_attr_sq(out,"class","people-search");ui_attr_sq(out,"role","search");ui_attr_sq(out,"method","get");ui_attr_open_sq(out,"action");esc(out,route);ui_attr_close_sq(out);ui_gt(out);
+    ui_open(out,"label",NULL); fputs(BF_ICON_SEARCH, out);
+    ui_start(out,"input");ui_attr_sq(out,"type","search");ui_attr_sq(out,"name","q");ui_attr_open_sq(out,"value");esc(out,ft_echo(needle ? needle : ""));ui_attr_close_sq(out);ui_attr_sq(out,"placeholder","Find a credited maker or source");ui_attr_sq(out,"aria-label","Find a credited maker");ui_gt(out);
+    ui_close(out,"label");
+    ui_start(out,"span");ui_attr_sq(out,"class","people-total");ui_gt(out);ui_open(out,"b",NULL);fprintf(out,"%d",total);ui_close(out,"b");ui_copy(out," ");ui_copy(out,needle && *needle ? "match" : "total");ui_close(out,"span");ui_close(out,"form");
     sqlite3_stmt *publisher_account=NULL;
     if(cms_attached)sqlite3_prepare_v2(db,
        "SELECT a.account_id,a.name,s.subaccount_id FROM cms_source.publisher_subaccount s"
@@ -429,14 +431,16 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
             initials[k] = 0;
         }
         ui_start(out,"li");ui_flag(out,"data-credit-card");ui_attr_open_sq(out,"data-credit-name"); esc(out, name);
-        fputs("' data-publisher-account='",out);esc(out,publisher_id);
-        fputs("' data-publisher-subaccount='",out);esc(out,subaccount_id);
-        fprintf(out, "'><span class='people-n'>%02u</span><span class='people-avatar' aria-hidden='true'>%s</span><div class='people-who'><h3><a href='",
-                offset + (unsigned)shown + 1, initials);
+        ui_attr_close_sq(out);ui_attr_open_sq(out,"data-publisher-account");esc(out,publisher_id);
+        ui_attr_close_sq(out);ui_attr_open_sq(out,"data-publisher-subaccount");esc(out,subaccount_id);
+        ui_attr_close_sq(out);ui_gt(out);
+        ui_start(out,"span");ui_attr_sq(out,"class","people-n");ui_gt(out);fprintf(out,"%02u",offset + (unsigned)shown + 1);ui_close(out,"span");
+        ui_start(out,"span");ui_attr_sq(out,"class","people-avatar");ui_attr_sq(out,"aria-hidden","true");ui_gt(out);fputs(initials,out);ui_close(out,"span");
+        ui_start(out,"div");ui_attr_sq(out,"class","people-who");ui_gt(out);ui_open(out,"h3",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");
         /* A byline first opens the exact source-cut the static estate exports. */
-        esc(out,route);fputs("?who=",out);url(out,name);fputs("&amp;source=",out);url(out,source);
-        fputs("' data-profile-host='",out);esc(out,primary_credit);fputs("'>",out);esc(out,name);ui_close(out,"a");
-        if (label[0] && strcmp(label, name)) { fputs(" <small>", out); esc(out, label); ui_close(out,"small"); }
+        esc(out,route);ui_copy(out,"?who=");url(out,name);ui_copy(out,"&amp;source=");url(out,source);
+        ui_attr_close_sq(out);ui_attr_open_sq(out,"data-profile-host");esc(out,primary_credit);ui_attr_close_sq(out);ui_gt(out);esc(out,name);ui_close(out,"a");
+        if (label[0] && strcmp(label, name)) { ui_copy(out," ");ui_open(out,"small",NULL); esc(out, label); ui_close(out,"small"); }
         ui_close(out,"h3");
         char domain[128] = "";
         sqlite3_reset(latest); sqlite3_bind_text(latest, 1, name, -1, SQLITE_TRANSIENT); sqlite3_bind_text(latest, 2, source, -1, SQLITE_TRANSIENT);
@@ -448,29 +452,29 @@ int bf_people_index_ordered(FILE *out, const char *archive_path, const char *rou
                 n = strcspn(h, "/?#:"); if (n && n < sizeof(domain)) { memcpy(domain, h, n); domain[n] = 0; }
             }
             const char *date = (const char *)sqlite3_column_text(latest, 3);
-            ui_start(out,"p");ui_attr_sq(out,"class","people-latest");ui_gt(out);ui_copy(out,"Latest: ");ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/o/"); url(out, (const char *)sqlite3_column_text(latest, 0)); fputs("/", out);
-            esc(out, (const char *)sqlite3_column_text(latest, 1)); fputs("'>&ldquo;", out); esc(out, (const char *)sqlite3_column_text(latest, 2)); fputs("&rdquo;</a>", out);
-            if (date && *date) { fputs(" <time datetime='", out); esc(out, date); fputs("'>(", out); esc(out, date); fputs(")</time>", out); }
+            ui_start(out,"p");ui_attr_sq(out,"class","people-latest");ui_gt(out);ui_copy(out,"Latest: ");ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/o/"); url(out, (const char *)sqlite3_column_text(latest, 0)); ui_copy(out,"/");
+            esc(out, (const char *)sqlite3_column_text(latest, 1)); ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"&ldquo;"); esc(out, (const char *)sqlite3_column_text(latest, 2)); ui_copy(out,"&rdquo;");ui_close(out,"a");
+            if (date && *date) { ui_copy(out," ");ui_start(out,"time");ui_attr_open_sq(out,"datetime"); esc(out, date); ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"("); esc(out, date); ui_copy(out,")");ui_close(out,"time"); }
             ui_close(out,"p");
         }
         ui_close(out,"div");ui_start(out,"p");ui_attr_sq(out,"class","people-count");ui_gt(out);ui_open(out,"b",NULL);fprintf(out,"%d",made);ui_copy(out," piece");ui_copy(out,made == 1 ? "" : "s");ui_close(out,"b");ui_open(out,"small",NULL);ui_copy(out,"at ");
         esc(out, domain[0] ? domain : source); ui_close(out,"small");ui_close(out,"p");
-        fputs("<a class='people-keep' data-relationship-review href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=", out);
-        url(out, name); fputs("&amp;source=", out); url(out, source); fputs("'>", out); fputs(BF_ICON_BOOKMARK, out); ui_open(out,"span",NULL);ui_copy(out,"keep track");ui_close(out,"span");ui_close(out,"a");ui_close(out,"li");
+        ui_start(out,"a");ui_attr_sq(out,"class","people-keep");ui_flag(out,"data-relationship-review");ui_attr_open_sq(out,"href");ui_copy(out,BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=");
+        url(out, name); ui_copy(out,"&amp;source="); url(out, source); ui_attr_close_sq(out);ui_gt(out); fputs(BF_ICON_BOOKMARK, out); ui_open(out,"span",NULL);ui_copy(out,"keep track");ui_close(out,"span");ui_close(out,"a");ui_close(out,"li");
         shown++;
     }
     ui_close(out,"ol");
     if (offset || total > (int)(offset + (unsigned)shown)) {
         ui_start(out,"nav");ui_attr_sq(out,"class","people-pager");ui_attr_sq(out,"aria-label","More makers");ui_gt(out);
         if (offset) {
-            ui_start(out,"a");ui_attr_sq(out,"class","ak-btn");ui_attr_open_sq(out,"href"); esc(out, route); fputs("?", out);
-            if (needle && *needle) { fputs("q=", out); url(out, needle); fputs("&amp;", out); }
-            if(recent_first)fputs("sort=recent&amp;",out);fprintf(out, "from=%u#people-credits'>Newer</a>", offset > page_size ? offset - page_size : 0);
+            ui_start(out,"a");ui_attr_sq(out,"class","ak-btn");ui_attr_open_sq(out,"href"); esc(out, route); ui_copy(out,"?");
+            if (needle && *needle) { ui_copy(out,"q="); url(out, needle); ui_copy(out,"&amp;"); }
+            if(recent_first)ui_copy(out,"sort=recent&amp;");ui_copy(out,"from=");fprintf(out, "%u", offset > page_size ? offset - page_size : 0);ui_copy(out,"#people-credits");ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Newer");ui_close(out,"a");
         }
         if (total > (int)(offset + (unsigned)shown)) {
-            ui_start(out,"a");ui_attr_sq(out,"class","ak-btn");ui_attr_open_sq(out,"href"); esc(out, route); fputs("?", out);
-            if (needle && *needle) { fputs("q=", out); url(out, needle); fputs("&amp;", out); }
-            if(recent_first)fputs("sort=recent&amp;",out);fprintf(out, "from=%u#people-credits'>Older (%d more)</a>", offset + (unsigned)shown, total - (int)(offset + (unsigned)shown));
+            ui_start(out,"a");ui_attr_sq(out,"class","ak-btn");ui_attr_open_sq(out,"href"); esc(out, route); ui_copy(out,"?");
+            if (needle && *needle) { ui_copy(out,"q="); url(out, needle); ui_copy(out,"&amp;"); }
+            if(recent_first)ui_copy(out,"sort=recent&amp;");ui_copy(out,"from=");fprintf(out, "%u", offset + (unsigned)shown);ui_copy(out,"#people-credits");ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Older (");fprintf(out, "%d", total - (int)(offset + (unsigned)shown));ui_copy(out," more)");ui_close(out,"a");
         }
         ui_close(out,"nav");
     }
@@ -518,18 +522,17 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
             char public_host[128]={0};
             int qualified=people_name_plausible(who)&&bf_credit_profile_host(who,source,public_host);
             ui_start(out,"li");ui_flag(out,"data-source-observation");ui_gt(out);ui_open(out,"h3",NULL);ui_start(out,"a");
-            if(qualified){fputs(" data-credit-profile href='https://",out);esc(out,public_host);fputs("/",out);}
-            else{fputs(" href='",out);esc(out,route);fputs("?who=",out);url(out,who);fputs("&amp;source=",out);url(out,source);}
-            fputs("'>",out);esc(out,source);
-            fprintf(out, "</a></h3><p><span>%d published item%s</span></p>"
-                    "<a class='relationship-link' data-relationship-review href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=",
-                    count, count == 1 ? "" : "s");
-            url(out,who); fputs("&amp;source=",out); url(out,source); fputs("'>Keep track</a></li>",out);
+            if(qualified){ui_flag(out,"data-credit-profile");ui_attr_open_sq(out,"href");ui_copy(out,"https://");esc(out,public_host);ui_copy(out,"/");}
+            else{ui_attr_open_sq(out,"href");esc(out,route);ui_copy(out,"?who=");url(out,who);ui_copy(out,"&amp;source=");url(out,source);}
+            ui_attr_close_sq(out);ui_gt(out);esc(out,source);
+            ui_close(out,"a");ui_close(out,"h3");ui_open(out,"p",NULL);ui_open(out,"span",NULL);fprintf(out,"%d",count);ui_copy(out," published item");ui_copy(out,count == 1 ? "" : "s");ui_close(out,"span");ui_close(out,"p");
+            ui_start(out,"a");ui_attr_sq(out,"class","relationship-link");ui_flag(out,"data-relationship-review");ui_attr_open_sq(out,"href");ui_copy(out,BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=");
+            url(out,who); ui_copy(out,"&amp;source="); url(out,source); ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Keep track");ui_close(out,"a");ui_close(out,"li");
             shown++;
         }
         sqlite3_finalize(st);
         ui_close(out,"ol");ui_start(out,"p");ui_attr_sq(out,"class","people-boundary");ui_flag(out,"data-identity-boundary");ui_gt(out);ui_copy(out,"This chooser preserves publisher boundaries. Nothing here asserts that the same spelling at two sources is the same person. ");ui_start(out,"a");ui_attr_open_sq(out,"href"); esc(out, route);
-        fputs("'>Back to People</a>.</p></section>", out);
+        ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Back to People");ui_close(out,"a");ui_copy(out,".");ui_close(out,"p");ui_close(out,"section");
         sqlite3_close(db);
         return shown;
     }
@@ -545,9 +548,9 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
     ui_start(out,"section");ui_attr_sq(out,"class","region region-person people-dossier");ui_attr_sq(out,"aria-label","Source-bound public credit");ui_flag(out,"data-source-dossier");ui_gt(out);ui_start(out,"div");ui_attr_sq(out,"class","people-dossier-head");ui_gt(out);ui_start(out,"p");ui_attr_sq(out,"class","people-kicker");ui_gt(out);ui_copy(out,"Credited maker");ui_close(out,"p");ui_open(out,"h2",NULL);
     esc(out, who);
     ui_close(out,"h2");ui_start(out,"p");ui_attr_sq(out,"class","people-credit-source");ui_gt(out);ui_copy(out,"Named by ");ui_open(out,"strong",NULL); esc(out, source_filter);
-    fprintf(out, "</strong> on %d piece%s this estate kept.</p><a class='relationship-link' data-relationship-review href='" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=",
-            made, made == 1 ? "" : "s");
-    url(out,who);fputs("&amp;source=",out);url(out,source_filter);fputs("'>Keep track of them</a></div>", out);
+    ui_close(out,"strong");ui_copy(out," on ");fprintf(out,"%d",made);ui_copy(out," piece");ui_copy(out,made == 1 ? "" : "s");ui_copy(out," this estate kept.");ui_close(out,"p");
+    ui_start(out,"a");ui_attr_sq(out,"class","relationship-link");ui_flag(out,"data-relationship-review");ui_attr_open_sq(out,"href");ui_copy(out,BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=");
+    url(out,who);ui_copy(out,"&amp;source=");url(out,source_filter);ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"Keep track of them");ui_close(out,"a");ui_close(out,"div");
 
     if (sqlite3_prepare_v2(db,
             "SELECT source, key, title, kind, COALESCE(publisher,''),"
@@ -566,10 +569,10 @@ int bf_person_page(FILE *out, const char *archive_path, const char *who,
             const char *date = (const char *)sqlite3_column_text(st, 5);
             if (!title || !*title) continue;
             ui_open(out,"li",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/o/");
-            url(out, source); fputs("/", out); esc(out, key); fputs("'>", out); esc(out, title); ui_close(out,"a");ui_open(out,"p",NULL);
+            url(out, source); ui_copy(out,"/"); esc(out, key); ui_attr_close_sq(out);ui_gt(out); esc(out, title); ui_close(out,"a");ui_open(out,"p",NULL);
             if (publisher && *publisher) { ui_open(out,"span",NULL); esc(out, publisher); ui_close(out,"span"); }
             if (kind && *kind) { ui_open(out,"span",NULL); esc(out, kind); ui_close(out,"span"); }
-            if (date && *date) { ui_start(out,"time");ui_attr_open_sq(out,"datetime"); esc(out, date); fputs("'>", out); esc(out, date); ui_close(out,"time"); }
+            if (date && *date) { ui_start(out,"time");ui_attr_open_sq(out,"datetime"); esc(out, date); ui_attr_close_sq(out);ui_gt(out); esc(out, date); ui_close(out,"time"); }
             ui_close(out,"p");ui_close(out,"li");
             shown++;
         }
@@ -618,10 +621,11 @@ int bf_organisations_index(FILE *out, const char *ledger_path, const char *route
 
     ui_start(out,"section");ui_attr_sq(out,"class","region region-orgs");ui_attr_sq(out,"aria-label","Institutions");ui_gt(out);ui_start(out,"h2");ui_attr_sq(out,"class","region-label");ui_gt(out);ui_copy(out,"The institutions this estate reads");ui_close(out,"h2");
     ui_start(out,"p");ui_attr_sq(out,"class","source-count");ui_gt(out);fprintf(out,"%d",total);ui_copy(out," publishers");ui_close(out,"p");
-    fputs("<form class='ledger-find' method='get' action='", out); esc(out, route);
-    fputs("'><label>Find an institution <input type='search' name='q' value='", out);
-    esc(out, needle ? needle : "");
-    fputs("' placeholder='a name, or a host'></label><button class='button primary' type='submit'>Look</button></form>", out);
+    ui_start(out,"form");ui_attr_sq(out,"class","ledger-find");ui_attr_sq(out,"method","get");ui_attr_open_sq(out,"action");esc(out,route);ui_attr_close_sq(out);ui_gt(out);
+    ui_open(out,"label",NULL);ui_copy(out,"Find an institution ");
+    ui_start(out,"input");ui_attr_sq(out,"type","search");ui_attr_sq(out,"name","q");ui_attr_open_sq(out,"value");esc(out,ft_echo(needle ? needle : ""));ui_attr_close_sq(out);ui_attr_sq(out,"placeholder","a name, or a host");ui_gt(out);
+    ui_close(out,"label");
+    ui_start(out,"button");ui_attr_sq(out,"class","button primary");ui_attr_sq(out,"type","submit");ui_gt(out);ui_copy(out,"Look");ui_close(out,"button");ui_close(out,"form");
     ui_start(out,"ol");ui_attr_sq(out,"class","source-roots");ui_gt(out);
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *host = (const char *)sqlite3_column_text(st, 0);
@@ -629,14 +633,14 @@ int bf_organisations_index(FILE *out, const char *ledger_path, const char *route
         const char *identity = (const char *)sqlite3_column_text(st, 2);
         int read = sqlite3_column_int(st, 3), listed = sqlite3_column_int(st, 4);
         char address[160] = {0};
-        ui_open(out,"li",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/channels?root="); url(out, host); fputs("'>", out);
+        ui_open(out,"li",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/channels?root="); url(out, host); ui_attr_close_sq(out);ui_gt(out);
         esc(out, name); ui_close(out,"a");ui_start(out,"span");ui_attr_sq(out,"class","by");ui_gt(out);
         ui_open(out,"span",NULL);fprintf(out,"%d",read);ui_copy(out," read here");ui_close(out,"span");ui_open(out,"span",NULL);fprintf(out,"%d",listed);ui_copy(out," listed");ui_close(out,"span");
         if (identity && *identity) {
-            ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/about/"); esc(out, identity); fputs("'>About</a>", out);
+            ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"/about/"); esc(out, identity); ui_attr_close_sq(out);ui_gt(out);ui_copy(out,"About");ui_close(out,"a");
         }
         if (cms && institution_address(cms, host, address, sizeof(address))) {
-            ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"https://"); esc(out, address); fputs("'>", out);
+            ui_start(out,"a");ui_attr_open_sq(out,"href");ui_copy(out,"https://"); esc(out, address); ui_attr_close_sq(out);ui_gt(out);
             esc(out, address); ui_close(out,"a");
         }
         ui_close(out,"span");ui_close(out,"li");

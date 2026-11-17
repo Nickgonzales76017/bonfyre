@@ -12,6 +12,7 @@ architecture public-estate-passport
   consumes InternetSource
   publishes PublicEstatePassport
   publishes ExternalSourceAdvertisement
+  publishes SourcePassport
   node_types PublicEstatePassport
   node_types ReusePosture
   edge_types advertises_capability
@@ -60,7 +61,7 @@ architecture dataset-registry-candidates
   purpose Compiles the awesome-public-datasets registry into candidate passports: each entry keeps its category, words, address and meta link; its host's robots rules are read once; an entry the registry marks broken or whose path robots refuses is REFUSED, every other entry is SHADOW. Candidates lower into external_source advertisements with the registry category as the domain axis, and into external_resource catalogue rows keyed by a stable identifier so a re-import updates rather than duplicates.
   maturity implemented
   consumes PublicEstatePassport
-  consumes ExternalEstateIndex
+  consumes CandidateExternalSource
   publishes CandidateExternalSource
   node_types CandidateExternalSource
   invariant a registry candidate is never ADMITTED by the compiler; admission is an authored census row with a receipt

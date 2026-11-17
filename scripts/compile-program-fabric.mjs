@@ -67,7 +67,7 @@ function compileInstance(db, put, subject, siteId, templateId, ordinalBase, addr
   if (!templateSlug) throw new Error(`template has no addressable identity: ${templateId}`);
   const roleSlugs = slots.map(role => slug(role, 24));
   if (roleSlugs.some(role => !role) || new Set(roleSlugs).size !== roleSlugs.length) throw new Error(`template has colliding or empty slot identities: ${templateId}`);
-  const instance = `${siteId}-${templateSlug}`;
+  const instance = `${siteId}-${templateSlug}${options.instanceSuffix ? '-'+options.instanceSuffix : ''}`;
   const prior = db.query("SELECT template_id,owner_subject,site_id FROM program_instance WHERE namespace=? AND instance_id=?").get(policy.namespace, instance);
   if (prior && (prior.template_id !== templateId || prior.owner_subject !== subject || prior.site_id !== siteId))
     throw new Error(`program identity collision: ${instance}; existing owner binding is not transferable`);
@@ -142,15 +142,17 @@ function compileInstance(db, put, subject, siteId, templateId, ordinalBase, addr
 // compiler with private draft status; the historical CLI retains published
 // declaration semantics. Neither path performs external discovery or effects.
 export function compilePrograms(db, {subject, siteId, programs, addressIndex,
-  newStatus = "published", instanceBoundary, addressRunFn} = {}) {
+  newStatus = "published", instanceBoundary, addressRunFn, instanceSuffix} = {}) {
   if (!subject || !siteId || !Array.isArray(programs) || !programs.length)
     throw new Error("program compilation needs a subject, site and templates");
+  if (instanceSuffix !== undefined && !/^ctx-[a-f0-9]{24}$/.test(instanceSuffix))
+    throw new Error("invalid contextual program instance suffix");
   const put = store(db, now(), newStatus);
   const hasDemandColumn=db.query('PRAGMA table_info(program_template)').all().some(c=>c.name==='address_demands');
   let base = db.query("SELECT COALESCE(MAX(ordinal),0) AS ordinal FROM semantic_slot WHERE namespace=? AND site_id=?").get(policy.namespace, siteId).ordinal;
   const compiled = [], missing = [];
   for (const template of programs) {
-    const result = compileInstance(db, put, subject, siteId, template, base, addressIndex, hasDemandColumn, {instanceBoundary,addressRunFn});
+    const result = compileInstance(db, put, subject, siteId, template, base, addressIndex, hasDemandColumn, {instanceBoundary,addressRunFn,instanceSuffix});
     if (result) { compiled.push(result); base = result.ordinal_end; }
     else missing.push(template);
   }

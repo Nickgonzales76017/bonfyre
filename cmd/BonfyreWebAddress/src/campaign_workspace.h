@@ -169,28 +169,38 @@ static int cwl_page(int status, const char *back, const char *action, const CwlF
     char *page = NULL; size_t size = 0; FILE *out = open_memstream(&page, &size);
     if (!out) { aw_error(503, "The campaign form could not be prepared.\n"); return 1; }
     /* The one shell: estate bar, one <main>, the one footer and player. */
-    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#0f1511\"><title>Campaign link \xc2\xb7 Aurekai</title>"
-        "<link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\"><link rel=\"stylesheet\" href=\"/assets/composition.css\"></head>"
-        "<body class=\"ak-app route-campaign\" data-aurekai-pattern=\"workbench\">" BF_ESTATE_BAR "<main class=\"ak-wb\"><p class=\"ak-kicker\"><a href=\"", out);
+    ui_copy(out,"<!doctype html>");ui_open_a(out,"html","lang","en");ui_open(out,"head",NULL);
+    ui_open_a(out,"meta","charset","utf-8");ui_open_a(out,"meta","name","viewport","content","width=device-width,initial-scale=1");
+    ui_open_a(out,"meta","name","theme-color","content","#0f1511");ui_open(out,"title",NULL);ui_copy(out,"Campaign link \xc2\xb7 Aurekai");ui_close(out,"title");
+    ui_open_a(out,"link","rel","stylesheet","href","/assets/authoring-reader.css");ui_open_a(out,"link","rel","stylesheet","href","/assets/composition.css");
+    ui_close(out,"head");ui_open_a(out,"body","class","ak-app route-campaign","data-aurekai-pattern","workbench");fputs(BF_ESTATE_BAR,out);
+    ui_open(out,"main","ak-wb");ui_open(out,"p","ak-kicker");ui_start(out,"a");ui_attr_open(out,"href");
     bf_lex_html_emit(out, back);
-    fputs("\">Back to campaign workspace</a></p><header class=\"ak-wb-hero is-solo\"><div><h1>Build a campaign link</h1><p class=\"ak-lede\">Add source, medium and campaign tags to a destination. Copy the completed link into the message or creative you plan to share.</p></div></header>", out);
+    ui_attr_close(out);ui_gt(out);ui_copy(out,"Back to campaign workspace");ui_close(out,"a");ui_close(out,"p");
+    ui_open(out,"header","ak-wb-hero is-solo");ui_open(out,"div",NULL);ui_open(out,"h1",NULL);ui_copy(out,"Build a campaign link");ui_close(out,"h1");
+    ui_open(out,"p","ak-lede");ui_copy(out,"Add source, medium and campaign tags to a destination. Copy the completed link into the message or creative you plan to share.");ui_close(out,"p");ui_close(out,"div");ui_close(out,"header");
     if (error && *error) { ui_start(out,"div");ui_attr(out,"class","cwl-notice");ui_attr(out,"role","alert");ui_gt(out);ui_open(out,"strong",NULL);ui_copy(out,"Check this link");ui_close(out,"strong");ui_open(out,"p",NULL); bf_lex_html_emit(out, error); ui_close(out,"p");ui_close(out,"div"); }
     if (result && *result) {
-        fputs("<section class=\"ak-panel cwl-result\" aria-labelledby=\"result-heading\"><h2 id=\"result-heading\">Link ready to copy</h2><label for=\"campaign-result\">Completed campaign URL</label><textarea id=\"campaign-result\" rows=\"5\" readonly spellcheck=\"false\" aria-describedby=\"copy-help\">", out);
+        ui_open_a(out,"section","class","ak-panel cwl-result","aria-labelledby","result-heading");ui_open_a(out,"h2","id","result-heading");ui_copy(out,"Link ready to copy");ui_close(out,"h2");
+        ui_open_a(out,"label","for","campaign-result");ui_copy(out,"Completed campaign URL");ui_close(out,"label");
+        ui_open_a(out,"textarea","id","campaign-result","rows","5","readonly",(const char *)NULL,"spellcheck","false","aria-describedby","copy-help");
         bf_lex_html_emit(out, result);
-        fputs("</textarea><p id=\"copy-help\" class=\"cwl-hint\">Select the URL and copy it. This page has not opened or shared the destination.</p></section>", out);
+        ui_close(out,"textarea");ui_open_a(out,"p","id","copy-help","class","cwl-hint");ui_copy(out,"Select the URL and copy it. This page has not opened or shared the destination.");ui_close(out,"p");ui_close(out,"section");
     }
-    fputs("<form class=\"ak-ask cwl-form\" method=\"post\" accept-charset=\"UTF-8\" action=\"", out); bf_lex_html_emit(out, action);
-    fputs("\"><p>Source, medium and campaign are required. Keep their spelling and capitalization consistent across your campaign.</p><div class=\"cwl-fields\">", out);
+    ui_start(out,"form");ui_attr(out,"class","ak-ask cwl-form");ui_attr(out,"method","post");ui_attr(out,"accept-charset","UTF-8");ui_attr_open(out,"action");bf_lex_html_emit(out, action);
+    ui_attr_close(out);ui_gt(out);ui_open(out,"p",NULL);ui_copy(out,"Source, medium and campaign are required. Keep their spelling and capitalization consistent across your campaign.");ui_close(out,"p");ui_open(out,"div","cwl-fields");
     for (int i = 0; i < 7; i++) {
-        fprintf(out, "<div class=\"ak-field%s\"><label for=\"campaign-%s\">%s%s</label><input id=\"campaign-%s\" name=\"%s\" type=\"%s\" maxlength=\"%u\" autocomplete=\"off\" spellcheck=\"false\" aria-describedby=\"hint-%s\"%s value=\"",
-            i ? "" : " is-wide", cwl_names[i], cwl_labels[i], i > 3 ? " <span>(optional)</span>" : "",
+        ui_start(out,"div");fprintf(out," class=\"ak-field%s\">",i ? "" : " is-wide");
+        ui_start(out,"label");fprintf(out," for=\"campaign-%s\">%s%s",cwl_names[i],cwl_labels[i],i > 3 ? " <span>(optional)</span>" : "");ui_close(out,"label");
+        ui_start(out,"input");fprintf(out, " id=\"campaign-%s\" name=\"%s\" type=\"%s\" maxlength=\"%u\" autocomplete=\"off\" spellcheck=\"false\" aria-describedby=\"hint-%s\"%s value=\"",
             cwl_names[i], cwl_names[i], i ? "text" : "url", i ? BF_CAMPAIGN_VALUE_MAX : BF_CAMPAIGN_URL_MAX,
             cwl_names[i], i < 4 ? " required" : "");
         bf_lex_html_emit(out, i ? form->values[i - 1] : form->url);
         fprintf(out, "\"><p class=\"cwl-hint\" id=\"hint-%s\">%s</p></div>", cwl_names[i], cwl_hints[i]);
     }
-    fputs("</div><button class=\"ak-btn is-primary\" type=\"submit\">Build campaign link</button></form><p class=\"cwl-hint cwl-scope\">This form creates a link for copying. Campaign tags do not identify a person or prove that a visit or conversion occurred. Save campaign drafts separately in the workspace.</p></main>" BF_ESTATE_FOOT "</body></html>", out);
+    ui_close(out,"div");ui_open_a(out,"button","class","ak-btn is-primary","type","submit");ui_copy(out,"Build campaign link");ui_close(out,"button");ui_close(out,"form");
+    ui_open(out,"p","cwl-hint cwl-scope");ui_copy(out,"This form creates a link for copying. Campaign tags do not identify a person or prove that a visit or conversion occurred. Save campaign drafts separately in the workspace.");ui_close(out,"p");
+    ui_close(out,"main");fputs(BF_ESTATE_FOOT,out);ui_close(out,"body");ui_close(out,"html");
     int failed = ferror(out); if (fclose(out)) failed = 1;
     if (failed || !page || size > CWL_HTML_MAX) aw_error(503, "The campaign form could not be prepared.\n");
     /* Keep the same-origin form Origin; external destinations receive no referrer. */

@@ -8,8 +8,8 @@ architecture saved-item
   semantic_question What has this person chosen to keep, and what did its source say about it when they kept it?
   purpose Owns a signed-in person's private, reversible reference to a thing they kept -- a retained feed item or a property -- with the public description its source gave at that moment, so a kept thing outlives its source's latest feed slot for that person. Written only through the CMS binary from a one-type schema directory; read by the item page, the property page and /saved.
   maturity implemented
-  consumes PageComposition
-  consumes BonfyreAuth
+  consumes ComposedPublicPage
+  consumes Authority
   publishes SavedItem
   node_types SavedItem
   edge_types keeps

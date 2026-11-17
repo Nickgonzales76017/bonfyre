@@ -38,7 +38,7 @@ static void ph_peer_post_teaser(sqlite3 *cms,const PhSite *site){
    ui_open(stdout,"div","ph-peer-source");ui_open(stdout,"small",NULL);ui_copy(stdout,"From their published site");ui_close(stdout,"small");ui_open(stdout,"p",NULL);
    html(title);ui_close(stdout,"p");ui_open(stdout,"time",NULL);html(time?time:"");
    ui_close(stdout,"time");ui_copy(stdout," ");ui_start(stdout,"a");ui_attr(stdout,"rel","noopener noreferrer");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
-   html(site->host);fputs("/?tab=posts\">Read on their site</a></div>",stdout);
+   html(site->host);ui_copy(stdout,"/?tab=posts");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Read on their site");ui_close(stdout,"a");ui_close(stdout,"div");
   }
  }
  sqlite3_finalize(s);
@@ -56,16 +56,15 @@ static void ph_peer_card(sqlite3 *cms,sqlite3 *owner,const BfPeerFacet *facet,co
  ui_start(stdout,"article");ui_attr(stdout,"class","ph-peer-item");ui_flag(stdout,"data-peer-candidate");ui_gt(stdout);ui_open(stdout,"div","ph-peer-item-head");ui_start(stdout,"span");ui_attr(stdout,"class","ph-peer-mark");ui_attr(stdout,"aria-hidden","true");ui_gt(stdout);
  html(site.name[0]?"":"A");if(site.name[0]){char initial[2]={site.name[0],0};html(initial);}
  ui_close(stdout,"span");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ph-kicker");ui_copy(stdout,"Published ");html(facet->label);
- fputs(" profile</p><h3>",stdout);html(site.name);
+ ui_copy(stdout," profile");ui_close(stdout,"p");ui_open(stdout,"h3",NULL);html(site.name);
  ui_close(stdout,"h3");ui_open(stdout,"p","ph-peer-dek");html(site.bio);
  ui_close(stdout,"p");ui_close(stdout,"div");ui_start(stdout,"a");ui_attr(stdout,"rel","noopener noreferrer");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
- html(site.host);fputs("/\">View profile</a></div>",stdout);
+ html(site.host);ui_copy(stdout,"/");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"View profile");ui_close(stdout,"a");ui_close(stdout,"div");
  ui_start(stdout,"nav");ui_attr(stdout,"class","ph-peer-context-links");ui_attr(stdout,"aria-label","Source-owned publications");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
  html(site.host);
- fputs(!strcmp(facet->id,"art")?"/?tab=gallery\">Browse published art</a>":
-       !strcmp(facet->id,"civic")?"/?tab=communities\">View public communities</a>":
-       !strcmp(facet->id,"projects")?"/?tab=posts\">See published work</a>":
-       "/?tab=about\">Read their introduction</a>",stdout);
+ {const char *ctab=!strcmp(facet->id,"art")?"gallery":!strcmp(facet->id,"civic")?"communities":!strcmp(facet->id,"projects")?"posts":"about";
+  const char *clabel=!strcmp(facet->id,"art")?"Browse published art":!strcmp(facet->id,"civic")?"View public communities":!strcmp(facet->id,"projects")?"See published work":"Read their introduction";
+  ui_copy(stdout,"/?tab=");ui_copy(stdout,ctab);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,clabel);ui_close(stdout,"a");}
  ui_close(stdout,"nav");
  ph_peer_post_teaser(cms,&site);
  if(row->matched){
@@ -90,7 +89,7 @@ static void ph_peer_card(sqlite3 *cms,sqlite3 *owner,const BfPeerFacet *facet,co
   ph_peer_action(facet->id,row->subject,"none",row->my_choice_revision,"Withdraw connection");
  }else if(row->incoming){
   ui_open(stdout,"p","ph-peer-status");ui_copy(stdout,"They invited you to connect about ");
-  html(facet->label);fputs(". You choose whether to accept.</p>",stdout);
+  html(facet->label);ui_copy(stdout,". You choose whether to accept.");ui_close(stdout,"p");
   ph_peer_action(facet->id,row->subject,"accept",row->my_choice_revision,"Accept introduction");
   ph_peer_action(facet->id,row->subject,"pass",row->my_choice_revision,"Pass");
  }else if(row->mine==BF_PEER_INTEREST){
@@ -121,12 +120,12 @@ static void ph_connections_view(sqlite3 *cms,const char *actor,const char *selec
  ui_start(stdout,"nav");ui_attr(stdout,"class","ph-connect-contexts");ui_attr(stdout,"aria-label","Connection contexts");ui_gt(stdout);
  if(available)for(size_t i=0;i<count;i++){
   ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/profile?tab=connections&amp;facet=");url_query_value(facets[i].id);
-  fputs("\"",stdout);if(!strcmp(selected,facets[i].id))fputs(" aria-current=\"page\"",stdout);
-  fputs(">",stdout);html(facets[i].label);ui_close(stdout,"a");
+  ui_attr_close(stdout);if(!strcmp(selected,facets[i].id))ui_attr(stdout,"aria-current","page");
+  ui_gt(stdout);html(facets[i].label);ui_close(stdout,"a");
  }
  /* Dating is its own profile app tab with its own adult and moderation owner;
   * this context list links to it and never embeds or enrolls it. */
- fputs("<a href=\"/profile?tab=dating\">Dating</a></nav>",stdout);
+ ui_start(stdout,"a");ui_attr(stdout,"href","/profile?tab=dating");ui_gt(stdout);ui_copy(stdout,"Dating");ui_close(stdout,"a");ui_close(stdout,"nav");
  if(!owner||!available){
   ui_start(stdout,"p");ui_attr(stdout,"role","status");ui_attr(stdout,"class","ph-privacy");ui_gt(stdout);ui_copy(stdout,"Private Participation is not installed here. Your profile, posts and communities remain available; no connections were inferred.");ui_close(stdout,"p");ui_close(stdout,"section");
   if(owner)sqlite3_close(owner);return;
@@ -141,10 +140,10 @@ static void ph_connections_view(sqlite3 *cms,const char *actor,const char *selec
  PhSite mysite;
  if(ph_peer_site(cms,actor,facet->territory,&mysite)){
   ui_start(stdout,"nav");ui_attr(stdout,"class","ph-connect-source-links");ui_attr(stdout,"aria-label","Your existing authored pages");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose/advanced?site=");url_query_value(mysite.id);
-  fputs("\">Edit your published profile</a><a href=\"/cms/compose/advanced?site=",stdout);
-  url_query_value(mysite.id);fputs("&amp;new=article\">Write for this site</a><a href=\"",stdout);
-  ph_url(&mysite,"gallery",1);fputs("\">Review gallery</a><a href=\"",stdout);
-  ph_url(&mysite,"communities",1);fputs("\">Your communities</a></nav>",stdout);
+  ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Edit your published profile");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/cms/compose/advanced?site=");
+  url_query_value(mysite.id);ui_copy(stdout,"&amp;new=article");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Write for this site");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");
+  ph_url(&mysite,"gallery",1);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Review gallery");ui_close(stdout,"a");ui_start(stdout,"a");ui_attr_open(stdout,"href");
+  ph_url(&mysite,"communities",1);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Your communities");ui_close(stdout,"a");ui_close(stdout,"nav");
  }else{
   ui_open(stdout,"div","ph-connect-source-links");ui_open(stdout,"p",NULL);ui_copy(stdout,"Publish a profile in this context before your public work can appear in others' feeds.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"href","/account#presence");ui_gt(stdout);ui_copy(stdout,"Set up a profile site");ui_close(stdout,"a");ui_close(stdout,"div");
  }
@@ -173,12 +172,14 @@ static void ph_connections_view(sqlite3 *cms,const char *actor,const char *selec
  if(state==1){
   char topics[265];unsigned topics_revision=0;
   if(bf_peer_interests_read(owner,actor,facet->id,topics,&topics_revision)){
-   fputs("<section class=\"ph-connect-interests\"><h3>Your interests in this context</h3>"
-    "<p>Add up to eight interests, separated by commas. People who also joined this context see only interests you share.</p>"
-    "<form method=\"post\" action=\"/profile/connections/interests\">",stdout);
-   ph_hidden("facet",facet->id);printf("<input type=\"hidden\" name=\"epoch\" value=\"%u\"><input type=\"hidden\" name=\"rev\" value=\"%u\">",revision,topics_revision);
-   fputs("<label>Interests <input name=\"topics\" maxlength=\"264\" value=\"",stdout);html(topics);
-   fputs("\" placeholder=\"hiking, board games\"></label><button type=\"submit\">Save interests</button></form></section>",stdout);
+   ui_open(stdout,"section","ph-connect-interests");ui_open(stdout,"h3",NULL);ui_copy(stdout,"Your interests in this context");ui_close(stdout,"h3");
+   ui_open(stdout,"p",NULL);ui_copy(stdout,"Add up to eight interests, separated by commas. People who also joined this context see only interests you share.");ui_close(stdout,"p");
+   {char epoch_text[16],rev_text[16];snprintf(epoch_text,sizeof(epoch_text),"%u",revision);snprintf(rev_text,sizeof(rev_text),"%u",topics_revision);
+    const FtField hidden[]={{"facet",facet->id},{"epoch",epoch_text},{"rev",rev_text}};
+    const FtInput in[]={{.label="Interests",.name="topics",.value=topics,.maxlength="264",.placeholder="hiking, board games"}};
+    const FtForm f={.id="ph-interests",.action="/profile/connections/interests",.label="Save interests",.hidden=hidden,.nhidden=3,.inputs=in,.ninputs=1};
+    ft_form(stdout,&f);}
+   ui_close(stdout,"section");
   }
   BfPeerCandidate rows[24];size_t n=0;
   if(!bf_peer_candidates(owner,actor,facet->id,rows,24,&n))

@@ -20,13 +20,13 @@ static void cp_head(const char *title) {
           "Connection: close\r\n\r\n<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
           "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>", stdout);
     html(title);
-    fputs(" · Aurekai</title>"
-          "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&amp;display=swap\">"
-          "<link rel=\"stylesheet\" href=\"/assets/aurekai-native.css?v=4\">"
-          "<link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\">", stdout);
+    ui_copy(stdout," · Aurekai");ui_close(stdout,"title");
+    ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;1,7..72,400&amp;display=swap");ui_gt(stdout);
+    ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/aurekai-native.css?v=4");ui_gt(stdout);
+    ui_start(stdout,"link");ui_attr(stdout,"rel","stylesheet");ui_attr(stdout,"href","/assets/authoring-reader.css");ui_gt(stdout);
 }
 /* Every companion page closes the shared way: the one footer, the one player. */
-static void cp_end(void) { fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout); }
+static void cp_end(void) { ui_close(stdout,"main");ui_copy(stdout,BF_ESTATE_FOOT "</body></html>"); }
 static void cp_theme_edit(sqlite3 *db, const char *actor) {
     BfAuthoringTree *tree = calloc(1, sizeof(*tree));
     sqlite3_stmt *st = NULL, *cur = NULL;
@@ -114,33 +114,33 @@ static void cp_masthead(sqlite3 *db, const char *actor, const char *kicker, cons
     sqlite3_finalize(st);
     ui_close(stdout,"head");ui_start(stdout,"body");ui_attr(stdout,"class","ak-app cp-app");
     if (tmpl[0]) {
-        fputs(" data-bf-template=\"", stdout);
+        ui_attr_open(stdout,"data-bf-template");
         html(tmpl);
-        fputc('"', stdout);
+        ui_attr_close(stdout);
     }
-    fputs(">" BF_ESTATE_BAR "<main class=\"cp-shell\" data-companions><section class=\"cp-hero\"><div><p class=\"cp-kicker\">", stdout);
+    ui_gt(stdout);ui_copy(stdout,BF_ESTATE_BAR);ui_start(stdout,"main");ui_attr(stdout,"class","cp-shell");ui_flag(stdout,"data-companions");ui_gt(stdout);ui_open(stdout,"section","cp-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"p","cp-kicker");
     html(kicker);
-    fputs(" · Degrees of proximity</p><h1>Never walk or sit alone. <em>", stdout);
+    ui_copy(stdout," · Degrees of proximity");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_copy(stdout,"Never walk or sit alone. ");ui_open(stdout,"em",NULL);
     html(title);
     ui_close(stdout,"em");ui_close(stdout,"h1");ui_open(stdout,"p","cp-lede");
     html(lede);
     ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"aside","cp-count");ui_open(stdout,"p",NULL);ui_copy(stdout,"People here");ui_close(stdout,"p");ui_open(stdout,"strong",NULL);
     printf("%d", people);
     ui_close(stdout,"strong");ui_open(stdout,"span",NULL);
-    fputs(people == 1 ? "person keeps" : "people keep", stdout);
-    fputs(" a public address on Aurekai</span></aside></section>"
-          "<section class=\"cp-board\" aria-labelledby=\"cp-board-h\"><header><h2 id=\"cp-board-h\">Ways to find each other</h2>"
-          "<p>Each view widens or narrows who you see. Nothing here contacts anyone for you.</p></header>"
-          "<nav class=\"cp-switch\" aria-label=\"Companions\">", stdout);
+    ui_copy(stdout,people == 1 ? "person keeps" : "people keep");
+    ui_copy(stdout," a public address on Aurekai");ui_close(stdout,"span");ui_close(stdout,"aside");ui_close(stdout,"section");
+    ui_start(stdout,"section");ui_attr(stdout,"class","cp-board");ui_attr(stdout,"aria-labelledby","cp-board-h");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_start(stdout,"h2");ui_attr(stdout,"id","cp-board-h");ui_gt(stdout);ui_copy(stdout,"Ways to find each other");ui_close(stdout,"h2");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"Each view widens or narrows who you see. Nothing here contacts anyone for you.");ui_close(stdout,"p");ui_close(stdout,"header");
+    ui_start(stdout,"nav");ui_attr(stdout,"class","cp-switch");ui_attr(stdout,"aria-label","Companions");ui_gt(stdout);
     for (int i = 0; i < 7; i++) {
         ui_start(stdout,"a");ui_attr_open(stdout,"href");
-        fputs(hrefs[i], stdout);
-        fputc('"', stdout);
-        if (!strcmp(title, names[i])) fputs(" aria-current=\"page\"", stdout);
-        printf("><small>0%d</small><b>", i + 1);
-        fputs(names[i], stdout);
+        ui_copy(stdout,hrefs[i]);
+        ui_attr_close(stdout);
+        if (!strcmp(title, names[i])) ui_attr(stdout,"aria-current","page");
+        ui_gt(stdout);ui_open(stdout,"small",NULL);printf("0%d",i + 1);ui_close(stdout,"small");ui_open(stdout,"b",NULL);
+        ui_copy(stdout,names[i]);
         ui_close(stdout,"b");ui_open(stdout,"span",NULL);
-        fputs(notes[i], stdout);
+        ui_copy(stdout,notes[i]);
         ui_close(stdout,"span");ui_close(stdout,"a");
     }
     ui_close(stdout,"nav");ui_close(stdout,"section");
@@ -420,7 +420,7 @@ static int serve_companions(const BfRequest *r) {
         return 1;
     }
     if (join) {
-        char club[65] = "";
+        char club[97] = "";
         PhField jfields[] = {{"club", club, sizeof(club), 0}};
         sqlite3_stmt *st = NULL;
         int exists = 0, member = 0;
@@ -435,7 +435,7 @@ static int serve_companions(const BfRequest *r) {
             return 1;
         }
         if (!ph_origin(raw, host) || !ph_fields(body, jfields, 1, 2048) || !*club ||
-            strlen(club) > 64 ||
+            strlen(club) > 96 ||
             strspn(club, "abcdefghijklmnopqrstuvwxyz0123456789-") != strlen(club)) {
             ph_error(400, "Choose a listed club.\n");
             if (db) sqlite3_close(db);
@@ -701,7 +701,7 @@ static int serve_companions(const BfRequest *r) {
         return 1;
     }
     if (events && !strcmp(method, "GET")) {
-        char club[65] = "", erepr[16] = "";
+        char club[97] = "", erepr[16] = "";
         if (!wants_html(accept) && accept && *accept && !strstr(accept, "*/*")) {
             if (db) sqlite3_close(db);
             return 0;
@@ -709,7 +709,7 @@ static int serve_companions(const BfRequest *r) {
         PhField efields[] = {{"club", club, sizeof(club), 0}, {"repr", erepr, sizeof(erepr), 0}};
         (void)erepr;
         if (!ph_fields(query, efields, 2, 2048) ||
-            (*club && (strlen(club) > 64 ||
+            (*club && (strlen(club) > 96 ||
                        strspn(club, "abcdefghijklmnopqrstuvwxyz0123456789-") != strlen(club)))) {
             ph_error(400, "Choose a listed club or none.\n");
             if (db) sqlite3_close(db);
@@ -920,7 +920,7 @@ static int serve_companions(const BfRequest *r) {
     }
     {
         char territory[8] = "", needle[65] = "", cursor[8] = "", repr[16] = "", sort[8] = "";
-        char view[10] = "", club[65] = "";
+        char view[10] = "", club[97] = "";
         /* The wire layer appends repr=API to machine requests; accept and ignore it. */
         PhField params[] = {{"territory", territory, sizeof(territory), 0},
                             {"q", needle, sizeof(needle), 0},
@@ -933,7 +933,7 @@ static int serve_companions(const BfRequest *r) {
         if (!ph_fields(query, params, 7, 2048) || (*cursor && !ph_digits(cursor)) ||
             (*sort && strcmp(sort, "match")) ||
             (*view && strcmp(view, "matches") && strcmp(view, "attention")) ||
-            (*club && (strlen(club) > 64 ||
+            (*club && (strlen(club) > 96 ||
                        strspn(club, "abcdefghijklmnopqrstuvwxyz0123456789-") != strlen(club)))) {
             ph_error(400, "Choose a territory, search or page on this exact directory.\n");
             if (db) sqlite3_close(db);
@@ -976,11 +976,10 @@ static int serve_companions(const BfRequest *r) {
             int gold = bf_gold_active(db, actor);
             int sl = 0, pl = 0;
             if (gold > 0) {
-                fputs("<div class=\"bf-native-slot\"><p class=\"cp-quota\" data-gold>Gold \u00B7 unlimited superlikes and plans.</p></div>", stdout);
+                ui_open(stdout,"div","bf-native-slot");ui_start(stdout,"p");ui_attr(stdout,"class","cp-quota");ui_flag(stdout,"data-gold");ui_gt(stdout);ui_copy(stdout,"Gold \u00B7 unlimited superlikes and plans.");ui_close(stdout,"p");ui_close(stdout,"div");
             } else if (bf_quota_superlike(db, actor, &sl) == 0 &&
                        bf_quota_plans(db, actor, &pl) == 0) {
-                printf("<div class=\"bf-native-slot\"><p class=\"cp-quota\" data-quota>Superlikes today: %d of 1 \u00B7 Plans this week: %d of 3 \u00B7 Gold removes the limits.</p></div>",
-                       sl, pl);
+                ui_open(stdout,"div","bf-native-slot");ui_start(stdout,"p");ui_attr(stdout,"class","cp-quota");ui_flag(stdout,"data-quota");ui_gt(stdout);ui_copy(stdout,"Superlikes today: ");printf("%d",sl);ui_copy(stdout," of 1 \u00B7 Plans this week: ");printf("%d",pl);ui_copy(stdout," of 3 \u00B7 Gold removes the limits.");ui_close(stdout,"p");ui_close(stdout,"div");
             }
         }
         if (signed_in && !strcmp(view, "")) cp_theme_edit(db, actor);
@@ -1029,6 +1028,11 @@ static int serve_companions(const BfRequest *r) {
         if (bf_companions_page(stdout, db, signed_in ? actor : NULL, territory, needle,
                                *cursor ? (unsigned)strtoul(cursor, NULL, 10) : 0, 24,
                                sort, view, club) < 0) {
+            ui_open(stdout,"div","cp-empty");ui_open(stdout,"p",NULL);
+            if (!signed_in && (!strcmp(view,"matches")||!strcmp(view,"attention"))) {ui_copy(stdout,"Sign in to see ");html(!strcmp(view,"matches")?"who liked you back.":"who noticed you.");fputs(" <a href=\"/login\">Sign in</a>",stdout);}
+            else ui_copy(stdout,"No companions to show right now.");
+            ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"section");
+            cp_end();
             sqlite3_close(db);
             return 1;
         }

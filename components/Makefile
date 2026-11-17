@@ -11,7 +11,6 @@ SUBDIRS = \
 	BonfyrePipeline \
 	BonfyreIndex \
 	BonfyreStitch \
-	BonfyreGate \
 	BonfyreCompress \
 	BonfyreEmbed \
 	BonfyreWeaviateIndex \

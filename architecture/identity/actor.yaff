@@ -72,6 +72,8 @@ architecture role-program-compiler
   consumes CapabilityProgram
   consumes SurfaceScene
   publishes RoleProgramCatalog
+  publishes CapabilityProgram
+  publishes SurfaceScene
   node_types RoleProgram
   node_types RoleAssignment
   edge_types assumes_operating_posture

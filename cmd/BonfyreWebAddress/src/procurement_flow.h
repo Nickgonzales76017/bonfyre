@@ -205,7 +205,7 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
     ui_open(stdout,"div","pf-layout");ui_open(stdout,"div","pf-stages");
 
     /* 1. What you need */
-    fputs("<section class=\"ak-pattern ak-card pf-stage\" id=\"need\">",stdout);
+    ui_open_a(stdout,"section","class","ak-pattern ak-card pf-stage","id","need");
     pf_stage_head(1,"What you need",f.rfq?"Done":f.list?"Now":"Start here",f.list?"The items and amounts from your saved room.":NULL);
     if(!f.list){
         ui_open(stdout,"div","ak-empty-state");ui_open(stdout,"h3",NULL);ui_copy(stdout,"Nothing to buy yet");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Plan a room and save its purchase list. It shows up here with every item and amount.");ui_close(stdout,"p");
@@ -227,9 +227,9 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
         }
         ui_close(stdout,"tbody");ui_open(stdout,"tfoot",NULL);ui_open(stdout,"tr",NULL);ui_start(stdout,"td");ui_attr(stdout,"colspan","4");ui_gt(stdout);ui_copy(stdout,"Listed prices when the room was saved");ui_close(stdout,"td");ui_open(stdout,"td",NULL);pf_money(list_total);ui_close(stdout,"td");ui_close(stdout,"tr");ui_close(stdout,"tfoot");ui_close(stdout,"table");ui_close(stdout,"div");
         if(!f.rfq){
-            fputs("<form class=\"ak-actions\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);
+            ui_start(stdout,"form");ui_attr(stdout,"class","ak-actions");ui_attr(stdout,"method","post");ui_attr_open(stdout,"action");ui_copy(stdout,"/apps/");html(binding);ui_copy(stdout,"/_procurement_flow");ui_attr_close(stdout);ui_gt(stdout);
             psetup_hidden("action","request");psetup_hidden("list",lkey);
-            fputs("<button type=\"submit\">Get quotes for these items</button><small>Makes a quote request you can share with suppliers yourself. Nothing is sent.</small></form>",stdout);
+            ui_open_a(stdout,"button","type","submit");ui_copy(stdout,"Get quotes for these items");ui_close(stdout,"button");ui_open(stdout,"small",NULL);ui_copy(stdout,"Makes a quote request you can share with suppliers yourself. Nothing is sent.");ui_close(stdout,"small");ui_close(stdout,"form");
         }
     }
     ui_close(stdout,"section");
@@ -241,42 +241,42 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
     pf_stage_head(2,"Compare quotes",f.approval?"Done":f.nquotes?"Now":f.rfq?"Now":"Next",f.rfq?"Type each supplier's prices into the empty column. The lowest complete total is marked.":"Opens once you ask for quotes.");
     if(f.rfq){
         int open=!f.approval;
-        if(open){fputs("<form id=\"pf-add\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);psetup_hidden("action","quote");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);fputs("</form>",stdout);
-            fputs("<form id=\"pf-send\" method=\"post\" action=\"/apps/",stdout);html(binding);fputs("/_procurement_flow\">",stdout);psetup_hidden("action","send");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);fputs("</form>",stdout);}
+        if(open){ui_start(stdout,"form");ui_attr(stdout,"id","pf-add");ui_attr(stdout,"method","post");ui_attr_open(stdout,"action");ui_copy(stdout,"/apps/");html(binding);ui_copy(stdout,"/_procurement_flow");ui_attr_close(stdout);ui_gt(stdout);psetup_hidden("action","quote");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);ui_close(stdout,"form");
+            ui_start(stdout,"form");ui_attr(stdout,"id","pf-send");ui_attr(stdout,"method","post");ui_attr_open(stdout,"action");ui_copy(stdout,"/apps/");html(binding);ui_copy(stdout,"/_procurement_flow");ui_attr_close(stdout);ui_gt(stdout);psetup_hidden("action","send");psetup_hidden("list",lkey);psetup_hidden("rfq",f.rfq->key);ui_close(stdout,"form");}
         ui_open(stdout,"div","ak-table-wrap");ui_open(stdout,"table","ak-table pf-compare");ui_open(stdout,"thead",NULL);ui_open(stdout,"tr",NULL);ui_open(stdout,"th",NULL);ui_copy(stdout,"Item");ui_close(stdout,"th");ui_open(stdout,"th",NULL);ui_copy(stdout,"Qty");ui_close(stdout,"th");
         for(size_t i=0;i<f.nquotes;i++){ui_start(stdout,"th");ui_attr_open(stdout,"class");ui_copy(stdout,"pf-q");if(f.quotes[i]==cheapest)fputs(" is-best",stdout);fputs("\"><span>",stdout);pf_supplier(f.quotes[i]);ui_close(stdout,"span");
             if(f.quotes[i]==cheapest)ui_text(stdout, "em", NULL, "Lowest");ui_close(stdout,"th");}
-        if(open)fputs("<th class=\"pf-new\"><input form=\"pf-add\" name=\"supplier\" maxlength=\"200\" placeholder=\"Supplier name\" aria-label=\"Supplier name for a new quote\"></th>",stdout);
+        if(open){ui_start(stdout,"th");ui_attr(stdout,"class","pf-new");ui_gt(stdout);ui_open_a(stdout,"input","form","pf-add","name","supplier","maxlength","200","placeholder","Supplier name","aria-label","Supplier name for a new quote");ui_close(stdout,"th");}
         ui_close(stdout,"tr");ui_close(stdout,"thead");ui_open(stdout,"tbody",NULL);
         const bf_json_node_t *rl=pf_at(f.rfq->doc,f.rfq->root,"lines");int index=0;
         for(const bf_json_node_t *l=rl&&rl->type==BF_JSON_ARRAY?bf_json_child_first(f.rfq->doc,rl):NULL;l;l=bf_json_child_next(f.rfq->doc,l),index++){
             char label[1024],line_id[65];long long q=0;pf_nstr(f.rfq->doc,l,"label",label,sizeof(label));pf_nstr(f.rfq->doc,l,"line_id",line_id,sizeof(line_id));pf_int(f.rfq->doc,l,"quantity_requested",&q);
             ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);html(label);ui_close(stdout,"td");ui_open(stdout,"td",NULL);fprintf(stdout,"%lld",q);ui_close(stdout,"td");
             for(size_t i=0;i<f.nquotes;i++){long long u,e;ui_open(stdout,"td","pf-q");if(pf_quote_line(f.quotes[i],line_id,&u,&e)&&e>=0){pf_money(e);if(u>=0){ui_open(stdout,"small",NULL);pf_money(u);fputs(" each</small>",stdout);}}else ui_text(stdout, "small", NULL, "Not quoted");ui_close(stdout,"td");}
-            if(open)printf("<td class=\"pf-new\"><input form=\"pf-add\" name=\"price%d\" inputmode=\"decimal\" placeholder=\"Price each\" aria-label=\"Price each for ",index),html(label),fputs("\"></td>",stdout);
+            if(open){ui_start(stdout,"td");ui_attr(stdout,"class","pf-new");ui_gt(stdout);ui_start(stdout,"input");ui_attr(stdout,"form","pf-add");ui_attr_open(stdout,"name");printf("price%d",index);ui_attr_close(stdout);ui_attr(stdout,"inputmode","decimal");ui_attr(stdout,"placeholder","Price each");ui_attr_open(stdout,"aria-label");ui_copy(stdout,"Price each for ");html(label);ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"td");}
             ui_close(stdout,"tr");
         }
         const char *fees[][2]={{"freight_cents","Delivery"},{"tax_cents","Tax"},{"other_fees_cents","Other fees"}};const char *fields[]={"delivery","tax","fees"};
         for(int k=0;k<3;k++){
             ui_open(stdout,"tr","pf-fee");ui_start(stdout,"td");ui_attr(stdout,"colspan","2");ui_gt(stdout);html(fees[k][1]);ui_close(stdout,"td");
             for(size_t i=0;i<f.nquotes;i++){long long v;ui_open(stdout,"td","pf-q");if(pf_int(f.quotes[i]->doc,f.quotes[i]->root,fees[k][0],&v))pf_money(v);else ui_text(stdout, "small", NULL, "Unknown");ui_close(stdout,"td");}
-            if(open){fputs("<td class=\"pf-new\"><input form=\"pf-add\" name=\"",stdout);fputs(fields[k],stdout);fputs("\" inputmode=\"decimal\" placeholder=\"0.00\" aria-label=\"",stdout);html(fees[k][1]);fputs(" for the new quote\"></td>",stdout);}
+            if(open){ui_start(stdout,"td");ui_attr(stdout,"class","pf-new");ui_gt(stdout);ui_start(stdout,"input");ui_attr(stdout,"form","pf-add");ui_attr_open(stdout,"name");fputs(fields[k],stdout);ui_attr_close(stdout);ui_attr(stdout,"inputmode","decimal");ui_attr(stdout,"placeholder","0.00");ui_attr_open(stdout,"aria-label");html(fees[k][1]);ui_copy(stdout," for the new quote");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"td");}
             ui_close(stdout,"tr");
         }
         ui_close(stdout,"tbody");ui_open(stdout,"tfoot",NULL);ui_open(stdout,"tr",NULL);ui_start(stdout,"td");ui_attr(stdout,"colspan","2");ui_gt(stdout);ui_copy(stdout,"Total");ui_close(stdout,"td");
         for(size_t i=0;i<f.nquotes;i++){long long t;ui_open(stdout,"td","pf-q");if(pf_quote_total(f.quotes[i],&t))pf_money(t);else ui_text(stdout, "small", NULL, "Incomplete");ui_close(stdout,"td");}
-        if(open)fputs("<td class=\"pf-new\"><input form=\"pf-add\" name=\"source\" maxlength=\"400\" placeholder=\"Where it came from\" aria-label=\"Where the new quote came from\"></td>",stdout);
+        if(open){ui_start(stdout,"td");ui_attr(stdout,"class","pf-new");ui_gt(stdout);ui_open_a(stdout,"input","form","pf-add","name","source","maxlength","400","placeholder","Where it came from","aria-label","Where the new quote came from");ui_close(stdout,"td");}
         ui_close(stdout,"tr");
         if(open&&f.nquotes){ui_open(stdout,"tr","pf-pick");ui_start(stdout,"td");ui_attr(stdout,"colspan","2");ui_gt(stdout);ui_copy(stdout,"Pick one");ui_close(stdout,"td");
-            for(size_t i=0;i<f.nquotes;i++){fputs("<td class=\"pf-q\"><label><input type=\"radio\" form=\"pf-send\" name=\"pick\" value=\"",stdout);html(f.quotes[i]->key);fputs("\"",stdout);if(f.quotes[i]==cheapest)fputs(" checked",stdout);fputs("> Choose</label></td>",stdout);}
+            for(size_t i=0;i<f.nquotes;i++){ui_start(stdout,"td");ui_attr(stdout,"class","pf-q");ui_gt(stdout);ui_open(stdout,"label",NULL);ui_start(stdout,"input");ui_attr(stdout,"type","radio");ui_attr(stdout,"form","pf-send");ui_attr(stdout,"name","pick");ui_attr_open(stdout,"value");html(f.quotes[i]->key);ui_attr_close(stdout);if(f.quotes[i]==cheapest)fputs(" checked",stdout);ui_gt(stdout);ui_copy(stdout," Choose");ui_close(stdout,"label");ui_close(stdout,"td");}
             ui_open(stdout,"td","pf-new");ui_close(stdout,"td");ui_close(stdout,"tr");}
         ui_close(stdout,"tfoot");ui_close(stdout,"table");ui_close(stdout,"div");
-        if(open)fputs("<p class=\"ak-actions\"><button class=\"is-primary\" type=\"submit\" form=\"pf-add\">Add this quote</button><small>Prices in dollars. Use 0 when there is no delivery, tax or fee.</small></p>",stdout);
+        if(open){ui_open(stdout,"p","ak-actions");ui_open_a(stdout,"button","class","is-primary","type","submit","form","pf-add");ui_copy(stdout,"Add this quote");ui_close(stdout,"button");ui_open(stdout,"small",NULL);ui_copy(stdout,"Prices in dollars. Use 0 when there is no delivery, tax or fee.");ui_close(stdout,"small");ui_close(stdout,"p");}
     }
     ui_close(stdout,"section");
 
     /* 4. Send for approval: the ledger */
-    fputs("</div><aside class=\"ak-pattern ak-card pf-ledger\" id=\"send\"><p class=\"ak-eyebrow\">Send for approval</p>",stdout);
+    ui_close(stdout,"div");ui_open_a(stdout,"aside","class","ak-pattern ak-card pf-ledger","id","send");ui_open(stdout,"p","ak-eyebrow");ui_copy(stdout,"Send for approval");ui_close(stdout,"p");
     if(f.approval){
         long long total=0;char at[32]="",decision[32]="";pf_int(f.approval->doc,f.approval->root,"known_total_cents",&total);pf_str(f.approval,"requested_at",at,sizeof(at));pf_str(f.approval,"authority.decision",decision,sizeof(decision));
         ui_open(stdout,"p","pf-total");pf_money(total);ui_close(stdout,"p");ui_open(stdout,"dl","ak-spec");
@@ -289,8 +289,8 @@ static void pf_render(const char *binding,const char *subject,const char *scope,
         ui_open(stdout,"p","pf-total");if(best>=0)pf_money(best);else fputs("—",stdout);ui_close(stdout,"p");ui_open(stdout,"dl","ak-spec");
         if(cheapest){ui_open(stdout,"dt",NULL);ui_copy(stdout,"Lowest quote");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);pf_supplier(cheapest);ui_close(stdout,"dd");}
         ui_open(stdout,"dt",NULL);ui_copy(stdout,"Quotes");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);fprintf(stdout,"%zu",f.nquotes);ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Listed");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);pf_money(list_total);ui_close(stdout,"dd");ui_close(stdout,"dl");
-        fputs("<label class=\"pf-confirm\"><input type=\"checkbox\" form=\"pf-send\" name=\"confirm\" value=\"yes\" required> I checked the items, amounts and the quote I picked.</label>",stdout);
-        fputs("<button class=\"is-primary\" type=\"submit\" form=\"pf-send\">Send for approval</button>",stdout);
+        ui_open(stdout,"label","pf-confirm");ui_open_a(stdout,"input","type","checkbox","form","pf-send","name","confirm","value","yes","required",(const char *)NULL);ui_copy(stdout," I checked the items, amounts and the quote I picked.");ui_close(stdout,"label");
+        ui_open_a(stdout,"button","class","is-primary","type","submit","form","pf-send");ui_copy(stdout,"Send for approval");ui_close(stdout,"button");
         ui_text(stdout, "p", "pf-safe", "Sending asks for approval in this workspace. It does not order, pay, or contact the supplier.");
     }else{
         ui_open(stdout,"p","pf-total");ui_copy(stdout,"—");ui_close(stdout,"p");ui_open(stdout,"p","pf-safe");

@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <bonfyre.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include "../../../lib/libbonfyre/include/bf_help.h"
 
 /* ── Utilities ────────────────────────────────────────────────────── */
@@ -548,6 +549,18 @@ static void print_usage(void) {
         "  bonfyre-repurpose all ./output/brief ./output/social\n");
 }
 
+/* Verb vocabulary, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+enum { REP_ALL, REP_CAROUSEL, REP_LINKEDIN, REP_NEWSLETTER, REP_TWEET_THREAD, REP_YOUTUBE_DESC };
+static const BfCommandEntry repurpose_commands[] = {
+    {"all", REP_ALL, 0, NULL},
+    {"carousel", REP_CAROUSEL, 0, NULL},
+    {"linkedin", REP_LINKEDIN, 0, NULL},
+    {"newsletter", REP_NEWSLETTER, 0, NULL},
+    {"tweet-thread", REP_TWEET_THREAD, 0, NULL},
+    {"youtube-desc", REP_YOUTUBE_DESC, 0, NULL},
+};
+
 int main(int argc, char **argv) {
     if (bf_help_requested(argc, argv)) { print_usage(); return 0; }
     if (argc < 4) {
@@ -591,27 +604,29 @@ int main(int argc, char **argv) {
 
     int rc = 0;
 
-    if (strcmp(mode, "tweet-thread") == 0) {
+    const int mode_id = bf_command_id(repurpose_commands,
+        BF_COMMAND_COUNT(repurpose_commands), mode, -1);
+    if (mode_id == REP_TWEET_THREAD) {
         rc = emit_tweet_thread(&b, out_dir);
         const char *f[] = {"tweet-thread"};
         if (rc == 0) write_manifest(out_dir, mode, f, 1);
-    } else if (strcmp(mode, "linkedin") == 0) {
+    } else if (mode_id == REP_LINKEDIN) {
         rc = emit_linkedin(&b, out_dir);
         const char *f[] = {"linkedin"};
         if (rc == 0) write_manifest(out_dir, mode, f, 1);
-    } else if (strcmp(mode, "carousel") == 0) {
+    } else if (mode_id == REP_CAROUSEL) {
         rc = emit_carousel(&b, out_dir);
         const char *f[] = {"carousel"};
         if (rc == 0) write_manifest(out_dir, mode, f, 1);
-    } else if (strcmp(mode, "youtube-desc") == 0) {
+    } else if (mode_id == REP_YOUTUBE_DESC) {
         rc = emit_youtube_desc(&b, out_dir);
         const char *f[] = {"youtube-desc"};
         if (rc == 0) write_manifest(out_dir, mode, f, 1);
-    } else if (strcmp(mode, "newsletter") == 0) {
+    } else if (mode_id == REP_NEWSLETTER) {
         rc = emit_newsletter(&b, out_dir);
         const char *f[] = {"newsletter"};
         if (rc == 0) write_manifest(out_dir, mode, f, 1);
-    } else if (strcmp(mode, "all") == 0) {
+    } else if (mode_id == REP_ALL) {
         rc |= emit_tweet_thread(&b, out_dir);
         rc |= emit_linkedin(&b, out_dir);
         rc |= emit_carousel(&b, out_dir);

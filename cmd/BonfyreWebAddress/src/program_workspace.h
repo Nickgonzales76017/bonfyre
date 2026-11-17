@@ -65,8 +65,8 @@ static int serve_program_workspace(const char *method,const char *target,const c
     if(!machine){
         int can_write=psetup_context(bearer,auth_db,in.context,2,actor,sizeof(actor),subject,sizeof(subject),&scope)==1;
         psetup_start(200,"Programs");
-        fputs("<link rel=\"stylesheet\" href=\"/apps/program-workspace.css\"><section data-program-workspace data-context=\"",stdout);html(in.context);
-        fputs("\" data-instance=\"",stdout);html(in.instance);fputs("\" data-template=\"",stdout);html(in.template_id);printf("\" data-can-write=\"%s\">",can_write?"true":"false");
+        ui_open_a(stdout,"link","rel","stylesheet","href","/apps/program-workspace.css");ui_start(stdout,"section");ui_flag(stdout,"data-program-workspace");ui_attr_open(stdout,"data-context");html(in.context);
+        ui_attr_close(stdout);ui_attr_open(stdout,"data-instance");html(in.instance);ui_attr_close(stdout);ui_attr_open(stdout,"data-template");html(in.template_id);ui_attr_close(stdout);printf(" data-can-write=\"%s\">",can_write?"true":"false");
         ui_open(stdout,"header","program-intro"); ui_text(stdout,"p","program-eyebrow","Your work"); ui_text(stdout,"h1",NULL,"Programs"); ui_text(stdout,"p",NULL,"Turn a plan, a service or a recurring need into work you can pick up again."); ui_close(stdout,"header");
         PackSetupDestination rows[PSETUP_DESTINATIONS_MAX];size_t count=0;
         int choices=psetup_destinations(bearer,auth_db,rows,&count);

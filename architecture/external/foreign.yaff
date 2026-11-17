@@ -10,6 +10,7 @@ architecture foreign-twin
   maturity measured
   node_types ForeignTwin
   node_types Projection
+  publishes ForeignTwin
   edge_types projects
   edge_types materializes_to
   state_types observe

@@ -31,6 +31,7 @@ architecture optimization-cascade
   forbidden_inference a stage existing in the cascade -> that stage running on every request
   forbidden_inference an expensive operator producing a correct answer -> that operator having been adequate to select
   forbidden_inference a cheap stage being wrong once -> that stage being inadmissible
+  source_lineage authored doctrine in optimization-cascade.yaff; architectural, no runtime binding establishes stage order from measurement yet
 
 stage s0-eliminate
   question Does this state need to exist at all?

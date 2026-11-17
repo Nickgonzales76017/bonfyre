@@ -23,12 +23,12 @@ try{
     check(host+' uses native forms without the old browser redirect',!r.body.includes('safeNext()')&&!r.body.includes('JSON.stringify({email, password})')&&!r.body.includes(' novalidate'));
   }
   const created=await register('first',target);
-  check('signup retains the selected address but creates no session',created.status===303&&queryNext(created)===target&&!cookie(created)&&count('sessions')===0);
+  check('signup signs the person in and returns to the exact address',created.status===303&&location(created)===target&&cookie(created).startsWith('bonfyre_session=bfy_')&&count('sessions')===1);
   check('signup creates no institutional grants',count('institution_grants')===0);
   const duplicate=await register('first',target);
   check('failed signup retains continuation without a cookie',duplicate.status===303&&queryNext(duplicate)===target&&location(duplicate).startsWith('/signup?failed=1')&&!cookie(duplicate));
-  const notice=await f.request(location(created));
-  check('created-account status and continuation reach the next form',notice.body.includes('Account created. Sign in to continue.')&&hidden(notice.body)===target);
+  const arrived=await f.request('/saved',{cookie:cookie(created)});
+  check('the session signup issued is a working sign-in',arrived.status===200);
   const failed=await login('first',target,'incorrect-fixture-password');
   check('failed login retains the complete destination',failed.status===303&&queryNext(failed)===target&&!cookie(failed));
   const signed=await login('first',target),first=cookie(signed);

@@ -14,6 +14,7 @@ architecture bitnet-address-ranker
   consumes CandidateAdvertisement
   consumes ModelRepresentationPassport
   publishes RankedCandidateFrontier
+  publishes RankedCandidateEnvelope
   node_types BitNetRankRun
   node_types AddressEmbeddingProjection
   node_types RankedCandidateFrontier

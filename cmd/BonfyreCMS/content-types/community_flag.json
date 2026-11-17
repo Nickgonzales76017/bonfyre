@@ -1,0 +1,16 @@
+{
+  "name": "community_flag",
+  "displayName": "Community Flag",
+  "description": "One member's safety flag on a community post. A flag hides the post from the reporter immediately and queues it for that community's steward. A flag is not a verdict, never hides the post from anyone else, and never implies guilt.",
+  "attributes": {
+    "flag": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "community": {"type": "string", "required": true},
+    "post": {"type": "string", "required": true},
+    "actor_subject": {"type": "string", "required": true},
+    "reason": {"type": "string", "required": true},
+    "details": {"type": "string", "required": false},
+    "created_at": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true},
+    "status": {"type": "string", "required": true}
+  }
+}

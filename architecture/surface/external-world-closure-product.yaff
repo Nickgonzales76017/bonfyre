@@ -8,9 +8,10 @@ architecture external-world-closure-product
   semantic_question How does one addressed public World become a coherent human product and a machine resource without assembling two different candidate sets?
   purpose Compiles a bounded, content-addressed public World closure from the measured ExternalEstate reservoir. A product-map closure names every World and grammar aperture, then each declared World and its participating interaction grammars become human and machine product routes through the same compiler, so a reader and machine inspect the same candidates, lenses and limits.
   maturity measured
-  consumes ExternalEstateDensity
+  consumes EstateDensityLedger
   consumes SurfaceDemand
   publishes PublicWorldClosure
+  publishes SurfaceDemand
   publishes PublicWorldCatalogue
   publishes HumanWorldProjection
   publishes MachineWorldProjection

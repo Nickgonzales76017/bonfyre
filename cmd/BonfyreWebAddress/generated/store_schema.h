@@ -1,6 +1,19 @@
 /* Generated from schemas/storage/stores by scripts/compile-store-schemas.sh. Do not edit. */
 #ifndef BONFYRE_STORE_SCHEMA_CMD_BONFYREWEBADDRESS_H
 #define BONFYRE_STORE_SCHEMA_CMD_BONFYREWEBADDRESS_H
+/* cmd/BonfyreWebAddress/src/page_routes_and_emitters.h */
+#define BF_STORE_WEB_ITEM_ARCHIVE \
+    "PRAGMA journal_mode=DELETE;" \
+    "CREATE TABLE IF NOT EXISTS item(source TEXT NOT NULL, key TEXT NOT NULL, kind TEXT NOT NULL, family TEXT DEFAULT '', title TEXT NOT NULL, body TEXT DEFAULT '', href TEXT DEFAULT '', image TEXT DEFAULT '', by TEXT DEFAULT '', publisher TEXT DEFAULT '', ident TEXT DEFAULT '', at INTEGER DEFAULT 0, first_read TEXT NOT NULL, last_read TEXT NOT NULL, PRIMARY KEY(source, key));" \
+    "CREATE INDEX IF NOT EXISTS item_by_source ON item(source, at DESC);" \
+    "CREATE INDEX IF NOT EXISTS idx_item_credit_by_source_at ON item(by, source, at DESC);" \
+    "CREATE INDEX IF NOT EXISTS item_credit_scan ON item(family,by,source,at);" \
+    "CREATE INDEX IF NOT EXISTS item_publisher_read ON item(publisher);" \
+    "CREATE INDEX IF NOT EXISTS item_by_ident ON item(ident);" \
+    "CREATE VIRTUAL TABLE IF NOT EXISTS item_text USING fts5(title, body, by, publisher, content='item', content_rowid='rowid', tokenize='porter unicode61');" \
+    "CREATE TRIGGER IF NOT EXISTS item_text_insert AFTER INSERT ON item BEGIN INSERT INTO item_text(rowid,title,body,by,publisher) VALUES(new.rowid,new.title,new.body,new.by,new.publisher); END;" \
+    "CREATE TRIGGER IF NOT EXISTS item_text_delete AFTER DELETE ON item BEGIN INSERT INTO item_text(item_text,rowid,title,body,by,publisher) VALUES('delete',old.rowid,old.title,old.body,old.by,old.publisher); END;" \
+    "CREATE TRIGGER IF NOT EXISTS item_text_update AFTER UPDATE ON item BEGIN INSERT INTO item_text(item_text,rowid,title,body,by,publisher) VALUES('delete',old.rowid,old.title,old.body,old.by,old.publisher); INSERT INTO item_text(rowid,title,body,by,publisher) VALUES(new.rowid,new.title,new.body,new.by,new.publisher); END;"
 /* store admission: sqlite, declared by cmd/BonfyreAdmission; written by bonfyre-admission */
 #define BF_STORE_ADMISSION_KIND "sqlite"
 #define BF_STORE_ADMISSION_ENV "BONFYRE_ADMISSION_DB"

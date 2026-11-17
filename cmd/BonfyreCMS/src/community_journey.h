@@ -4,7 +4,7 @@
 /* Native effects over CommunityBody, CommunityMembership and CommunityPost.
  * CLI callers are trusted gateways; only the gateway resolves the acting account. */
 #define CJ_BYTES 16384
-typedef struct {char community[97],target[97],expected[65],request[65],title[161],body[6001];} CjInput;
+typedef struct {char community[97],target[97],expected[65],request[65],title[161],body[6001],interest[48],event_at[20],venue[161];} CjInput;
 static int cj_string(bf_mp_reader_t *r,char *out,size_t cap){
  bf_mp_value_t v;if(bf_mp_read_next(r,&v)!=BF_MP_STR||v.v.raw.len>=cap||memchr(v.v.raw.ptr,0,v.v.raw.len))return 0;
  for(uint32_t i=0;i<v.v.raw.len;i++)if((v.v.raw.ptr[i]<32&&v.v.raw.ptr[i]!='\n'&&v.v.raw.ptr[i]!='\r'&&v.v.raw.ptr[i]!='\t')||v.v.raw.ptr[i]==127)return 0;
@@ -12,10 +12,18 @@ static int cj_string(bf_mp_reader_t *r,char *out,size_t cap){
 }
 static int cj_decode(const void *data,size_t size,CjInput *p){
  bf_mp_reader_t r;bf_mp_value_t v;memset(p,0,sizeof(*p));bf_mp_reader_init(&r,data,size);
- if(!size||size>CJ_BYTES||bf_mp_read_next(&r,&v)!=BF_MP_ARRAY||v.v.count!=7)return 0;
+ /* Seven parts; eight with what a new community is about; ten with when and
+  * where a post takes place (an event people can RSVP to). */
+ if(!size||size>CJ_BYTES||bf_mp_read_next(&r,&v)!=BF_MP_ARRAY||(v.v.count!=7&&v.v.count!=8&&v.v.count!=10))return 0;size_t parts_n=v.v.count-1;
  bf_mp_type_t t=bf_mp_read_next(&r,&v);if(!((t==BF_MP_UINT&&v.v.u==1)||(t==BF_MP_INT&&v.v.i==1)))return 0;
- char *parts[]={p->community,p->target,p->expected,p->request,p->title,p->body};size_t caps[]={sizeof(p->community),sizeof(p->target),sizeof(p->expected),sizeof(p->request),sizeof(p->title),sizeof(p->body)};
- for(int i=0;i<6;i++)if(!cj_string(&r,parts[i],caps[i]))return 0;return r.pos==r.len;
+ char *parts[]={p->community,p->target,p->expected,p->request,p->title,p->body,p->interest,p->event_at,p->venue};size_t caps[]={sizeof(p->community),sizeof(p->target),sizeof(p->expected),sizeof(p->request),sizeof(p->title),sizeof(p->body),sizeof(p->interest),sizeof(p->event_at),sizeof(p->venue)};
+ for(size_t i=0;i<parts_n;i++)if(!cj_string(&r,parts[i],caps[i]))return 0;
+ /* An interest is a short folded label (the gateway folds it); anything else is refused, not stored. */
+ for(const char *s=p->interest;*s;s++)if((*s>='A'&&*s<='Z')||*s=='\n'||*s=='\r'||*s=='"')return 0;
+ /* A time is local wall time, YYYY-MM-DDTHH:MM, or absent. */
+ if(*p->event_at){const char *e=p->event_at;if(strlen(e)!=16||e[4]!='-'||e[7]!='-'||e[10]!='T'||e[13]!=':')return 0;for(int i=0;i<16;i++)if(i!=4&&i!=7&&i!=10&&i!=13&&(e[i]<'0'||e[i]>'9'))return 0;}
+ if(strchr(p->venue,'\n')||strchr(p->venue,'\r'))return 0;
+ return r.pos==r.len;
 }
 static int cj_words(const char *s){return s&&*s&&strspn(s," \r\n\t")<strlen(s);}
 static int cj_nonce(const char *s){return strlen(s)==32&&strspn(s,"0123456789abcdef")==32;}
@@ -37,8 +45,8 @@ static int entry_community_journey(sqlite3 *db,const char *actor,const char *ope
  CjInput p;CjrCommunity c={0};CjrMember member={0},selected={0};CjrPost post={0},parent={0};
  const char *state="invalid",*message="Review this operation in its community.",*delta="NOT_REQUESTED",*changed_type=NULL;char key[97]="",target[97]="",digest[65]="",now[64],root[97]="";char *payload=NULL,*membership_payload=NULL;long long changed_id=0,membership_id=0;int begun=0,committed=0,result=4,changed=0;
  if(!cjr_actor(actor)||!operation||!cj_decode(data,size,&p)||!find_type("community_body")||!find_type("community_membership")||!find_type("community_post"))goto done;
- int creating_guild=!strcmp(operation,"create-guild"),creating=!strcmp(operation,"create")||creating_guild,joining=!strcmp(operation,"request"),leaving=!strcmp(operation,"leave"),accepting=!strcmp(operation,"accept"),declining=!strcmp(operation,"decline"),revoking=!strcmp(operation,"revoke"),posting=!strcmp(operation,"post"),replying=!strcmp(operation,"reply"),editing=!strcmp(operation,"edit"),removing=!strcmp(operation,"remove"),hiding=!strcmp(operation,"hide"),editing_community=!strcmp(operation,"edit-community");
- if(!creating&&!joining&&!leaving&&!accepting&&!declining&&!revoking&&!posting&&!replying&&!editing&&!removing&&!hiding&&!editing_community)goto done;
+ int creating_guild=!strcmp(operation,"create-guild"),creating=!strcmp(operation,"create")||creating_guild,joining=!strcmp(operation,"request"),leaving=!strcmp(operation,"leave"),accepting=!strcmp(operation,"accept"),declining=!strcmp(operation,"decline"),revoking=!strcmp(operation,"revoke"),posting=!strcmp(operation,"post"),replying=!strcmp(operation,"reply"),editing=!strcmp(operation,"edit"),removing=!strcmp(operation,"remove"),hiding=!strcmp(operation,"hide"),editing_community=!strcmp(operation,"edit-community"),transferring=!strcmp(operation,"transfer"),flagging=!strcmp(operation,"flag");
+ if(!creating&&!joining&&!leaving&&!accepting&&!declining&&!revoking&&!posting&&!replying&&!editing&&!removing&&!hiding&&!editing_community&&!transferring&&!flagging)goto done;
  if(sqlite3_exec(db,"BEGIN IMMEDIATE",NULL,NULL,NULL)!=SQLITE_OK){state="unavailable";message="The community owner is busy. No change was confirmed.";goto done;}begun=1;iso_timestamp(now,sizeof(now));
  if(creating){
   if(*p.community||*p.target||*p.expected||!cj_nonce(p.request)||!cj_words(p.title)||!cj_words(p.body))goto done;
@@ -46,7 +54,7 @@ static int entry_community_journey(sqlite3 *db,const char *actor,const char *ope
   if(exists){if(cjr_public(&c)&&!strcmp(c.owner,actor)&&!strcmp(c.title,p.title)&&!strcmp(c.description,p.body)){state="unchanged";message="This community is already created.";snprintf(digest,sizeof(digest),"%s",c.digest);result=0;goto finish;}state="conflict";message="This creation request already belongs to a different or withdrawn community.";goto done;}
   sqlite3_stmt *q=NULL;int capacity=0;if(sqlite3_prepare_v2(db,"SELECT count(*)<100 FROM community_body WHERE namespace='root' AND created_by_subject=?1",-1,&q,NULL)==SQLITE_OK){sqlite3_bind_text(q,1,actor,-1,SQLITE_STATIC);capacity=sqlite3_step(q)==SQLITE_ROW&&sqlite3_column_int(q,0);}sqlite3_finalize(q);if(!capacity){state="capacity";message="Review your existing communities before creating another.";goto done;}
   char subject[128],membership[97];snprintf(subject,sizeof(subject),"community_body:%s",key);cj_identity("member",key,actor,"",membership);
-  const char *values[]={key,subject,p.title,p.body,actor,CJR_POLICY,creating_guild?"local-guild":"local-community"};payload=cj_payload(db,"SELECT json_object('community',?1,'subject_address',?2,'title',?3,'description',?4,'visibility','public','created_by_subject',?5,'governance_scope',?7,'moderation_policy',?6,'cannot_infer','A local Aurekai community; it does not create an external account, provider membership, payment or programme enrollment.','status','published')",values,7);
+  const char *values[]={key,subject,p.title,p.body,actor,CJR_POLICY,creating_guild?"local-guild":"local-community",p.interest};payload=cj_payload(db,"SELECT json_object('community',?1,'subject_address',?2,'title',?3,'description',?4,'visibility','public','created_by_subject',?5,'governance_scope',?7,'moderation_policy',?6,'interest_label',?8,'cannot_infer','A local Aurekai community; it does not create an external account, provider membership, payment or programme enrollment.','status','published')",values,8);
   const char *mv[]={membership,key,actor,now};membership_payload=cj_payload(db,"SELECT json_object('membership',?1,'community',?2,'member_subject',?3,'role','steward','state','active','joined_at',?4,'cannot_infer','Local community participation only; no infrastructure, provider or financial authority.','status','published')",mv,4);
   defer_hooks=1;deferred_write_error=0;if(!cj_write(db,"community_body",&changed_id,payload)||!cj_write(db,"community_membership",&membership_id,membership_payload)||deferred_write_error){state="unavailable";goto done;}changed_type="community_body";changed=1;
   if(cjr_community(db,key,&c)!=1){state="unavailable";goto done;}snprintf(digest,sizeof(digest),"%s",c.digest);message="Your public community is ready. People can request to join.";goto commit;
@@ -74,13 +82,59 @@ static int entry_community_journey(sqlite3 *db,const char *actor,const char *ope
   if(strcmp(p.expected,c.digest)){state="conflict";message="The community introduction changed. Reload before editing.";goto done;}
   const char *v[]={p.title,p.body};payload=cj_payload(db,"SELECT json_object('title',?1,'description',?2)",v,2);changed_type="community_body";changed_id=c.id;defer_hooks=1;deferred_write_error=0;if(!cj_write(db,changed_type,&changed_id,payload)||deferred_write_error||cjr_community(db,key,&c)!=1){state="unavailable";goto done;}changed=1;snprintf(digest,sizeof(digest),"%s",c.digest);message="The community introduction was updated.";goto commit;
  }
+ if(transferring){
+  if(!owner){state="forbidden";message="Only this community's steward can pass stewardship on.";goto done;}
+  if(!cjr_actor(p.target)||!strcmp(p.target,actor)){state="invalid";goto done;}
+  if(!strcmp(c.owner,p.target)){state="unchanged";message="This person already manages this community.";snprintf(digest,sizeof(digest),"%s",c.digest);snprintf(target,sizeof(target),"%s",p.target);result=0;goto finish;}
+  if(strcmp(p.expected,c.digest)){state="conflict";message="This community changed. Reload before passing stewardship on.";goto done;}
+  CjrMember next={0};if(cjr_member(db,key,p.target,&next)<0){state="unavailable";goto done;}
+  if(!next.id||!next.active||strcmp(next.state,"active")){state="forbidden";message="Stewardship passes only to an active member.";goto done;}
+  CjrMember prior={0};if(cjr_member(db,key,actor,&prior)<0||!prior.id){state="unavailable";goto done;}
+  const char *bv[]={p.target};payload=cj_payload(db,"SELECT json_object('created_by_subject',?1)",bv,1);
+  changed_type="community_body";changed_id=c.id;defer_hooks=1;deferred_write_error=0;
+  if(!cj_write(db,changed_type,&changed_id,payload)||deferred_write_error){state="unavailable";goto done;}
+  free(payload);payload=NULL;
+  const char *mv[]={"member"};payload=cj_payload(db,"SELECT json_object('role',?1)",mv,1);
+  long long prior_id=prior.id;
+  if(!cj_write(db,"community_membership",&prior_id,payload)||deferred_write_error){state="unavailable";goto done;}
+  free(payload);payload=NULL;
+  const char *sv[]={"steward"};payload=cj_payload(db,"SELECT json_object('role',?1)",sv,1);
+  long long next_id=next.id;
+  if(!cj_write(db,"community_membership",&next_id,payload)||deferred_write_error){state="unavailable";goto done;}
+  if(cjr_community(db,key,&c)!=1||strcmp(c.owner,p.target)){state="unavailable";goto done;}
+  changed=1;snprintf(target,sizeof(target),"%s",p.target);snprintf(digest,sizeof(digest),"%s",c.digest);message="Stewardship now belongs to the new steward. The previous steward remains an active member.";goto commit;
+ }
+ if(flagging){
+  /* Only a flag needs the flag type; every other operation works on a store
+   * that has not installed it. */
+  if(!find_type("community_flag")){state="unavailable";message="Flagging is not installed here.";goto done;}
+  if(!owner&&!member.active){state="forbidden";message="Your membership must be active before flagging.";goto done;}
+  if(strcmp(p.title,"spam")&&strcmp(p.title,"harassment")&&strcmp(p.title,"fake")&&strcmp(p.title,"minor-safety")&&strcmp(p.title,"other")){state="invalid";message="Name a reason: spam, harassment, fake, minor-safety or other.";goto done;}
+  CjrPost flagged={0};if(cjr_post(db,key,p.target,&flagged)!=1||!cjr_visible(&flagged)){state="not_found";message="This contribution is not visible here.";goto done;}
+  if(!strcmp(flagged.author,actor)){state="invalid";message="Remove your own contribution instead of flagging it.";goto done;}
+  if(strcmp(p.expected,flagged.digest)){state="conflict";message="This contribution changed. Reload before flagging it.";goto done;}
+  char flag[97];cj_identity("flag",key,actor,p.target,flag);
+  sqlite3_stmt *fq=NULL;int flagged_already=0;
+  if(sqlite3_prepare_v2(db,"SELECT 1 FROM community_flag WHERE namespace='root' AND flag=?1",-1,&fq,NULL)==SQLITE_OK){sqlite3_bind_text(fq,1,flag,-1,SQLITE_STATIC);flagged_already=sqlite3_step(fq)==SQLITE_ROW;}
+  sqlite3_finalize(fq);
+  if(flagged_already){state="unchanged";message="You already flagged this contribution. It stays hidden from you.";snprintf(target,sizeof(target),"%s",p.target);result=0;goto finish;}
+  sqlite3_stmt *qq=NULL;int allowed=0;
+  if(sqlite3_prepare_v2(db,"SELECT count(*)<5 FROM community_flag WHERE namespace='root' AND actor_subject=?1 AND status='published' AND date(substr(created_at,1,10))=date('now')",-1,&qq,NULL)==SQLITE_OK){sqlite3_bind_text(qq,1,actor,-1,SQLITE_STATIC);allowed=sqlite3_step(qq)==SQLITE_ROW&&sqlite3_column_int(qq,0);}
+  sqlite3_finalize(qq);if(!allowed){state="capacity";message="Report limit reached for today; try again tomorrow.";goto done;}
+  const char *fv[]={flag,key,p.target,actor,p.title,strlen(p.body)?p.body:"",now};
+  payload=cj_payload(db,"SELECT json_object('flag',?1,'community',?2,'post',?3,'actor_subject',?4,'reason',?5,'details',?6,'created_at',?7,'cannot_infer','An observation held for human review, not a verdict and not proof.','status','published')",fv,7);
+  changed_type="community_flag";changed_id=0;defer_hooks=1;deferred_write_error=0;
+  if(!cj_write(db,changed_type,&changed_id,payload)||deferred_write_error){state="unavailable";goto done;}
+  changed=1;snprintf(target,sizeof(target),"%s",p.target);message="Flagged for this community's steward. It is hidden from you now; nothing else changes without human review.";goto commit;
+ }
  if(posting||replying){
   if(!owner&&!member.active){state="forbidden";message="Your membership must be active before contributing.";goto done;}
   if(!cj_nonce(p.request)||!cj_words(p.body)||(posting&&(!cj_words(p.title)||*p.target))||(replying&&!cjr_key(p.target)))goto done;
   char post_key[97];cj_identity("post",key,actor,p.request,post_key);int exists=cjr_post(db,key,post_key,&post);if(exists<0){state="unavailable";goto done;}
   if(exists){if(cjr_visible(&post)&&!strcmp(post.author,actor)&&!strcmp(post.title,p.title)&&!strcmp(post.body,p.body)&&!strcmp(post.parent,p.target)){state="unchanged";message="This contribution is already published.";snprintf(target,sizeof(target),"%s",post.key);snprintf(digest,sizeof(digest),"%s",post.digest);result=0;goto finish;}state="conflict";message="This publishing request already belongs to different or removed content.";goto done;}
   if(replying&&(cjr_post(db,key,p.target,&parent)!=1||cjr_thread(db,key,&parent,root,1)<1||cjr_thread(db,key,&parent,root,1)>=9||strcmp(parent.digest,p.expected))){state="conflict";message="The conversation changed or no longer accepts this reply. Reopen it before replying.";goto done;}
-  const char *v[]={post_key,key,actor,p.title,p.body,p.target,now};payload=cj_payload(db,"SELECT json_object('post',?1,'community',?2,'author_subject',?3,'title',?4,'body',?5,'reply_to',?6,'published_at',?7,'visibility','public','moderation_state','accepted','cannot_infer','A local public contribution; no external publication, endorsement or operational commitment.','status','published')",v,7);
+  const char *ev=replying?"":p.event_at,*vn=replying?"":p.venue;
+  const char *v[]={post_key,key,actor,p.title,p.body,p.target,now,ev,vn};payload=cj_payload(db,"SELECT json_patch(json_object('post',?1,'community',?2,'author_subject',?3,'title',?4,'body',?5,'reply_to',?6,'published_at',?7,'visibility','public','moderation_state','accepted','cannot_infer','A local public contribution; no external publication, endorsement or operational commitment. A stated time and place is the author''s plan, not a booking.','status','published'),CASE WHEN ?8='' THEN '{}' ELSE json_object('event_at',?8,'venue',?9) END)",v,9);
   changed_type="community_post";defer_hooks=1;deferred_write_error=0;if(!cj_write(db,changed_type,&changed_id,payload)||deferred_write_error||cjr_post(db,key,post_key,&post)!=1){state="unavailable";goto done;}changed=1;snprintf(target,sizeof(target),"%s",post.key);snprintf(digest,sizeof(digest),"%s",post.digest);message="Your contribution is published in this community.";goto commit;
  }
  if(cjr_post(db,key,p.target,&post)!=1||strcmp(post.visibility,"public")){state="not_found";message="This contribution is not in this community.";goto done;}snprintf(target,sizeof(target),"%s",post.key);

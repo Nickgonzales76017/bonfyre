@@ -2703,3 +2703,340 @@ interaction web-route-table-ranks-not-found-with-static-embedding
   invalidates_on a new .bfse, a change to the semantic row, or a change to any row's title
   witness cmd/BonfyreWebAddress/tests/web_route_kinds_test.sh
   binding cmd/BonfyreWebAddress/src/web_route_kinds.h
+
+interaction apparatus-disturbances-enter-occurrence-origin
+  source apparatus-provider
+  destination occurrence-origin
+  relation injected_fault_to_filed_occurrence
+  preserves the injected disturbance kind, scenario, affected protocol surface and observed failure
+  drops any claim the scenario space is covered and any robustness verdict
+  forbidden_inference a survived injected fault -> system robustness
+  forbidden_inference a filed occurrence -> a verdict on the scenario space
+  invalidates_on the range API, scenario vocabulary or occurrence filing relation changing
+  witness no runtime binding exists; the range is real and the Bonfyre Provider binding is architectural per apparatus-provider known_gap
+
+interaction browser-borrowed-operations-serve-page-capture
+  source browser-engine-provider
+  destination page-capture
+  relation borrowed_engine_operation_with_named_receipt
+  preserves the engine that did the work, what it cost, and the receipt that would justify a native dependency later
+  drops Skia, PDFium and Dawn as linkable libraries; a machine without Chromium has none of this
+  forbidden_inference borrowed engines -> native libraries available
+  forbidden_inference zero GPU mismatches -> the same floats on another device
+  invalidates_on installed Chromium major, viewer controller interface or GPU adapter changing
+  witness integrations/browser/tests/chromium-engines.test.mjs
+  binding integrations/browser/engines/chromium-engines.mjs
+
+interaction burn-trains-phenotypes-tract-executes
+  source burn
+  destination tract
+  relation trained_phenotype_to_local_execution
+  preserves the trained tensor/model phenotype as the artifact Tract runs, nothing about the model identity
+  drops any claim that training implies generation quality or that local execution implies authorization
+  forbidden_inference trained -> generation quality good
+  forbidden_inference runs locally -> the representation is authorized or correct
+  invalidates_on either substrate probe changing
+
+interaction carla-feasibility-gates-work-graph
+  source carla-provider
+  destination work-graph
+  relation counterfactual_feasibility_to_dispatch_gate
+  preserves route and vehicle configuration feasibility under stated sensors, weather and autonomy mode
+  drops any claim a simulated success is a real delivery
+  forbidden_inference a simulated success -> a real delivery
+  invalidates_on the CARLA API, scenario vocabulary or dispatch gating rule changing
+  witness no runtime binding exists; the simulator is real and the Bonfyre Provider binding is architectural per carla-provider known_gap
+
+interaction kratos-proofs-gate-proof-frontier
+  source kratos-provider
+  destination proof-frontier
+  relation simulation_receipt_to_evidence_frontier
+  preserves the Simulation Receipt with its configuration, load and stated assumptions
+  drops any claim the physical asset is safe; a run predicts, the Receipt is the evidence
+  forbidden_inference a simulation ran -> the physical asset is safe
+  invalidates_on the Kratos/CoSimIO boundary or Receipt schema changing
+  witness no runtime binding exists; the framework is real and the Bonfyre Provider binding is architectural per kratos-provider known_gap
+
+interaction openmdao-candidates-feed-kratos-runs
+  source openmdao-provider
+  destination kratos-provider
+  relation design_coordinates_to_simulation_configuration
+  preserves coupled-optimization design coordinates as simulation inputs
+  drops manufacturability, feasibility and authority, which still gate downstream
+  forbidden_inference a Pareto-optimal candidate -> a manufacturable or authorized one
+  invalidates_on the OpenMDAO driver API or Kratos configuration schema changing
+  witness no runtime binding exists; the library is real and the Bonfyre binding is architectural per openmdao-provider known_gap
+
+interaction opencat-telemetry-feeds-transport-phenotype
+  source opencat-provider
+  destination transport-phenotype
+  relation device_telemetry_to_physical_state
+  preserves gait, servo, IMU and sensor telemetry as physical state with health evidence
+  drops any claim that reachability implies component health
+  forbidden_inference a device is connected -> its components are healthy
+  invalidates_on the ESP32/ROS telemetry vocabulary changing
+  witness no runtime binding exists; the firmware is real and the Bonfyre Provider binding is architectural per opencat-provider known_gap
+
+interaction pace-doctrine-binds-authority-graph
+  source pace-provider
+  destination authority-graph
+  relation tiered_doctrine_to_authority_and_escalation
+  preserves the tiered rule of engagement, authority and escalation that applies to an event
+  drops any execution authorization; the human gate and Authority still bind
+  forbidden_inference a doctrinal response is derived -> it is authorized to execute
+  invalidates_on the PACE doctrine tiers or authority graph changing
+
+interaction mes-provenance-registers-provider-graph
+  source mes-provider
+  destination provider-graph
+  relation serialized_provenance_to_provider_registry
+  preserves part provenance and material batch traceability for serialized components
+  drops any claim that inventory presence implies assembly qualification
+  forbidden_inference a part is in inventory -> it is qualified for this assembly
+  invalidates_on the MES schema or provider-graph registration changing
+  witness no runtime binding exists; the MES domain is real and the Bonfyre binding is architectural per mes-provider known_gap
+
+interaction physical-asset-gates-withdraw-work-graph
+  source physical-asset
+  destination work-graph
+  relation derived_capability_to_assignment_gate
+  preserves the live conjunction of component-health, proof, model and calibration gates behind each derived capability
+  drops any static declaration of what the asset can do
+  forbidden_inference a device is connected -> the asset is capable
+  forbidden_inference a capability advertised once -> still valid
+  invalidates_on the gate vocabulary, DBSP circuit or assignment rule changing
+
+interaction automerge-candidate-state-serves-work-graph
+  source automerge
+  destination work-graph
+  relation conflict_free_candidate_state_to_planned_work
+  preserves CRDT-merged candidate state that many agents and humans may mutate
+  drops any mutation of Actual; Possible never touches it
+  forbidden_inference a candidate merged in Possible -> a change to Actual
+  invalidates_on the merge mechanics or candidate-state relation changing
+
+interaction cubecl-kernels-execute-on-tract
+  source cubecl
+  destination tract
+  relation generated_kernel_to_local_execution
+  preserves the accelerated generated kernel as the artifact a local runtime executes
+  drops any claim that speed implies the fused operation is valid
+  forbidden_inference a generated kernel is fast -> the fused operation is valid
+  invalidates_on either substrate probe changing
+
+interaction daft-corpora-enter-analysis-universe
+  source daft
+  destination analysis-universe
+  relation transformed_corpus_to_measured_set
+  preserves bulk-transformed corpora as the input sets measurements are taken over
+  drops provenance of inputs and outputs, which a transform alone does not carry
+  forbidden_inference a transformed corpus -> provenance preserved without a witness
+  invalidates_on the dataframe execution boundary or universe digest rules changing
+
+interaction hydro-placement-drives-service-lifecycle
+  source hydro
+  destination service-lifecycle
+  relation dataflow_placement_to_service_operation
+  preserves distributed placement and dataflow decisions for work
+  drops any authority to run what is placed
+  forbidden_inference placeable -> authorized to execute there
+  invalidates_on the placement determinism contract or lifecycle vocabulary changing
+
+interaction lance-vectors-serve-static-semantic-search
+  source lance
+  destination static-semantic-search
+  relation vector_body_to_semantic_retrieval
+  preserves the multimodal and vector body of code, traces, docs, images and transcripts behind retrieval
+  drops identity and authority of whatever is embedded
+  forbidden_inference vector similarity -> same actor or same claim
+  invalidates_on the columnar/ANN boundary or search contract changing
+
+interaction media-decode-borrows-browser-engines
+  source media-decode-operation
+  destination browser-engine-provider
+  relation one_decode_operation_two_engines
+  preserves the shared decode receipt (frame count, size, pixel layout, pixel digest) across WebCodecs and FFmpeg
+  drops audio, video streams, time base beyond the frame timestamp, and encode
+  forbidden_inference one still picture decoded -> video, audio or live capture decoded
+  invalidates_on the WebCodecs or FFmpeg decode boundary changing
+  witness integrations/browser/tests/media-decode.test.mjs
+  binding integrations/browser/engines/media-decode.mjs
+
+interaction federation-projections-checked-by-round-trip-twin
+  source federation-twin
+  destination round-trip-twin
+  relation published_projection_to_independent_readback
+  preserves the canonical projection and the independently observed carrier representation for comparison
+  drops any claim about reach or acceptance
+  forbidden_inference publication fidelity -> reach
+  forbidden_inference publication fidelity -> acceptance
+  invalidates_on the projection vocabulary or carrier observation law changing
+  witness cmd/BonfyreWebAddress/tests/federation_test.sh
+
+interaction foreign-live-ingest-files-into-foreign-twin
+  source foreign-live-ingest
+  destination foreign-twin
+  relation observed_occurrence_to_twin_filing
+  preserves per-event platform provenance, the OBSERVED origin, and the ordered rights states
+  drops any assertion by this estate of an ingested claim and any right beyond what was granted
+  forbidden_inference observable -> retainable
+  forbidden_inference an ingested claim -> a claim this estate is asserting
+  invalidates_on the rights vocabulary, twin filing relation or platform provenance rule changing
+  witness components/BonfyreControlPlane/tests/foreign-live.test.mjs
+
+interaction estate-harvest-retires-to-retirement-archive
+  source estate-volume-harvest
+  destination retirement-archive
+  relation harvested_estate_to_ordered_archive
+  preserves the inventoried estate files, per-copy checks, database integrity results and the ordered archive with receipt
+  drops private keys, credential files, the operating system, caches, and any write to or release of the source volume
+  forbidden_inference the harvest tested on a made-up volume -> the real volume harvested
+  forbidden_inference a harvested file -> a current one
+  invalidates_on the harvest inventory paths, integrity checks or archive ordering changing
+  witness scripts/tests/oracle_volume_harvest_test.sh
+  binding scripts/oracle_volume_harvest.sh
+
+interaction text-identity-keys-resolve-subject-index
+  source text-primitives
+  destination subject-index
+  relation spelling_key_to_subject_resolution
+  preserves the composed case-folded compatibility-unified identity key as the spelling under which names resolve
+  drops any claim that equal keys mean the same person or organisation
+  forbidden_inference the same identity key -> the same person or organisation
+  invalidates_on the utf8proc normalization or matcher linearity contract changing
+  witness no owner calls either primitive yet per text-primitives known_gap; CMS, Entity, ForeignTwin and the frontier still compare text their own way
+
+interaction result-bundles-attest-worker-runs
+  source result-receipt-bundle
+  destination worker-run
+  relation portable_attestation_of_worker_submission
+  preserves patch, gate results, task ref, sandbox selection, worker key and DSSE-signed chain-linked attestation for offline field-level verify
+  drops pinned provenance, which needs an out-of-band roster
+  forbidden_inference embedded worker key -> pinned provenance
+  invalidates_on the bundle schema, gate vocabulary or signature envelope changing
+
+interaction blocker-graph-opens-collapse-front-analysis
+  source blocker-graph
+  destination collapse-front
+  relation open_blocker_to_support_retraction
+  preserves which open blockers bear on which conclusions as the input set whose withdrawal would collapse them
+  drops any claim that removing a blocker wins the opportunity
+  forbidden_inference blocker removed -> opportunity won
+  invalidates_on the blocker vocabulary or support lattice changing
+  witness both endpoints stand on archived sources per their known_gaps; no live binding exists
+
+interaction collapse-front-names-actor-support
+  source collapse-front
+  destination actor-graph
+  relation retraction_dual_over_actor_grounds
+  preserves the exact transpose collapse matrix: which conclusions go dark if one actor-ground is retracted
+  drops any verdict that a collapsed conclusion was false
+  forbidden_inference collapses under retraction -> the conclusion was false
+  invalidates_on the support lattice or actor grounds changing
+  witness bun test architecture/tests/atlas_collapse.test.mjs
+
+interaction fortification-ranks-over-collapse-front
+  source fortification-plan
+  destination collapse-front
+  relation leverage_rank_over_collapse_matrix
+  preserves ranked verify and diversify moves with the leverage each collapse front confers
+  drops execution; the plan ranks moves, reachability stops at the human line
+  forbidden_inference high leverage -> the action is authorized or free
+  forbidden_inference published plan -> the action was taken
+  invalidates_on the collapse matrix, actor confidence split or ranking rule changing
+
+interaction analysis-universe-bounds-readiness-state
+  source analysis-universe
+  destination readiness-state
+  relation universe_digest_to_comparability_gate
+  preserves the universe digest covering closure, revision, inclusion rules, tool and environment behind every measured set
+  drops any comparison across universes without explicit reconciliation
+  forbidden_inference two counts of the same kind -> those counts being comparable
+  invalidates_on the digest coverage or reconciliation vocabulary changing
+
+interaction independent-oracle-arbitrates-readiness-state
+  source independent-oracle
+  destination readiness-state
+  relation residual_arbitration_to_release_gate
+  preserves the operative-vs-advisory designation, classified residuals and corroboration requirements
+  drops any automatic repair, relabeling or state change from a residual alone
+  forbidden_inference a difference -> a defect
+  invalidates_on the comparison contract or corroboration routes changing
+
+interaction capability-genome-promotes-through-proof-frontier
+  source capability-genome
+  destination proof-frontier
+  relation candidate_primitive_to_promotion_proof
+  preserves the pattern-to-motif-to-candidate chain presented for proof before any registry promotion
+  drops any promotion without proof and validation
+  forbidden_inference a learned candidate -> a promoted primitive
+  invalidates_on the promotion proof bar or genome vocabulary changing
+
+interaction envelope-messages-await-browser-host
+  source cmd-envelope
+  destination browser-host
+  relation typed_envelope_to_unmigrated_boundary
+  preserves the envelope identity and field-kind checking the boundary would inherit on migration
+  drops any live use; the browser host, queue and native commands still pass JSON
+  forbidden_inference a typed envelope -> an authorised operation
+  invalidates_on the operation.proto messages or boundary wire format changing
+  witness cmd/BonfyreEnvelope/tests/envelope_test.sh
+
+interaction factor-reduction-opens-optimization-cascade
+  source factor-reduction
+  destination optimization-cascade
+  relation exact_elimination_as_first_cascade_stage
+  preserves exact bounded-width counts with shared-component caching as the cheapest adequate stage
+  drops any approximation; over-wide or overflowing counts are refused
+  forbidden_inference a fast count on a bounded-width family -> tractability of an arbitrary formula
+  invalidates_on the elimination bound or cascade stage order changing
+  witness lib/libbonfyre/tests/factor_count_test.c
+
+interaction institution-structure-grounds-institution-identity
+  source institution-graph
+  destination institution-identity
+  relation established_structure_to_identity
+  preserves units, roles, resources, authority domains and protocols as the structure identity rests on
+  drops any inference from observed structure to established authority
+  forbidden_inference observed structure -> established authority
+  invalidates_on the structure vocabulary or identity derivation changing
+
+interaction delegation-model-bounds-relationship-types
+  source institutional-delegation-model
+  destination institutional-relationship-types
+  relation bounded_envelope_to_owned_relationship
+  preserves the delegation envelope's provider, information, effect and evidence closures as what a downstream estate receives of an owned relationship
+  drops inheritance; an unlisted capability is absent, and data flows nowhere by the envelope alone
+  forbidden_inference a parent holding a capability -> a child holding it
+  forbidden_inference a delegation existing -> data flowing across it
+  invalidates_on the envelope schema or relationship-kind vocabulary changing
+
+interaction prepared-artifacts-lease-on-tract
+  source prepared-execution-graph
+  destination tract
+  relation prepared_artifact_to_local_runtime_lease
+  preserves the representation-to-hardware preparation chain ending in a resident lease Tract serves
+  drops any authorization to run from preparation alone
+  forbidden_inference prepared -> authorized to run
+  invalidates_on the preparation chain or lease vocabulary changing
+
+interaction repository-shape-constrains-store-schema-registry
+  source repository-shape
+  destination store-schema-registry
+  relation placement_declarations_to_store_contracts
+  preserves physical-root ownership rules: stores named by declaration, tenant-free organ vocabulary, snapshot discipline
+  drops any semantic authority from placement alone
+  forbidden_inference physical placement -> semantic authority
+  invalidates_on the repository layout or store declaration contract changing
+  witness tests/test_repository_shape.py.archive
+
+interaction motif-proposals-realize-through-surface-renderer
+  source surface-motif-learning
+  destination surface-renderer
+  relation proposed_candidate_to_realized_surface
+  preserves learned presentation candidates gated by proof through reversible LOWER/LIFT envelopes
+  drops any change to deterministic semantic truth, which the fabric keeps authoritative
+  forbidden_inference a learned pattern -> changed semantic truth
+  forbidden_inference a frequent motif -> a correct or authorized one
+  invalidates_on the proposal proof bar or renderer vocabulary changing
+  witness engine/core/tests/pattern_test.c

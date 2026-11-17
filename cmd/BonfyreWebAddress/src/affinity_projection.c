@@ -205,7 +205,7 @@ static int companions_params_ok(const char *viewer, const char *territory,
     if (sort && *sort && strcmp(sort, "match")) return 0;
     if (view && *view && strcmp(view, "matches") && strcmp(view, "attention")) return 0;
     if (club && *club &&
-        (strlen(club) > 64 || strspn(club, "abcdefghijklmnopqrstuvwxyz0123456789-") != strlen(club)))
+        (strlen(club) > 96 || strspn(club, "abcdefghijklmnopqrstuvwxyz0123456789-") != strlen(club)))
         return 0;
     return 1;
 }
@@ -248,7 +248,9 @@ static int companions_fetch(sqlite3 *db, const char *viewer, const char *territo
             snprintf(rows[n].name, sizeof(rows[n].name), "%s",
                      handle && handle[1] ? handle + 1 : s);
         }
-        if (bio) snprintf(rows[n].bio, sizeof(rows[n].bio), "%s", bio);
+        /* A member with no introduction has an empty one, never whatever the
+         * row's memory last held. */
+        snprintf(rows[n].bio, sizeof(rows[n].bio), "%s", bio ? bio : "");
         rows[n].shared[0] = '\0';
         rows[n].score = 0;
         n++;

@@ -1132,9 +1132,18 @@ static int cmd_embed_branch_(int argc, char **argv) {
     }
 
     const char *action = argv[1];
+    enum { EMBB_ADD, EMBB_APPLY, EMBB_DELTA, EMBB_LIST };
+    static const BfCommandEntry embed_branch_commands[] = {
+        {"add", EMBB_ADD, 0, NULL},
+        {"apply", EMBB_APPLY, 0, NULL},
+        {"delta", EMBB_DELTA, 0, NULL},
+        {"list", EMBB_LIST, 0, NULL},
+    };
+    const int action_id = bf_command_id(embed_branch_commands,
+        BF_COMMAND_COUNT(embed_branch_commands), action, -1);
 
     /* ── list ── */
-    if (strcmp(action, "list") == 0) {
+    if (action_id == EMBB_LIST) {
         char **names = NULL; int count = 0;
         bf_embed_steer_list(&names, &count);
         if (count == 0) printf("no branches stored\n");
@@ -1144,7 +1153,7 @@ static int cmd_embed_branch_(int argc, char **argv) {
     }
 
     /* ── add: store a pre-computed delta vector as a branch ── */
-    if (strcmp(action, "add") == 0) {
+    if (action_id == EMBB_ADD) {
         if (argc < 4) { fprintf(stderr, "branch add: need <name> <delta.vecf>\n"); return 1; }
         const char *name = argv[2], *path = argv[3];
         uint32_t dim = 0;
@@ -1162,7 +1171,7 @@ static int cmd_embed_branch_(int argc, char **argv) {
      * This is how you build concept branches:
      *   "apple (tech context)" - "apple (general)" = tech steering vector
      */
-    if (strcmp(action, "delta") == 0) {
+    if (action_id == EMBB_DELTA) {
         if (argc < 5) {
             fprintf(stderr, "branch delta: need <base.vecf> <target.vecf> <name>\n");
             return 1;
@@ -1194,7 +1203,7 @@ static int cmd_embed_branch_(int argc, char **argv) {
     }
 
     /* ── apply: steer an embedding along one or more branches ── */
-    if (strcmp(action, "apply") == 0) {
+    if (action_id == EMBB_APPLY) {
         if (argc < 3) { fprintf(stderr, "branch apply: need <input.vecf>\n"); return 1; }
         const char *inpath = argv[2], *outpath = NULL;
         const char *bnames[32]; float balphas[32]; int nb = 0;

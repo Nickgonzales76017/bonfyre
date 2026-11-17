@@ -27,11 +27,11 @@ static void aw_picker_card(const char *site,sqlite3_int64 world,const char *spac
     html(title);ui_close(stdout,"strong");
     if(by&&*by){ui_text(stdout, "small", NULL, by);}
     if(context&&*context){ui_text(stdout, "small", NULL, context);}
-    fputs("<a href=\"/o/",stdout);
+    ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/o/");
     const char *slash=strchr(ref,'/');
     char source[96];size_t n=(size_t)(slash-ref);memcpy(source,ref,n);source[n]=0;
-    page_url_escape(source);fputs("/",stdout);html(slash+1);
-    fputs("\">Open retained item",stdout); ui_close(stdout,"a"); ui_close(stdout,"div");
+    page_url_escape(source);ui_copy(stdout,"/");html(slash+1);
+    ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open retained item"); ui_close(stdout,"a"); ui_close(stdout,"div");
     ui_open_a(stdout,"form","action","/workspace/world","method","post","data-world-picker-add",(const char *)NULL);
     world_web_hidden_base(site,world,space,"item",revision);
     char p[12];snprintf(p,sizeof(p),"%d",position);ph_hidden("position",p);
@@ -78,9 +78,11 @@ static void aw_picker_emit(sqlite3 *db,const char *site,sqlite3_int64 world,cons
             const char *source=(const char*)sqlite3_column_text(st,0);
             if(!aw_picker_source(source))continue;
             if(!found++)ui_open_a(stdout,"ul","class","aw-picker-source","data-world-observed-sources",(const char *)NULL);
-            fputs("<li><a href=\"/workspace/worlds?site=",stdout);url_query_value(site);
+            ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");
+            ui_copy(stdout,"/workspace/worlds?site=");url_query_value(site);
             printf("&amp;world=%lld&amp;space=",(long long)world);url_query_value(space);
-            fputs("&amp;source=",stdout);url_query_value(source);fputs("\"><strong>",stdout);
+            ui_copy(stdout,"&amp;source=");url_query_value(source);ui_attr_close(stdout);ui_gt(stdout);
+            ui_open(stdout,"strong",NULL);
             const char *label=(const char*)sqlite3_column_text(st,1),*family=(const char*)sqlite3_column_text(st,2);
             html(label&&*label?label:source);ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);html(family?family:"Source");ui_close(stdout,"small"); ui_close(stdout,"a"); ui_close(stdout,"li");
         }

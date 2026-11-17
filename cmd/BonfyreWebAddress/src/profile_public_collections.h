@@ -31,7 +31,7 @@ static void ph_public_communities(sqlite3 *db,const PhSite *site,const char *aut
             if(!key||cjr_community(db,key,&c)!=1||!cjr_public(&c)||strcmp(c.owner,author))continue;
             if(!shown++){ui_start(stdout,"div");ui_flag(stdout,"data-public-community-list");ui_gt(stdout);}
             ui_start(stdout,"article");ui_attr(stdout,"class","ph-post");ui_flag(stdout,"data-public-community");ui_gt(stdout);ui_open(stdout,"h3",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community=");
-            url_query_value(c.key);fputs("\">",stdout);html(c.title);ui_close(stdout,"a");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);html(c.description);ui_close(stdout,"p");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community=");url_query_value(c.key);fputs("\">Open public conversations</a></article>",stdout);
+            url_query_value(c.key);ui_attr_close(stdout);ui_gt(stdout);html(c.title);ui_close(stdout,"a");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);html(c.description);ui_close(stdout,"p");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/community?community=");url_query_value(c.key);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open public conversations");ui_close(stdout,"a");ui_close(stdout,"article");
         }
     }
     sqlite3_finalize(st);
@@ -43,6 +43,6 @@ static void ph_public_communities(sqlite3 *db,const PhSite *site,const char *aut
 static void ph_public_organizations(void) {
     /* Auth institution grants, invitations and workspace memberships are
      * private access state, not a published person-to-organization relation. */
-    fputs("<section data-profile-organizations><h2>Organizations</h2><div class=\"ph-empty\"><p>No public organization affiliations are declared for this profile. Private organization access is not a public endorsement or membership claim.</p></div><p><a href=\"/organisations\">Explore published organizations and their sources</a></p></section>",stdout);
+    ui_start(stdout,"section");ui_flag(stdout,"data-profile-organizations");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Organizations");ui_close(stdout,"h2");ui_open(stdout,"div","ph-empty");ui_open(stdout,"p",NULL);ui_copy(stdout,"No public organization affiliations are declared for this profile. Private organization access is not a public endorsement or membership claim.");ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr(stdout,"href","/organisations");ui_gt(stdout);ui_copy(stdout,"Explore published organizations and their sources");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section");
 }
 #endif

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 
 static void json_string(const char *s) {
   putchar('"');
@@ -174,24 +175,41 @@ static int usage(void) {
         "         --right-generation N --right-input-bound-bytes N]\n", stderr);
   return 2;
 }
+/* Verb vocabulary, declared once in strcmp order for the shared
+ * bf_command_lookup; handlers keep their own arguments and exit codes. */
+enum {
+  WH_COHORTS, WH_HEAD, WH_INTEGRITY, WH_PLAN, WH_PORTFOLIO,
+  WH_QUERY_PLAN, WH_RETENTION, WH_STATUS, WH_VERIFY
+};
+static const BfCommandEntry warehouse_commands[] = {
+  {"cohorts", WH_COHORTS, 0, NULL},
+  {"head", WH_HEAD, 0, NULL},
+  {"integrity", WH_INTEGRITY, 0, NULL},
+  {"plan", WH_PLAN, 0, NULL},
+  {"portfolio", WH_PORTFOLIO, 0, NULL},
+  {"query-plan", WH_QUERY_PLAN, 0, NULL},
+  {"retention", WH_RETENTION, 0, NULL},
+  {"status", WH_STATUS, 0, NULL},
+  {"verify", WH_VERIFY, 0, NULL},
+};
 int main(int argc, char **argv) {
   const char *action = argc > 1 ? argv[1] : NULL;
   const char *estate = NULL, *semantic = NULL, *kind = NULL;
   const char *operation=NULL,*generation=NULL,*input_bound=NULL,*memory=NULL,*workers=NULL;
   const char *right_semantic=NULL,*right_generation=NULL,*right_bound=NULL,*cutoff=NULL,*offset=NULL,*limit=NULL;
-  int planning=action && !strcmp(action,"query-plan");
-  if (!action || (strcmp(action, "status") && strcmp(action, "integrity") && strcmp(action, "cohorts") && strcmp(action, "verify") &&
-                  strcmp(action, "head") && strcmp(action, "plan") && strcmp(action, "query-plan") &&
-                  strcmp(action, "retention") && strcmp(action, "portfolio")))
+  const int action_id = bf_command_id(warehouse_commands,
+      BF_COMMAND_COUNT(warehouse_commands), action, -1);
+  int planning = action_id == WH_QUERY_PLAN;
+  if (action_id < 0)
     return usage();
   for (int i = 2; i < argc; i += 2) {
     if (i + 1 >= argc) return usage();
     if (!strcmp(argv[i], "--estate") && !estate) estate = argv[i+1];
     else if (!strcmp(argv[i], "--semantic-kind") && !semantic) semantic = argv[i+1];
     else if (!strcmp(argv[i], "--kind") && !kind) kind = argv[i+1];
-    else if (!strcmp(action,"portfolio") && !strcmp(argv[i],"--offset") && !offset) offset=argv[i+1];
-    else if (!strcmp(action,"portfolio") && !strcmp(argv[i],"--limit") && !limit) limit=argv[i+1];
-    else if (!strcmp(action,"retention") && !strcmp(argv[i],"--cutoff") && !cutoff) cutoff=argv[i+1];
+    else if (action_id==WH_PORTFOLIO && !strcmp(argv[i],"--offset") && !offset) offset=argv[i+1];
+    else if (action_id==WH_PORTFOLIO && !strcmp(argv[i],"--limit") && !limit) limit=argv[i+1];
+    else if (action_id==WH_RETENTION && !strcmp(argv[i],"--cutoff") && !cutoff) cutoff=argv[i+1];
     else if (planning && !strcmp(argv[i],"--operation") && !operation) operation=argv[i+1];
     else if (planning && !strcmp(argv[i],"--generation") && !generation) generation=argv[i+1];
     else if (planning && !strcmp(argv[i],"--input-bound-bytes") && !input_bound) input_bound=argv[i+1];
@@ -203,8 +221,8 @@ int main(int argc, char **argv) {
     else return usage();
   }
   if (!estate || estate[0] != '/' || strlen(estate) >= PATH_MAX - 40) return usage();
-  if (!strcmp(action, "status") || !strcmp(action, "integrity") || !strcmp(action, "cohorts") || !strcmp(action, "verify") || !strcmp(action,"retention") || !strcmp(action,"portfolio")) {
-    if (semantic || kind || (!strcmp(action,"retention") && !cutoff) || (!strcmp(action,"portfolio") && (!offset||!limit))) return usage();
+  if (action_id==WH_STATUS || action_id==WH_INTEGRITY || action_id==WH_COHORTS || action_id==WH_VERIFY || action_id==WH_RETENTION || action_id==WH_PORTFOLIO) {
+    if (semantic || kind || (action_id==WH_RETENTION && !cutoff) || (action_id==WH_PORTFOLIO && (!offset||!limit))) return usage();
   }
   else if (!semantic || !kind) return usage();
   if (planning && (!operation || !generation || !input_bound || !memory || !workers ||
@@ -228,16 +246,16 @@ int main(int argc, char **argv) {
     fputs("cannot begin read snapshot\n", stderr);
     return 1;
   }
-  int ok = !strcmp(action, "status") ? status(db) :
-    !strcmp(action, "integrity") ? integrity(db) :
-    !strcmp(action, "cohorts") ? warehouse_cohorts(db) :
-    !strcmp(action, "verify") ? warehouse_verify(db) :
-    !strcmp(action, "retention") ? warehouse_retention(db,cutoff) :
-    !strcmp(action, "portfolio") ? warehouse_portfolio(db,offset,limit) :
+  int ok = action_id==WH_STATUS ? status(db) :
+    action_id==WH_INTEGRITY ? integrity(db) :
+    action_id==WH_COHORTS ? warehouse_cohorts(db) :
+    action_id==WH_VERIFY ? warehouse_verify(db) :
+    action_id==WH_RETENTION ? warehouse_retention(db,cutoff) :
+    action_id==WH_PORTFOLIO ? warehouse_portfolio(db,offset,limit) :
     planning ? warehouse_query_plan(db,operation,
       (warehouse_query_input){semantic,kind,generation,input_bound},
       (warehouse_query_input){right_semantic,"parquet",right_generation,right_bound},
-      memory,workers) : head(db, semantic, kind, !strcmp(action, "plan"));
+      memory,workers) : head(db, semantic, kind, action_id==WH_PLAN);
   if (sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL) != SQLITE_OK) ok = 0;
   sqlite3_close(db);
   if (!ok) fputs("invalid or unavailable manifold metadata\n", stderr);

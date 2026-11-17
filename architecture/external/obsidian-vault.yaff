@@ -9,7 +9,7 @@ architecture obsidian-vault-binding
   semantic_question Which Obsidian vault folders on this device belong to which account, how are they read, written and synced (desktop CLI, Obsidian Headless or the files themselves), and when is headless sync refused?
   purpose Binds a local Obsidian vault folder to exactly one account and gives every flow one contract over it. Reads (search, tasks, backlinks, links, unresolved, tags, properties, read) go through the running desktop app's CLI when the binding asks for it and the app is up, otherwise through native readers over the files. Writes (create, append, prepend, daily-append, task) go the same way, natively as atomic same-folder writes. Obsidian Headless (ob) runs per account under its own HOME so each account has its own Obsidian login; sync-setup, sync-config, sync-once and a supervised continuous sync (child process with pidfile, or a launchd agent) are refused wherever desktop Sync is on for the vault, as Obsidian requires. Content-addressed snapshots record every file's sha256, size and mtime incrementally and diff against each other for local sync.
   maturity implemented
-  consumes AccountSubject
+  consumes MatrixSubject
   owns ObsidianVaultBinding
   publishes ObsidianNoteRef
   publishes ObsidianTaskRef

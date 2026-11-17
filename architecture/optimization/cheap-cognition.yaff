@@ -9,6 +9,8 @@ architecture cheap-cognition
   consumes InformationPolicy
   publishes CandidateClassification
   publishes EscalationDecision
+  publishes CandidateSet
+  publishes ExactMask
   family optimization
   domain Optimization / Cognitive control plane
   layer execution

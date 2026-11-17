@@ -11,7 +11,7 @@ architecture creator-channel
   owns ChannelSubscription
   consumes MediaProgram
   consumes ActorClosure
-  consumes Community
+  consumes HumanCommunityBody
   publishes ChannelSurfaceProjection
   node_types CreatorChannel
   node_types ChannelPublication

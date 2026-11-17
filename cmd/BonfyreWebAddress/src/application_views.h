@@ -65,7 +65,7 @@ static int ac_views(const char *relative,const char *query,const char *id,const 
         if(ok && out.len<=AW_PACKET)aw_response(200,"application/msgpack",out.buf,out.len,0);else aw_error(503,"The continuation projection exceeded its bound.\n");bf_mp_writer_free(&out);
     }else{
         psetup_start(200,"Continue this work");size_t nav_size=0;unsigned char *nav=ac_navigation(id,context,pack,&nav_size);if(nav){fwrite(nav,1,nav_size,stdout);free(nav);}
-        ui_open(stdout,"h1",NULL);html(*title?title:"Continue this work");printf("</h1><p>Saved version %lld. These views open the same record in this destination. Unsaved edits stay in your original tab.</p><div class=\"pack-cards\">",row->revision);
+        ui_open(stdout,"h1",NULL);html(*title?title:"Continue this work");ui_close(stdout,"h1");ui_open(stdout,"p",NULL);printf("Saved version %lld. These views open the same record in this destination. Unsaved edits stay in your original tab.",row->revision);ui_close(stdout,"p");ui_open(stdout,"div","pack-cards");
         for(size_t n=0;n<count;n++){AcAlternative *a=&alternatives[n];ui_open(stdout,"article","pack-panel"); ui_open(stdout,"h2",NULL);html(a->label);ui_close(stdout,"h2"); ui_open(stdout,"p",NULL);html(a->view);ui_close(stdout,"p"); ui_open_a(stdout,"a","data-compatible-view",(const char *)NULL,UI_DYN,"href","",(a->url)); fputs("Open this view",stdout); ui_close(stdout,"a"); ui_close(stdout,"article");}
         ui_close(stdout,"div");if(!count)ui_text(stdout, "p", NULL, "No active editor currently declares a compatible view. The saved record has not changed.");psetup_end();
     }

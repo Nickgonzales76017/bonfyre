@@ -384,6 +384,21 @@ static int emit_page_program_route_uncached(const char *root, const char *target
             }
         }
     }
+    /* Explore: the page's material is the archive itself, ranked for what was
+     * asked by words and meaning, so any subject -- a story, a dish, a game, a
+     * person -- is a page in every rhythm the estate can compose. The words
+     * chose the material; they do not filter it again. */
+    char explore_title[256] = "";
+    if (!strcmp(program->route, "/explore")) {
+        free(prefilled);
+        prefilled = calloc(1, sizeof(*prefilled));
+        sources[0] = '\0';
+        projected = -1;
+        compiled_region_count = -1;
+        if (prefilled && q[0]) page_collect_archive_about(q, prefilled);
+        if (q[0]) snprintf(explore_title, sizeof explore_title, "%s", q);
+        q[0] = '\0';
+    }
     if (stage_prefilled) {
         sources[0] = '\0';
         focused_program = *program;
@@ -423,7 +438,8 @@ static int emit_page_program_route_uncached(const char *root, const char *target
         PageProjectionContract projection_contract;
         int have_projection_contract = projected >= 0 &&
             page_subject_projection_contract(&projection, program->route, &projection_contract);
-        const char *title = have_projection_contract && projection_contract.title[0]
+        const char *title = explore_title[0] ? explore_title
+                          : have_projection_contract && projection_contract.title[0]
                           ? projection_contract.title : program->title;
         const char *lede = have_projection_contract && projection_contract.lede[0]
                          ? projection_contract.lede : program->lede;
@@ -468,6 +484,7 @@ static int emit_page_program_route_uncached(const char *root, const char *target
                             NULL, "", program->route, territory, NULL, program->regions, program->region_count,
                             from, stream, q, program, NULL, program->route, NULL, NULL, 0, query, NULL};
         doc.subject_address=projection.subject[0]?projection.subject:NULL;
+        if (!strcmp(program->route, "/explore")) doc.prefilled = prefilled;
         if (projected >= 0) {
             doc.prefilled = prefilled;
             doc.sequence = compiled_regions;
@@ -714,10 +731,10 @@ static int page_emit_around_precomputed(const char *source, const char *key, con
         if (not_ident && *not_ident && ident && !strcmp(ident, not_ident)) continue;
         if (!shown++) (ui_open(stdout, "section", "region region-around"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Around here"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "more around"));
         page_distance_words(metres / 1000.0, words, sizeof(words));
-        fputs(image && page_image_url_safe(image) ? "<li class=\"with-picture\">" : "<li>", stdout);
+        if (image && page_image_url_safe(image)) ui_open(stdout, "li", "with-picture"); else ui_open(stdout, "li", NULL);
         slash = near && !strncmp(near, "o/", 2) ? strchr(near + 2, '/') : NULL;
         if (slash) { ui_open_a(stdout, "a", UI_DYN, "href", "/", near); }
-        else if (href && public_http_url(href)) { fputs("<a href=\"", stdout); html(href); ui_lit(stdout, "\" rel=\"noopener\">"); }
+        else if (href && public_http_url(href)) { ui_open_a(stdout, "a", UI_DYN, "href", "", href, "rel", "noopener"); }
         html(title);
         if (slash || (href && public_http_url(href))) ui_close(stdout, "a");
         if (image && page_image_url_safe(image)) { char sized[1024]; page_picture_at(image, 240, sized, sizeof(sized)); page_emit_picture(sized, "thumb"); }
@@ -768,7 +785,7 @@ static int page_emit_kin(const char *source, const char *key, const char *not_id
         if (!title || !*title || !kin) continue;
         if (not_ident && *not_ident && ident && !strcmp(ident, not_ident)) continue;
         if (!shown++) (ui_open(stdout, "section", "region region-kin"), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Also reported by"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "more kin"));
-        fputs(image && page_image_url_safe(image) ? "<li class=\"with-picture\">" : "<li>", stdout);
+        if (image && page_image_url_safe(image)) ui_open(stdout, "li", "with-picture"); else ui_open(stdout, "li", NULL);
         ui_link_path(stdout, (const char *const[]){"/", kin}, 2, title);
         if (image && page_image_url_safe(image)) { char sized[1024]; page_picture_at(image, 240, sized, sizeof(sized)); page_emit_picture(sized, "thumb"); }
         ui_open(stdout, "span", "by");
@@ -776,11 +793,486 @@ static int page_emit_kin(const char *source, const char *key, const char *not_id
         else if (by && *by) { ui_text(stdout, "span", NULL, by); }
         ui_close_n(stdout, "span", "li", NULL);
     }
-    if (shown)
-        fputs("</ol><p class=\"src\">These texts closely resemble this one in this estate's own chart of the words "
+    if (shown) do {
+        ui_close(stdout, "ol"); ui_open(stdout, "p", "src");
+        ui_lit(stdout, "These texts closely resemble this one in this estate's own chart of the words "
               "they use. That is a measurement of two texts, not a shared source, not confirmation of what either "
-              "says, and no claim about who published first.</p></section>", stdout);
+              "says, and no claim about who published first.");
+        ui_close(stdout, "p"); ui_close(stdout, "section");
+    } while (0);
     sqlite3_finalize(st); sqlite3_close(archive);
+    return shown;
+}
+
+/* The archive by meaning.
+ *
+ * Every kept item is embedded by the estate's own distilled static model
+ * (the same .bfse the site search and route suggestions use) and the vectors
+ * are written beside the archive as a .bfsi index, with a row table giving
+ * each vector's item, publication time and source. The archive's writer
+ * builds it; a request maps it and scores one query against every row, so
+ * the whole archive -- every source ever read, quiet ones included -- is one
+ * scan away from any headline or question.
+ *
+ * cannot infer: a high score -> the same story, a shared source, agreement or
+ * a correction; scores compare only within one model. */
+typedef struct { int64_t rowid; int64_t at; uint32_t source; uint32_t visible; } PageArchiveRow;
+
+static uint32_t page_archive_source_hash(const char *s) {
+    uint32_t h = 2166136261u;
+    for (; s && *s; s++) { h ^= (unsigned char)*s; h *= 16777619u; }
+    return h;
+}
+
+static int page_archive_index_paths(char *bfsi, size_t bcap, char *rows, size_t rcap) {
+    const char *path = getenv("BONFYRE_ITEM_ARCHIVE_DB");
+    if (!path || !*path) return 0;
+    return snprintf(bfsi, bcap, "%s.static.bfsi", path) < (int)bcap && snprintf(rows, rcap, "%s.static.rows", path) < (int)rcap;
+}
+
+/* What a kept item is embedded from: its headline, then the start of what it
+ * says. A row the model can read too little of is left out of the index
+ * rather than standing for every text of its length. */
+#define PAGE_ARCHIVE_EMBED_BODY 280
+#define PAGE_ARCHIVE_EMBED_MIN_TOKENS 3
+static int page_archive_index_build(sqlite3 *archive, int *indexed, int *skipped) {
+    const BfStaticModel *model = bf_route_static_model();
+    char bfsi[1100], rows_path[1100], tmp[1200], text[1024];
+    sqlite3_stmt *st = NULL; float *vectors = NULL; PageArchiveRow *rows = NULL;
+    int dims, cap = 0, n = 0, ok = 0; FILE *f = NULL;
+    *indexed = 0; *skipped = 0;
+    if (!archive || !model || !page_archive_index_paths(bfsi, sizeof bfsi, rows_path, sizeof rows_path)) return -1;
+    dims = bf_static_dims(model);
+    if (sqlite3_prepare_v2(archive, "SELECT rowid, source, title, COALESCE(body,''), COALESCE(at,0) FROM item ORDER BY rowid", -1, &st, NULL) != SQLITE_OK) return -1;
+    while (sqlite3_step(st) == SQLITE_ROW) {
+        const char *source = (const char *)sqlite3_column_text(st, 1);
+        const char *title = (const char *)sqlite3_column_text(st, 2);
+        const char *body = (const char *)sqlite3_column_text(st, 3);
+        if (n == cap) {
+            int next = cap ? cap * 2 : 65536;
+            float *v = realloc(vectors, sizeof(float) * (size_t)next * (size_t)dims);
+            PageArchiveRow *r = v ? realloc(rows, sizeof(*rows) * (size_t)next) : NULL;
+            if (v) vectors = v;
+            if (!v || !r) goto out;
+            rows = r; cap = next;
+        }
+        snprintf(text, sizeof text, "%s. %.*s", title ? title : "", PAGE_ARCHIVE_EMBED_BODY, body ? body : "");
+        if (bf_static_embed(model, text, vectors + (size_t)n * (size_t)dims) < PAGE_ARCHIVE_EMBED_MIN_TOKENS) { (*skipped)++; continue; }
+        rows[n].rowid = sqlite3_column_int64(st, 0);
+        rows[n].at = sqlite3_column_int64(st, 4);
+        rows[n].source = page_archive_source_hash(source);
+        rows[n].visible = 1;
+        n++;
+    }
+    /* Rows first, then the index, each by rename: a reader that maps the new
+     * index finds a row table at least as long. */
+    snprintf(tmp, sizeof tmp, "%s.tmp", rows_path);
+    if (!(f = fopen(tmp, "wb")) || (n && fwrite(rows, sizeof(*rows), (size_t)n, f) != (size_t)n)) { if (f) fclose(f); remove(tmp); goto out; }
+    if (fclose(f) != 0 || rename(tmp, rows_path) != 0) { remove(tmp); goto out; }
+    if (bf_static_index_write(bfsi, model, n, vectors) != 0) goto out;
+    *indexed = n; ok = 1;
+out:
+    sqlite3_finalize(st); free(vectors); free(rows);
+    return ok ? 0 : -1;
+}
+
+/* The mapped index and its rows, reloaded when the writer replaces them. */
+typedef struct { BfStaticIndex *index; const PageArchiveRow *rows; size_t rows_size; int count; time_t mtime; } PageArchiveIndex;
+static const PageArchiveIndex *page_archive_index(void) {
+    static PageArchiveIndex x;
+    const BfStaticModel *model = bf_route_static_model();
+    char bfsi[1100], rows_path[1100], err[160]; struct stat st, rs; int fd; void *map;
+    if (!model || !page_archive_index_paths(bfsi, sizeof bfsi, rows_path, sizeof rows_path) || stat(bfsi, &st)) return x.index ? &x : NULL;
+    if (x.index && st.st_mtime == x.mtime) return &x;
+    if (x.index) { bf_static_index_unmap(x.index); munmap((void *)x.rows, x.rows_size); memset(&x, 0, sizeof x); }
+    if (!(x.index = bf_static_index_map(bfsi, model, err, sizeof err))) return NULL;
+    if ((fd = open(rows_path, O_RDONLY)) < 0 || fstat(fd, &rs) ||
+        (size_t)rs.st_size < sizeof(PageArchiveRow) * (size_t)bf_static_index_count(x.index) ||
+        (map = mmap(NULL, (size_t)rs.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
+        if (fd >= 0) close(fd);
+        bf_static_index_unmap(x.index); memset(&x, 0, sizeof x); return NULL;
+    }
+    close(fd);
+    x.rows = map; x.rows_size = (size_t)rs.st_size; x.count = bf_static_index_count(x.index); x.mtime = st.st_mtime;
+    return &x;
+}
+
+typedef struct {
+    char source[96], key[40], title[384], by[160], publisher[160], image[512], family[64];
+    time_t at; float score;
+} PageArchiveMatch;
+
+typedef struct { const PageArchiveRow *rows; time_t before; uint32_t not_source; } PageArchiveFilter;
+static int page_archive_accept(int row, void *ctx) {
+    const PageArchiveFilter *f = ctx;
+    if (f->not_source && f->rows[row].source == f->not_source) return 0;
+    if (f->before && (f->rows[row].at <= 0 || f->rows[row].at >= f->before)) return 0;
+    return 1;
+}
+
+static int page_archive_fill(sqlite3 *archive, int64_t rowid, PageArchiveMatch *m) {
+    sqlite3_stmt *st = NULL; int ok = 0;
+    if (sqlite3_prepare_v2(archive, "SELECT source, key, title, COALESCE(by,''), COALESCE(publisher,''), COALESCE(image,''), COALESCE(at,0), COALESCE(family,'') FROM item WHERE rowid=?1", -1, &st, NULL) != SQLITE_OK) return 0;
+    sqlite3_bind_int64(st, 1, rowid);
+    if (sqlite3_step(st) == SQLITE_ROW && sqlite3_column_text(st, 0) && sqlite3_column_text(st, 1) && sqlite3_column_text(st, 2)) {
+        snprintf(m->source, sizeof m->source, "%s", (const char *)sqlite3_column_text(st, 0));
+        snprintf(m->key, sizeof m->key, "%s", (const char *)sqlite3_column_text(st, 1));
+        snprintf(m->title, sizeof m->title, "%s", (const char *)sqlite3_column_text(st, 2));
+        snprintf(m->by, sizeof m->by, "%s", (const char *)sqlite3_column_text(st, 3));
+        snprintf(m->publisher, sizeof m->publisher, "%s", (const char *)sqlite3_column_text(st, 4));
+        snprintf(m->image, sizeof m->image, "%s", (const char *)sqlite3_column_text(st, 5));
+        m->at = (time_t)sqlite3_column_int64(st, 6);
+        snprintf(m->family, sizeof m->family, "%s", sqlite3_column_text(st, 7) ? (const char *)sqlite3_column_text(st, 7) : "");
+        ok = m->title[0] != '\0';
+    }
+    sqlite3_finalize(st);
+    return ok;
+}
+
+/* Measured on this archive's leads: earlier coverage of the same subject
+ * scored 0.87-0.93 of the best match, pieces sharing only a place name or
+ * sponsor 0.85 and below. */
+#define PAGE_ARCHIVE_REACH 0.88f
+#define PAGE_ARCHIVE_LEAST 0.45f
+/* Rows nearest a text by meaning, best first, with the filter applied
+ * during the scan. Returns how many rowids were written. */
+static int page_archive_nearest(const char *text, time_t before, const char *not_source, float floor, int64_t *rowid, float *score, int cap) {
+    const PageArchiveIndex *x = page_archive_index();
+    const BfStaticModel *model = bf_route_static_model();
+    float query[1024]; int rows[256], n, i, kept = 0;
+    PageArchiveFilter filter;
+    if (!x || !model || !text || cap <= 0 || bf_static_dims(model) > 1024) return 0;
+    if (cap > 256) cap = 256;
+    if (bf_static_embed(model, text, query) < 2) return 0;
+    filter.rows = x->rows; filter.before = before; filter.not_source = not_source ? page_archive_source_hash(not_source) : 0;
+    n = bf_static_index_top(x->index, query, cap, page_archive_accept, &filter, rows, score);
+    /* How close is close depends on the question: a long headline and a
+     * one-word query sit on different scales under a static model. So the
+     * cut is relative to this query's own best match -- pieces within reach
+     * of it -- with floor only as the least any match may score. */
+    if (n && floor < score[0] * PAGE_ARCHIVE_REACH) floor = score[0] * PAGE_ARCHIVE_REACH;
+    for (i = 0; i < n; i++) if (score[i] >= floor) { rowid[kept] = x->rows[rows[i]].rowid; score[kept] = score[i]; kept++; }
+    return kept;
+}
+
+
+/* The words of a text that say what it is about: those the archive holds in
+ * under one item in fifty. A word nearly everything uses ("with", "after")
+ * distinguishes nothing; the measure is the archive's own, not a list. */
+static int page_archive_distinct_query(sqlite3 *archive, const char *text, char *out, size_t cap) {
+    sqlite3_stmt *total = NULL, *df = NULL; long long n = 0; int words = 0, seen = 0; size_t used = 0;
+    const unsigned char *p = (const unsigned char *)(text ? text : "");
+    out[0] = '\0';
+    if (sqlite3_prepare_v2(archive, "SELECT max(rowid) FROM item", -1, &total, NULL) == SQLITE_OK && sqlite3_step(total) == SQLITE_ROW) n = sqlite3_column_int64(total, 0);
+    sqlite3_finalize(total);
+    if (n < 1000 || sqlite3_prepare_v2(archive, "SELECT count(*) FROM item_text WHERE item_text MATCH ?1", -1, &df, NULL) != SQLITE_OK) return 0;
+    while (*p && seen < 16 && words < 8) {
+        const unsigned char *start; size_t len; char one[64]; long long count = 0; int w;
+        while (*p && !(isalnum(*p) || *p >= 0x80)) p++;
+        start = p;
+        while (*p && (isalnum(*p) || *p >= 0x80)) p++;
+        len = (size_t)(p - start);
+        if (len < 2 || len > 48) continue;
+        seen++;
+        snprintf(one, sizeof one, "\"%.*s\"", (int)len, (const char *)start);
+        sqlite3_reset(df); sqlite3_bind_text(df, 1, one, -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(df) == SQLITE_ROW) count = sqlite3_column_int64(df, 0);
+        if (count <= 0 || count * 50 > n) continue;
+        w = snprintf(out + used, cap - used, "%s%s", words ? " OR " : "", one);
+        if (w < 0 || used + (size_t)w >= cap) break;
+        used += (size_t)w; words++;
+    }
+    sqlite3_finalize(df);
+    return words;
+}
+
+/* Choose up to cap of the candidates, in order: one place per title, and no
+ * source above per_source while another still has a candidate. */
+static int page_archive_choose(PageArchiveMatch *cand, int n, int per_source, PageArchiveMatch *out, int cap, int *sources) {
+    unsigned char *taken = calloc((size_t)(n ? n : 1), 1); int chosen = 0, pass, i, j;
+    *sources = 0;
+    if (!taken) return 0;
+    /* per_source 0: the share follows the candidates -- twice an even split of
+     * the places across the sources that have one, never under two. */
+    if (per_source <= 0) {
+        int distinct = 0;
+        for (i = 0; i < n; i++) { for (j = 0; j < i && strcmp(cand[j].source, cand[i].source); j++) {} if (j == i) distinct++; }
+        per_source = distinct ? (2 * (n < cap ? n : cap) + distinct - 1) / distinct : 2;
+        if (per_source < 2) per_source = 2;
+    }
+    for (pass = 0; pass < 2 && chosen < cap; pass++)
+        for (i = 0; i < n && chosen < cap; i++) {
+            int same = 0;
+            if (taken[i]) continue;
+            for (j = 0; j < chosen && strcasecmp(out[j].title, cand[i].title); j++) {}
+            if (j < chosen) { taken[i] = 1; continue; }
+            for (j = 0; j < chosen; j++) same += !strcmp(out[j].source, cand[i].source);
+            if (pass == 0 && same >= per_source) continue;
+            if (!same) (*sources)++;
+            taken[i] = 1; out[chosen++] = cand[i];
+        }
+    free(taken);
+    return chosen;
+}
+
+static void page_archive_emit_list(const char *heading, const PageArchiveMatch *picks, int shown) {
+    int i;
+    ui_elem(stdout, "section", (const UiAttr[]){{"class", "region region-kin region-archive"}, {"aria-label", heading}}, 2, 0);
+    (ui_open(stdout, "h2", "region-label"), ui_lit(stdout, heading), ui_close(stdout, "h2"), ui_open(stdout, "ol", "more kin"));
+    for (i = 0; i < shown; i++) {
+        const PageArchiveMatch *m = &picks[i]; char address[224];
+        fputs(page_image_url_safe(m->image) ? "<li class=\"with-picture\">" : "<li>", stdout);
+        snprintf(address, sizeof(address), "o/%s/%s", m->source, m->key);
+        ui_link_path(stdout, (const char *const[]){"/", address}, 2, m->title);
+        if (page_image_url_safe(m->image)) { char sized[1024]; page_picture_at(m->image, 240, sized, sizeof(sized)); page_emit_picture(sized, "thumb"); }
+        ui_open(stdout, "span", "by");
+        ui_text(stdout, "span", NULL, m->publisher[0] ? m->publisher : m->by[0] ? m->by : m->source);
+        if (m->at > 0 && !page_family_timeless(m->family)) { struct tm tm; char when[32]; if (gmtime_r(&m->at, &tm) && strftime(when, sizeof(when), "%B %Y", &tm)) ui_text(stdout, "span", NULL, when); }
+        ui_close_n(stdout, "span", "li", NULL);
+    }
+    ui_close(stdout, "ol");
+}
+
+/* Search reaches every source the estate has ever read.
+ *
+ * Two rankings of the archive are fused by reciprocal rank: the words a
+ * person typed (the full-text index the archive's writer keeps) and what
+ * the question means (the static index). A piece both rankings find rises; a
+ * piece only one finds still has a place. */
+#define PAGE_ARCHIVE_MATCH_SHOW 24
+/* Working space for one ranking, not a policy: what is shown is decided by
+ * evidence and shares below. */
+#define PAGE_ARCHIVE_CANDIDATES 240
+/* The archive ranked for q: what the words find (full text, bm25) and what
+ * the question means (static index), fused by reciprocal rank so a piece both
+ * find rises and a piece only one finds keeps a place. Writes up to cap
+ * rowids best first; *words_found is how many pieces use the words. */
+/* Why a ranked piece is there: found by its words, by its meaning (with the
+ * cosine), or both. */
+typedef struct { unsigned char words; float meaning; } PageArchiveEvidence;
+static int page_archive_ranked(sqlite3 *archive, const char *q, int64_t *rowid, double *score, PageArchiveEvidence *why, int cap, int *words_found) {
+    double *fused; float near_score[PAGE_ARCHIVE_CANDIDATES]; int64_t near[PAGE_ARCHIVE_CANDIDATES];
+    char match[512]; int n = 0, near_n, any, i, j, limit = cap < PAGE_ARCHIVE_CANDIDATES ? cap : PAGE_ARCHIVE_CANDIDATES;
+    *words_found = 0;
+    if (!archive || !q || !*q || cap <= 0 || !(fused = calloc((size_t)cap, sizeof(*fused)))) return 0;
+    for (any = 0; any < 2 && !n; any++) {
+        /* Rank by the words that say something: a word nearly every piece
+         * uses ranks nothing and makes the ranking score most of the archive.
+         * With none left, meaning carries the question alone. */
+        sqlite3_stmt *st = NULL; int words = page_archive_distinct_query(archive, q, match, sizeof(match));
+        if (words && !any) { char *p; for (p = match; (p = strstr(p, " OR ")); ) memmove(p + 1, p + 4, strlen(p + 4) + 1); }
+        if (!words || (any && words < 2)) break;
+        if (sqlite3_prepare_v2(archive, "SELECT rowid FROM item_text WHERE item_text MATCH ?1 ORDER BY bm25(item_text, 8.0, 1.0, 3.0, 3.0) LIMIT ?2", -1, &st, NULL) != SQLITE_OK) break;
+        sqlite3_bind_text(st, 1, match, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(st, 2, limit);
+        while (n < limit && sqlite3_step(st) == SQLITE_ROW) {
+            rowid[n] = sqlite3_column_int64(st, 0); fused[n] = 1.0 / (60 + n + 1);
+            if (why) { why[n].words = 1; why[n].meaning = 0; }
+            n++;
+        }
+        sqlite3_finalize(st);
+        if (n && sqlite3_prepare_v2(archive, "SELECT count(*) FROM item_text WHERE item_text MATCH ?1", -1, &st, NULL) == SQLITE_OK) {
+            sqlite3_bind_text(st, 1, match, -1, SQLITE_TRANSIENT);
+            if (sqlite3_step(st) == SQLITE_ROW) *words_found = sqlite3_column_int(st, 0);
+            sqlite3_finalize(st);
+        }
+    }
+    near_n = page_archive_nearest(q, 0, NULL, PAGE_ARCHIVE_LEAST, near, near_score, limit);
+    for (i = 0; i < near_n; i++) {
+        for (j = 0; j < n && rowid[j] != near[i]; j++) {}
+        if (j == n) { if (n >= cap) continue; rowid[n] = near[i]; fused[n] = 0; if (why) why[n].words = 0; n++; }
+        fused[j] += 1.0 / (60 + i + 1);
+        if (why) why[j].meaning = near_score[i];
+    }
+    for (i = 1; i < n; i++) for (j = i; j > 0 && fused[j] > fused[j - 1]; j--) {
+        double f = fused[j]; int64_t r = rowid[j]; fused[j] = fused[j - 1]; rowid[j] = rowid[j - 1]; fused[j - 1] = f; rowid[j - 1] = r;
+        if (why) { PageArchiveEvidence e = why[j]; why[j] = why[j - 1]; why[j - 1] = e; }
+    }
+    if (score) for (i = 0; i < n; i++) score[i] = fused[i];
+    free(fused);
+    return n;
+}
+
+static int page_emit_archive_matches(const char *q) {
+    sqlite3 *archive; PageArchiveMatch *cand, *picks; int64_t rowid[PAGE_ARCHIVE_CANDIDATES];
+    int n, words_found = 0, i, shown, sources, filled = 0;
+    if (!q || !*q || !(archive = page_archive_open(0))) return 0;
+    n = page_archive_ranked(archive, q, rowid, NULL, NULL, PAGE_ARCHIVE_CANDIDATES, &words_found);
+    cand = calloc((size_t)(n ? n : 1), sizeof(*cand)); picks = calloc(PAGE_ARCHIVE_MATCH_SHOW, sizeof(*picks));
+    if (!cand || !picks) { free(cand); free(picks); sqlite3_close(archive); return 0; }
+    for (i = 0; i < n; i++) if (page_archive_fill(archive, rowid[i], &cand[filled])) filled++;
+    sqlite3_close(archive);
+    shown = page_archive_choose(cand, filled, 0, picks, PAGE_ARCHIVE_MATCH_SHOW, &sources);
+    if (shown) {
+        page_archive_emit_list("From the archive", picks, shown);
+        ui_open(stdout, "p", "src");
+        if (words_found) printf("%d %s these words; these are the closest by words and meaning, from %d source%s. ", words_found, words_found == 1 ? "piece uses" : "pieces use", sources, sources == 1 ? "" : "s");
+        else printf("No piece uses these words; these are the closest by meaning, from %d source%s. ", sources, sources == 1 ? "" : "s");
+        ui_lit(stdout, "Each is what its source published when this estate read it, kept with its date; it may since have changed or been taken down.");
+        ui_close_n(stdout, "p", "section", NULL);
+        /* Everything the estate holds on it, composed as a page of its own. */
+        ui_open(stdout, "p", "jump");
+        ui_start(stdout, "a"); ui_attr_open(stdout, "href"); ui_copy(stdout, "/explore?q="); url_query_value(q); ui_attr_close(stdout); ui_gt(stdout);
+        ui_copy(stdout, "Open it as a page: read, listen, watch and look");
+        ui_close_n(stdout, "a", "p", NULL);
+    }
+    free(cand); free(picks);
+    return shown;
+}
+
+/* A page made from the archive: every kind of material the estate kept about
+ * q -- stories, episodes, video, pictures, events -- in rank order, at most
+ * a share per source that follows what was found, for the page's own regions to
+ * compose. Each item is marked archived: what was read, not what is current. */
+/* Every word of q of four letters or more appears in title, ignoring case
+ * ("Dungeons & Dragons" answers "dungeons and dragons"). */
+static int page_archive_title_has_words(const char *title, const char *q) {
+    const unsigned char *p = (const unsigned char *)q; int words = 0;
+    while (*p) {
+        const unsigned char *start; size_t len; char word[64]; const char *t; int found = 0;
+        while (*p && !(isalnum(*p) || *p >= 0x80)) p++;
+        start = p;
+        while (*p && (isalnum(*p) || *p >= 0x80)) p++;
+        len = (size_t)(p - start);
+        if (len < 4 || len >= sizeof word) continue;
+        memcpy(word, start, len); word[len] = '\0'; words++;
+        for (t = title; *t && !found; t++) found = !strncasecmp(t, word, len);
+        if (!found) return 0;
+    }
+    return words > 0;
+}
+static int page_collect_archive_about(const char *q, PageMaterial *material) {
+    sqlite3 *archive; sqlite3_stmt *st = NULL; int64_t rowid[PAGE_ARCHIVE_CANDIDATES]; double fused[PAGE_ARCHIVE_CANDIDATES];
+    PageArchiveEvidence why[PAGE_ARCHIVE_CANDIDATES];
+    int n, words_found = 0, i, loaded = 0;
+    if (!q || !*q || !material || !(archive = page_archive_open(0))) return 0;
+    n = page_archive_ranked(archive, q, rowid, fused, why, PAGE_ARCHIVE_CANDIDATES, &words_found);
+    (void)fused;
+    /* Each source's share of the page follows what was found: twice an even
+     * split of the admitted pieces across their sources, and never less than
+     * two. A subject one publisher covers (a game's own news site) fills from
+     * it; a subject hundreds cover stays a chorus. */
+    int share = 2;
+    {
+        sqlite3_stmt *pre = NULL; char (*seen)[96] = calloc((size_t)(n ? n : 1), 96); int admitted = 0, sources = 0;
+        if (seen && n && sqlite3_prepare_v2(archive, "SELECT source,title FROM item WHERE rowid=?1", -1, &pre, NULL) == SQLITE_OK) {
+            for (i = 0; i < n; i++) {
+                const char *src, *ttl; int k;
+                sqlite3_reset(pre); sqlite3_bind_int64(pre, 1, rowid[i]);
+                if (sqlite3_step(pre) != SQLITE_ROW || !(src = (const char *)sqlite3_column_text(pre, 0)) || !(ttl = (const char *)sqlite3_column_text(pre, 1))) continue;
+                if (why[i].meaning <= 0 && !page_archive_title_has_words(ttl, q)) continue;
+                admitted++;
+                for (k = 0; k < sources && strcmp(seen[k], src); k++) {}
+                if (k == sources) snprintf(seen[sources++], 96, "%s", src);
+            }
+        }
+        sqlite3_finalize(pre); free(seen);
+        if (sources) share = (2 * admitted + sources - 1) / sources;
+        if (share < 2) share = 2;
+    }
+    if (n && sqlite3_prepare_v2(archive, "SELECT source,key,kind,title,body,href,image,by,publisher,ident,at,COALESCE(family,'') FROM item WHERE rowid=?1", -1, &st, NULL) == SQLITE_OK) {
+        for (i = 0; i < n; i++) {
+            const char *source, *kind_name, *title; int kind, same = 0, k; PageItem *item; PageStream *stream;
+            sqlite3_reset(st); sqlite3_bind_int64(st, 1, rowid[i]);
+            if (sqlite3_step(st) != SQLITE_ROW) continue;
+            source = (const char *)sqlite3_column_text(st, 0); kind_name = (const char *)sqlite3_column_text(st, 2); title = (const char *)sqlite3_column_text(st, 3);
+            if (!source || !title || !*title) continue;
+            /* Evidence enough to stand on a page about q: its meaning is within
+             * reach of the best match, or its own title carries every word
+             * asked. A body that mentions the words once is not enough. */
+            if (why[i].meaning <= 0 && !page_archive_title_has_words(title, q)) continue;
+            kind = kind_name && !strcmp(kind_name, "event") ? BF_PAGE_MATERIAL_EVENT
+                 : kind_name && !strcmp(kind_name, "photo") ? BF_PAGE_MATERIAL_PHOTO
+                 : kind_name && !strcmp(kind_name, "video") ? BF_PAGE_MATERIAL_VIDEO
+                 : kind_name && !strcmp(kind_name, "audio") ? BF_PAGE_MATERIAL_AUDIO
+                 : BF_PAGE_MATERIAL_PUBLICATION;
+            stream = &material->stream[kind];
+            for (k = 0; k < stream->count; k++) {
+                if (!strcmp(stream->item[k].source, source)) same++;
+                if (!strcasecmp(stream->item[k].title, title)) { same = -1; break; }
+            }
+            if (same < 0 || same >= share || !(item = page_push(stream, title))) continue;
+            snprintf(item->source, sizeof(item->source), "%s", source);
+            snprintf(item->key, sizeof(item->key), "%s", (const char *)sqlite3_column_text(st, 1));
+            snprintf(item->body, sizeof(item->body), "%s", (const char *)sqlite3_column_text(st, 4));
+            snprintf(item->href, sizeof(item->href), "%s", (const char *)sqlite3_column_text(st, 5));
+            snprintf(item->image, sizeof(item->image), "%s", (const char *)sqlite3_column_text(st, 6));
+            snprintf(item->by, sizeof(item->by), "%s", (const char *)sqlite3_column_text(st, 7));
+            snprintf(item->note, sizeof(item->note), "%s", (const char *)sqlite3_column_text(st, 8));
+            snprintf(item->ident, sizeof(item->ident), "%s", (const char *)sqlite3_column_text(st, 9));
+            /* Timeless material is placed by rank, not by a date it does not need. */
+            item->at = page_family_timeless((const char *)sqlite3_column_text(st, 11)) ? 0 : (time_t)sqlite3_column_int64(st, 10);
+            item->kind = kind;
+            item->archived = 1;
+            loaded++;
+        }
+        sqlite3_finalize(st);
+    }
+    sqlite3_close(archive);
+    {
+        static const BfPageMaterial mixed[] = {BF_PAGE_MATERIAL_PUBLICATION, BF_PAGE_MATERIAL_VIDEO, BF_PAGE_MATERIAL_PHOTO, BF_PAGE_MATERIAL_AUDIO};
+        size_t m; int k;
+        for (m = 0; m < sizeof(mixed) / sizeof(mixed[0]); m++) {
+            PageStream *from = &material->stream[mixed[m]], *mix = &material->stream[BF_PAGE_MATERIAL_MIX];
+            for (k = 0; k < from->count && mix->count < PAGE_STREAM_MAX; k++) if (from->item[k].key[0]) mix->item[mix->count++] = from->item[k];
+        }
+    }
+    return loaded;
+}
+
+/* Earlier in the archive: a story's longer history.
+ *
+ * A source that went quiet still holds what it said. Under a front's lead
+ * the static index proposes the older pieces (a fortnight back or more, other
+ * publishers) nearest the lead by meaning; the full-text index then keeps
+ * only those that also share the lead's words, ranked by both, one per
+ * publisher. Meaning alone drifts toward anything of the same shape; words
+ * alone toward anything sharing one name. Where both agree it is the same
+ * subject told earlier. */
+#define PAGE_ARCHIVE_THREAD_CANDIDATES 96
+static int page_emit_archive_thread(const PageItem *lead, time_t now) {
+    sqlite3 *archive; sqlite3_stmt *st = NULL;
+    static PageArchiveMatch cand[PAGE_ARCHIVE_THREAD_CANDIDATES]; PageArchiveMatch picks[6];
+    int64_t rowid[PAGE_ARCHIVE_THREAD_CANDIDATES]; float score[PAGE_ARCHIVE_THREAD_CANDIDATES];
+    double fused[PAGE_ARCHIVE_THREAD_CANDIDATES]; int words_rank[PAGE_ARCHIVE_THREAD_CANDIDATES];
+    char text[1024], match[512], ids[PAGE_ARCHIVE_THREAD_CANDIDATES * 21 + 2];
+    int n, i, j, filled = 0, shown, sources, rank = 0; size_t used = 0;
+    if (!lead || !lead->title[0]) return 0;
+    snprintf(text, sizeof text, "%s. %.*s", lead->title, PAGE_ARCHIVE_EMBED_BODY, lead->body);
+    n = page_archive_nearest(text, now - 14 * 86400, lead->source, PAGE_ARCHIVE_LEAST, rowid, score, PAGE_ARCHIVE_THREAD_CANDIDATES);
+    if (n < 1 || !(archive = page_archive_open(0))) return 0;
+    if (!page_archive_distinct_query(archive, lead->title, match, sizeof match)) { sqlite3_close(archive); return 0; }
+    for (i = 0; i < n; i++) { int w = snprintf(ids + used, sizeof ids - used, "%s%lld", i ? "," : "", (long long)rowid[i]); if (w > 0) used += (size_t)w; words_rank[i] = -1; }
+    {
+        char sql[sizeof ids + 200];
+        snprintf(sql, sizeof sql, "SELECT rowid FROM item_text WHERE item_text MATCH ?1 AND rowid IN (%s) ORDER BY bm25(item_text, 8.0, 1.0, 3.0, 3.0)", ids);
+        if (sqlite3_prepare_v2(archive, sql, -1, &st, NULL) == SQLITE_OK) {
+            sqlite3_bind_text(st, 1, match, -1, SQLITE_TRANSIENT);
+            while (sqlite3_step(st) == SQLITE_ROW) {
+                int64_t r = sqlite3_column_int64(st, 0);
+                for (j = 0; j < n; j++) if (rowid[j] == r && words_rank[j] < 0) { words_rank[j] = rank++; break; }
+            }
+        }
+        sqlite3_finalize(st);
+    }
+    for (i = 0; i < n; i++) fused[i] = words_rank[i] < 0 ? -1 : 1.0 / (60 + i + 1) + 1.0 / (60 + words_rank[i] + 1);
+    for (i = 0; i < n; i++) {
+        int best = -1;
+        for (j = 0; j < n; j++) if (fused[j] >= 0 && (best < 0 || fused[j] > fused[best])) best = j;
+        if (best < 0) break;
+        if (page_archive_fill(archive, rowid[best], &cand[filled])) { cand[filled].score = score[best]; filled++; }
+        fused[best] = -1;
+    }
+    sqlite3_close(archive);
+    shown = page_archive_choose(cand, filled, 1, picks, 6, &sources);
+    if (shown < 1) return 0;
+    page_archive_emit_list("Earlier in the archive", picks, shown);
+    ui_text(stdout, "p", "src", "Older pieces from other publishers that read closest to the story above and share its words. That is not the same story, a shared source or a correction.");
+    ui_open(stdout, "p", "jump");
+    ui_start(stdout, "a"); ui_attr_open(stdout, "href"); ui_copy(stdout, "/explore?q="); url_query_value(lead->title); ui_attr_close(stdout); ui_gt(stdout);
+    ui_copy(stdout, "Everything on this story: read, listen, watch and look");
+    ui_close_n(stdout, "a", "p", NULL);
+    ui_close(stdout, "section");
     return shown;
 }
 
@@ -852,8 +1344,8 @@ static int page_emit_around(sqlite3 *db, double lat, double lon, const char *not
  * source still publishes it: the page says when it was read, keeps the
  * original link, and never presents it as current.
  */
-#include "item_credit_indexes.h"
 #include "web_store.h"
+#include "../generated/store_schema.h"
 static sqlite3 *page_archive_open(int writable) {
     const char *path = getenv("BONFYRE_ITEM_ARCHIVE_DB");
     sqlite3 *db = NULL;
@@ -861,15 +1353,16 @@ static sqlite3 *page_archive_open(int writable) {
     if (writable) {
         if (bf_store_open(path, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, &bf_store_policy_item_archive) != SQLITE_OK) { sqlite3_close(db); return NULL; }
         sqlite3_busy_timeout(db, 5000);
-        if (sqlite3_exec(db, "PRAGMA journal_mode=DELETE;"
-            "CREATE TABLE IF NOT EXISTS item(source TEXT NOT NULL, key TEXT NOT NULL, kind TEXT NOT NULL, family TEXT DEFAULT '',"
-            " title TEXT NOT NULL, body TEXT DEFAULT '', href TEXT DEFAULT '', image TEXT DEFAULT '', by TEXT DEFAULT '',"
-            " publisher TEXT DEFAULT '', ident TEXT DEFAULT '', at INTEGER DEFAULT 0, first_read TEXT NOT NULL, last_read TEXT NOT NULL,"
-            " PRIMARY KEY(source, key));"
-            "CREATE INDEX IF NOT EXISTS item_by_source ON item(source, at DESC);"
-            "CREATE INDEX IF NOT EXISTS idx_item_credit_by_source_at ON item(by, source, at DESC);"
-            BF_ITEM_CREDIT_INDEXES
-            "CREATE INDEX IF NOT EXISTS item_by_ident ON item(ident);", NULL, NULL, NULL) != SQLITE_OK) { sqlite3_close(db); return NULL; }
+        if (sqlite3_exec(db, BF_STORE_WEB_ITEM_ARCHIVE, NULL, NULL, NULL) != SQLITE_OK) { sqlite3_close(db); return NULL; }
+        /* An archive kept before its text index existed is indexed once, here
+         * at its writer; from then on the declared triggers keep it current. */
+        {
+            sqlite3_stmt *st = NULL; int empty = 0;
+            if (sqlite3_prepare_v2(db, "SELECT EXISTS(SELECT 1 FROM item) AND NOT EXISTS(SELECT 1 FROM item_text_docsize)", -1, &st, NULL) == SQLITE_OK &&
+                sqlite3_step(st) == SQLITE_ROW) empty = sqlite3_column_int(st, 0);
+            sqlite3_finalize(st);
+            if (empty && sqlite3_exec(db, "INSERT INTO item_text(item_text) VALUES('rebuild');", NULL, NULL, NULL) != SQLITE_OK) { sqlite3_close(db); return NULL; }
+        }
         return db;
     }
     return bf_store_open_ro(path, 1500, &bf_store_policy_item_archive);
@@ -1034,15 +1527,17 @@ static int page_emit_entities(const char *title) {
                                               tag_from, sizeof(tag_from));
         int has_where = page_entity_observation(db, eid, "location", where, sizeof(where),
                                                 where_from, sizeof(where_from));
-        if (!shown++)
-            fputs("<section class=\"region names\"><h2 class=\"region-label\">Names and references</h2>"
-                  "<ol class=\"more\">", stdout);
+        if (!shown++) do {
+            ui_open(stdout, "section", "region names"); ui_open(stdout, "h2", "region-label");
+            ui_lit(stdout, "Names and references"); ui_close(stdout, "h2"); ui_open(stdout, "ol", "more");
+        } while (0);
         (ui_open(stdout, "li", NULL), ui_open(stdout, "strong", NULL)); html(display); (ui_close(stdout, "strong"), ui_lit(stdout, " — "));
         html(kind);
         ui_open(stdout, "span", "by");
         if (has_tag) {
-            fputs("<span><a href=\"https://www.wikidata.org/wiki/", stdout); html(tag);
-            ui_lit(stdout, "\" rel=\"noopener noreferrer\" target=\"_blank\">"); html(tag);
+            ui_open(stdout, "span", NULL);
+            ui_open_a(stdout, "a", UI_DYN, "href", "https://www.wikidata.org/wiki/", tag, "rel", "noopener noreferrer", "target", "_blank");
+            html(tag);
             ui_close_n(stdout, "a", "span", NULL);
         }
         if (has_where) { ui_text(stdout, "span", NULL, where); }
@@ -1076,7 +1571,8 @@ static int page_emit_archive_earlier(const char *source, const char *except_key,
             (ui_open(stdout, "section", "region region-earlier"), ui_open(stdout, "h2", "region-label")); html(heading);
             (ui_close(stdout, "h2"), ui_open(stdout, "ol", "more"));
         }
-        fputs("<li><a href=\"/o/", stdout); page_url_escape(source); ui_lit(stdout, "/"); html(key); ui_lit(stdout, "\">");
+        ui_open(stdout, "li", NULL); ui_start(stdout, "a"); ui_attr_open(stdout, "href"); ui_copy(stdout, "/o/");
+        page_url_escape(source); ui_copy(stdout, "/"); html(key); ui_lit(stdout, "\">");
         html(title); ui_close(stdout, "a");
         if (at > 0) page_when(at, now, when, sizeof(when));
         if (when[0]) { (ui_open(stdout, "span", "by"), ui_open(stdout, "span", NULL)); html(when); ui_close_n(stdout, "span", "span", NULL); }
@@ -1408,7 +1904,7 @@ static void page_emit_property_results(const char *q) {
         if (!account[0] || strspn(account, "0123456789") != strlen(account)) continue;
         if (!shown++) (ui_elem(stdout, "section", (const UiAttr[]){{"class", "region region-properties"}, {"aria-label", "Properties"}}, 2, 0), ui_open(stdout, "h2", "region-label"), ui_lit(stdout, "Properties"), ui_close(stdout, "h2"), ui_open(stdout, "ol", "results"));
         page_title_case(address[0] ? address : "Address not recorded", pretty, sizeof(pretty));
-        fputs("<li><a class=\"result\" href=\"/s/parcel/", stdout); html(account); (ui_lit(stdout, "\">"), ui_open(stdout, "span", "kind")); page_glyph("pin");
+        ui_open(stdout, "li", NULL); ui_open_a(stdout, "a", "class", "result", UI_DYN, "href", "/s/parcel/", account); ui_open(stdout, "span", "kind"); page_glyph("pin");
         (ui_close(stdout, "span"), ui_open(stdout, "span", "what"), ui_open(stdout, "b", NULL)); html(pretty); (ui_close(stdout, "b"), ui_open(stdout, "span", "dek"));
         { char owner_pretty[256]; page_title_case(owner, owner_pretty, sizeof(owner_pretty)); html(owner_pretty); }
         if (page_money(total, money, sizeof(money))) { ui_lit(stdout, " &middot; assessed "); html(money); }
@@ -1483,11 +1979,13 @@ static int emit_parcel_page(const BfRequest *r) {
         page_item_action(market, "list", "See this market", 0, 1);
     }
     if (actor[0]) {
-        fputs(is_saved ? "<form class=\"verb-form\" method=\"post\" action=\"/o/unsave\">" : "<form class=\"verb-form\" method=\"post\" action=\"/o/save\">", stdout);
-        fputs("<input type=\"hidden\" name=\"item\" value=\"", stdout); html(ref);
-        fputs("\"><input type=\"hidden\" name=\"return\" value=\"", stdout); html(target);
-        fputs(is_saved ? "\"><button class=\"verb is-on\" type=\"submit\" aria-pressed=\"true\">" : "\"><button class=\"verb\" type=\"submit\" aria-pressed=\"false\">", stdout);
-        page_glyph("save"); fputs(is_saved ? "<span>Saved</span>" : "<span>Save</span>", stdout); ui_close_n(stdout, "button", "form", NULL);
+        if (is_saved) ui_open_a(stdout, "form", "class", "verb-form", "method", "post", "action", "/o/unsave");
+        else ui_open_a(stdout, "form", "class", "verb-form", "method", "post", "action", "/o/save");
+        ui_open_a(stdout, "input", "type", "hidden", "name", "item", UI_DYN, "value", "", ref);
+        ui_open_a(stdout, "input", "type", "hidden", "name", "return", UI_DYN, "value", "", target);
+        if (is_saved) ui_open_a(stdout, "button", "class", "verb is-on", "type", "submit", "aria-pressed", "true");
+        else ui_open_a(stdout, "button", "class", "verb", "type", "submit", "aria-pressed", "false");
+        page_glyph("save"); if (is_saved) ui_text(stdout, "span", NULL, "Saved"); else ui_text(stdout, "span", NULL, "Save"); ui_close_n(stdout, "button", "form", NULL);
         if (may_write) {
             /* The parcel aperture's own work verbs, offered only with write scope. */
             char watch[200];
@@ -1508,7 +2006,9 @@ static int emit_parcel_page(const BfRequest *r) {
         for (p = (const unsigned char *)self; *p && w < (int)sizeof(share) - 8; p++) w += isalnum(*p) || strchr("-._~", *p) ? snprintf(share + w, sizeof(share) - (size_t)w, "%c", *p) : snprintf(share + w, sizeof(share) - (size_t)w, "%%%02X", *p);
         page_item_action(share, "share", "Share", 0, 0);
     }
-    fputs("</nav><p class=\"link-line\"><label>Link <input readonly value=\"", stdout); html(self); (ui_lit(stdout, "\">"), ui_close(stdout, "label"), ui_close(stdout, "p"), ui_close(stdout, "div"));
+    ui_close(stdout, "nav"); ui_open(stdout, "p", "link-line"); ui_open(stdout, "label", NULL); ui_lit(stdout, "Link ");
+    ui_open_a(stdout, "input", "readonly", (const char *)NULL, UI_DYN, "value", "", self);
+    ui_close(stdout, "label"); ui_close(stdout, "p"); ui_close(stdout, "div");
     ui_open(stdout, "dl", "facts");
     page_fact("Owner of record", owner_pretty);
     if (mail[0]) { char m[400], mp[400]; snprintf(m, sizeof(m), "%s, %s", mail, mail_city); page_title_case(m, mp, sizeof(mp)); page_fact("Mailing address", mp); }
@@ -1548,7 +2048,9 @@ static int emit_parcel_page(const BfRequest *r) {
                         (ui_close(stdout, "h2"), ui_open(stdout, "div", "ledger-wrap"), ui_open(stdout, "table", "ledger"), ui_open(stdout, "thead", NULL), ui_open(stdout, "tr", NULL), ui_open(stdout, "th", NULL), ui_lit(stdout, "Address"), ui_close(stdout, "th"), ui_open(stdout, "th", NULL), ui_lit(stdout, "Assessed"), ui_close(stdout, "th"), ui_open(stdout, "th", NULL), ui_lit(stdout, "Built"), ui_close(stdout, "th"), ui_close(stdout, "tr"), ui_close(stdout, "thead"), ui_open(stdout, "tbody", NULL));
                     }
                     page_title_case(addr, ap, sizeof(ap));
-                    fputs("<tr><td class=\"name\"><a href=\"/s/parcel/", stdout); html(acc); ui_lit(stdout, "\">"); html(ap); (ui_close(stdout, "a"), ui_close(stdout, "td"), ui_open(stdout, "td", NULL));
+                    ui_open(stdout, "tr", NULL); ui_open(stdout, "td", "name");
+                    ui_open_a(stdout, "a", UI_DYN, "href", "/s/parcel/", acc);
+                    html(ap); (ui_close(stdout, "a"), ui_close(stdout, "td"), ui_open(stdout, "td", NULL));
                     html(page_money(tv, money, sizeof(money)) ? money : ""); (ui_close(stdout, "td"), ui_open(stdout, "td", "when"));
                     if (atoi(yb) > 1800) html(yb);
                     ui_close_n(stdout, "td", "tr", NULL);
@@ -1567,7 +2069,7 @@ static int emit_parcel_page(const BfRequest *r) {
  * line a person can follow: "Picture from Wikimedia Commons · CC BY-SA 4.0". */
 static void page_emit_credit(const PageItem *item, const char *element) {
     if (!item->origin[0] && !item->rights[0]) return;
-    printf("<%s class=\"credit\">", element);
+    ui_open(stdout, element, "credit");
     if (item->origin[0]) {
         fputs(item->asset[0] && item->kind == BF_PAGE_MATERIAL_AUDIO ? "Recording from " : item->asset[0] ? "Video from " : "Picture from ", stdout);
         ui_open_a(stdout, "a", "rel", "noopener", "target", "_blank", "href", item->origin_href); html(item->origin); ui_close(stdout, "a");
@@ -1577,7 +2079,7 @@ static void page_emit_credit(const PageItem *item, const char *element) {
         if (item->rights_href[0]) { ui_open_a(stdout, "a", "rel", "license noopener", "target", "_blank", "href", item->rights_href); html(item->rights); ui_close(stdout, "a"); }
         else html(item->rights);
     }
-    printf("</%s>", element);
+    ui_close(stdout, element);
 }
 
 /* Using a picture someone shared is a thing a person can do, not a question
@@ -1592,28 +2094,30 @@ static void page_emit_reuse(const PageItem *item) {
     if (item->origin[0]) { snprintf(where_name, sizeof(where_name), "%s", item->origin); snprintf(where_href, sizeof(where_href), "%s", item->origin_href); }
     else if (item->rights[0] && public_http_url(item->href)) { page_publisher(item->href, where_name, sizeof(where_name)); snprintf(where_href, sizeof(where_href), "%s", item->href); }
     if (!where_name[0]) return;
-    printf("<details class=\"reuse\"><summary>Use this %s</summary>", noun);
+    ui_open_a(stdout, "details", "class", "reuse"); ui_open(stdout, "summary", NULL); ui_lit(stdout, "Use this "); ui_copy(stdout, noun); ui_close(stdout, "summary");
     if (item->rights[0]) {
         const BfPageLicence *licence = page_licence(item->rights, item->rights_href);
         if (licence) {
             /* What its terms let a person do, in plain words. */
             ui_open(stdout, "ul", "terms-list");
-            fputs(licence->commercial ? "<li>You may use it in something you sell.</li>" : "<li>Not for commercial use.</li>", stdout);
-            fputs(licence->adapt ? "<li>You may crop, edit or remix it.</li>" : "<li>Use it as it is, without changes.</li>", stdout);
+            if (licence->commercial) ui_text(stdout, "li", NULL, "You may use it in something you sell."); else ui_text(stdout, "li", NULL, "Not for commercial use.");
+            if (licence->adapt) ui_text(stdout, "li", NULL, "You may crop, edit or remix it."); else ui_text(stdout, "li", NULL, "Use it as it is, without changes.");
             if (licence->credit) ui_text(stdout, "li", NULL, "Credit who made it.");
             if (licence->share_alike) ui_text(stdout, "li", NULL, "Share what you make from it under the same terms.");
             ui_close(stdout, "ul");
         }
-        fputs("<p>Credit it like this wherever you use it:</p><input readonly value=\"", stdout);
+        ui_open(stdout, "p", NULL); ui_lit(stdout, "Credit it like this wherever you use it:"); ui_close(stdout, "p");
+        ui_start(stdout, "input"); ui_flag(stdout, "readonly"); ui_attr_open(stdout, "value");
         ui_lit(stdout, "&ldquo;"); html(item->title); ui_lit(stdout, "&rdquo;");
         if (item->by[0] && strcmp(item->by, item->note)) { ui_lit(stdout, " by "); html(item->by); }
         ui_lit(stdout, ", "); html(item->rights); ui_lit(stdout, ", via "); html(where_name); ui_lit(stdout, "\">");
         ui_open(stdout, "p", NULL);
-        if (item->rights_href[0]) { fputs("<a rel=\"license noopener\" target=\"_blank\" href=\"", stdout); html(item->rights_href); ui_lit(stdout, "\">What "); html(item->rights); (ui_lit(stdout, " lets you do"), ui_close(stdout, "a"), ui_lit(stdout, " &middot; ")); }
+        if (item->rights_href[0]) { ui_open_a(stdout, "a", "rel", "license noopener", "target", "_blank", UI_DYN, "href", "", item->rights_href); ui_lit(stdout, "What "); html(item->rights); (ui_lit(stdout, " lets you do"), ui_close(stdout, "a"), ui_lit(stdout, " &middot; ")); }
     } else {
         (ui_open(stdout, "p", NULL), ui_lit(stdout, "Its page says who made it and how it may be used."), ui_close(stdout, "p"), ui_open(stdout, "p", NULL));
     }
-    fputs("<a rel=\"noopener\" target=\"_blank\" href=\"", stdout); html(where_href); fputs(item->origin[0] ? "\">Full size and its terms at " : "\">Its terms at ", stdout); html(where_name); ui_close_n(stdout, "a", "p", "details", NULL);
+    ui_open_a(stdout, "a", "rel", "noopener", "target", "_blank", UI_DYN, "href", "", where_href);
+    fputs(item->origin[0] ? "Full size and its terms at " : "Its terms at ", stdout); html(where_name); ui_close_n(stdout, "a", "p", "details", NULL);
 }
 
 /* The same thing as other sources report it: today's featured article may
@@ -2146,8 +2650,9 @@ static int emit_item_page(const BfRequest *r) {
            item ? "200 OK" : "404 Not Found", actor[0] ? "private, no-store" : "public, max-age=60, stale-while-revalidate=300");
     page_emit_head(template, head_end, item ? item->title : "Not here any more", item && item->body[0] ? item->body : (item ? item->by : ""));
     if (item && page_image_url_safe(item->image)) { ui_open_a(stdout, "meta", "property", "og:image", "content", item->image); }
-    fputs("</head><body class=\"", stdout); html(program ? program->character : "journal"); ui_lit(stdout, " item-page\" data-character=\"");
-    html(program ? program->character : "journal"); (ui_lit(stdout, "\">"), ui_open(stdout, "main", "wrap"));
+    ui_close(stdout, "head"); ui_start(stdout, "body"); ui_attr_open(stdout, "class");
+    html(program ? program->character : "journal"); ui_lit(stdout, " item-page"); ui_attr_close(stdout);
+    ui_attr_open(stdout, "data-character"); html(program ? program->character : "journal"); ui_lit(stdout, "\">"); ui_open(stdout, "main", "wrap");
     {
         PageDocument nav = {0};
         nav.route = program ? program->route : NULL;
@@ -2157,7 +2662,7 @@ static int emit_item_page(const BfRequest *r) {
     }
     if (!item) {
         (ui_open(stdout, "header", "hero"), ui_open(stdout, "h1", NULL), ui_lit(stdout, "Not here any more"), ui_close(stdout, "h1"), ui_open(stdout, "p", "lede"), ui_lit(stdout, "This came from a source whose latest material no longer includes it."), ui_close(stdout, "p"));
-        if (program) { fputs("<p class=\"jump\"><a href=\"", stdout); html(program->route); ui_lit(stdout, "\">Back to "); html(program->title); ui_close_n(stdout, "a", "p", NULL); }
+        if (program) { ui_open(stdout, "p", "jump"); ui_open_a(stdout, "a", UI_DYN, "href", "", program->route); ui_lit(stdout, "Back to "); html(program->title); ui_close_n(stdout, "a", "p", NULL); }
         ui_close_n(stdout, "header", "main", "body", "html", NULL);
         goto done;
     }
@@ -2173,14 +2678,19 @@ static int emit_item_page(const BfRequest *r) {
         page_picture_at(item->image, 1280, sized, sizeof(sized));
         if ((page_is_video(item) && page_peertube_embed(item->href, embed, sizeof(embed))) ||
             (!item->asset[0] && (page_is_video(item) || item->kind == BF_PAGE_MATERIAL_AUDIO) && page_embed_for(item->href, embed, sizeof(embed)))) {
-            fputs("<div class=\"player\"><iframe src=\"", stdout); html(embed);
-            ui_lit(stdout, "\" title=\""); html(item->title);
-            (ui_lit(stdout, "\" allow=\"fullscreen; picture-in-picture\" allowfullscreen loading=\"lazy\" referrerpolicy=\"no-referrer\" sandbox=\"allow-same-origin allow-scripts allow-popups\">"), ui_close(stdout, "iframe"), ui_close(stdout, "div"));
+            ui_open(stdout, "div", "player"); ui_start(stdout, "iframe"); ui_attr_open(stdout, "src"); html(embed);
+            ui_attr_close(stdout); ui_attr_open(stdout, "title"); html(item->title); ui_attr_close(stdout);
+            ui_attr(stdout, "allow", "fullscreen; picture-in-picture"); ui_flag(stdout, "allowfullscreen");
+            ui_attr(stdout, "loading", "lazy"); ui_attr(stdout, "referrerpolicy", "no-referrer");
+            ui_attr(stdout, "sandbox", "allow-same-origin allow-scripts allow-popups"); ui_gt(stdout);
+            ui_close(stdout, "iframe"); ui_close(stdout, "div");
         } else if (item->asset[0] && item->kind == BF_PAGE_MATERIAL_VIDEO) {
             /* A file that plays is played here, from where it is kept. */
-            fputs("<figure class=\"playing\"><div class=\"player\"><video controls playsinline preload=\"metadata\" src=\"", stdout); html(item->asset); ui_lit(stdout, "\"");
-            if (page_image_url_safe(sized)) { ui_lit(stdout, " poster=\""); html(sized); ui_lit(stdout, "\""); }
-            (ui_lit(stdout, ">"), ui_close(stdout, "video"), ui_close(stdout, "div")); page_emit_credit(item, "figcaption"); ui_close(stdout, "figure");
+            ui_open(stdout, "figure", "playing"); ui_open(stdout, "div", "player");
+            ui_start(stdout, "video"); ui_flag(stdout, "controls"); ui_flag(stdout, "playsinline");
+            ui_attr(stdout, "preload", "metadata"); ui_attr_open(stdout, "src"); html(item->asset); ui_attr_close(stdout);
+            if (page_image_url_safe(sized)) { ui_attr_open(stdout, "poster"); html(sized); ui_attr_close(stdout); }
+            ui_gt(stdout); ui_close(stdout, "video"); ui_close(stdout, "div"); page_emit_credit(item, "figcaption"); ui_close(stdout, "figure");
         } else if (item->asset[0] && item->kind == BF_PAGE_MATERIAL_AUDIO) {
             ui_open(stdout, "figure", "hero-picture listening");
             if (page_image_url_safe(sized)) page_emit_picture(sized, "picture");
@@ -2228,9 +2738,9 @@ static int emit_item_page(const BfRequest *r) {
     if (item->kind == BF_PAGE_MATERIAL_EVENT) {
         /* An event says first what it is right now. */
         time_t ends = 0; PageEventPhase phase = page_event_phase(item, now, &ends);
-        fputs("<p class=\"phase phase-", stdout);
+        ui_start(stdout, "p"); ui_attr_open(stdout, "class"); ui_copy(stdout, "phase phase-");
         fputs(phase == PAGE_EVENT_ON_NOW ? "now" : phase == PAGE_EVENT_SOON ? "soon" : phase == PAGE_EVENT_PAST || phase == PAGE_EVENT_JUST_ENDED ? "past" : "ahead", stdout);
-        ui_lit(stdout, "\">"); html(page_event_phase_words(phase)); ui_close(stdout, "p");
+        ui_attr_close(stdout); ui_gt(stdout); html(page_event_phase_words(phase)); ui_close(stdout, "p");
     }
     /* Who published it opens the publisher's own address here. */
     estate_reference_open(&stores);
@@ -2242,7 +2752,7 @@ static int emit_item_page(const BfRequest *r) {
     if (publisher.estate && publisher.name[0]) {
         PageItem shown = *item;
         snprintf(shown.by, sizeof(shown.by), "%s", "");
-        fputs("<span><a href=\"", stdout); html(publisher.url); ui_lit(stdout, "\">"); html(shown_publisher[0] ? shown_publisher : publisher.name); ui_close_n(stdout, "a", "span", NULL);
+        ui_open(stdout, "span", NULL); ui_open_a(stdout, "a", UI_DYN, "href", "", publisher.url); html(shown_publisher[0] ? shown_publisher : publisher.name); ui_close_n(stdout, "a", "span", NULL);
         page_emit_by(&shown, now);
     } else {
         /* No estate profile yet: keep the source byline without its marketing tagline. */
@@ -2277,7 +2787,9 @@ static int emit_item_page(const BfRequest *r) {
         strftime(starts_words, sizeof(starts_words), "%A %e %B, %l:%M%p", &tm);
         { struct tm utc; gmtime_r(&item->at, &utc); strftime(iso, sizeof(iso), "%Y-%m-%dT%H:%M:%SZ", &utc); }
         if (item->duration_ms > 0 && page_local_time(ends, &tm)) strftime(ends_words, sizeof(ends_words), "%l:%M%p", &tm);
-        fputs("<dl class=\"facts event\"><div><dt>Starts</dt><dd><time datetime=\"", stdout); html(iso); ui_lit(stdout, "\">");
+        ui_open(stdout, "dl", "facts event"); ui_open(stdout, "div", NULL); ui_open(stdout, "dt", NULL);
+        ui_lit(stdout, "Starts"); ui_close(stdout, "dt"); ui_open(stdout, "dd", NULL);
+        ui_start(stdout, "time"); ui_attr_open(stdout, "datetime"); html(iso); ui_lit(stdout, "\">");
         html(starts_words); ui_close_n(stdout, "time", "dd", "div", NULL);
         if (ends_words[0]) { (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Until"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(ends_words); ui_close_n(stdout, "dd", "div", NULL); }
         if (item->where[0]) { (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL), ui_lit(stdout, "Where"), ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL)); html(item->where); ui_close_n(stdout, "dd", "div", NULL); }
@@ -2340,11 +2852,14 @@ static int emit_item_page(const BfRequest *r) {
     if (actor[0]) {
         /* A form, so saving works before and without any script, and comes
          * back to this page. */
-        fputs(is_saved ? "<form class=\"verb-form\" method=\"post\" action=\"/o/unsave\">" : "<form class=\"verb-form\" method=\"post\" action=\"/o/save\">", stdout);
-        fputs("<input type=\"hidden\" name=\"item\" value=\"", stdout); html(source); ui_lit(stdout, "/"); html(key);
-        fputs("\"><input type=\"hidden\" name=\"return\" value=\"", stdout); html(target);
-        fputs(is_saved ? "\"><button class=\"verb is-on\" type=\"submit\" aria-pressed=\"true\">" : "\"><button class=\"verb\" type=\"submit\" aria-pressed=\"false\">", stdout);
-        page_glyph("save"); fputs(is_saved ? "<span>Saved</span>" : "<span>Save</span>", stdout); ui_close_n(stdout, "button", "form", NULL);
+        if (is_saved) ui_open_a(stdout, "form", "class", "verb-form", "method", "post", "action", "/o/unsave");
+        else ui_open_a(stdout, "form", "class", "verb-form", "method", "post", "action", "/o/save");
+        ui_start(stdout, "input"); ui_attr(stdout, "type", "hidden"); ui_attr(stdout, "name", "item");
+        ui_attr_open(stdout, "value"); html(source); ui_lit(stdout, "/"); html(key); ui_attr_close(stdout); ui_gt(stdout);
+        ui_open_a(stdout, "input", "type", "hidden", "name", "return", UI_DYN, "value", "", target);
+        if (is_saved) ui_open_a(stdout, "button", "class", "verb is-on", "type", "submit", "aria-pressed", "true");
+        else ui_open_a(stdout, "button", "class", "verb", "type", "submit", "aria-pressed", "false");
+        page_glyph("save"); if (is_saved) ui_text(stdout, "span", NULL, "Saved"); else ui_text(stdout, "span", NULL, "Save"); ui_close_n(stdout, "button", "form", NULL);
     } else {
         char login[1200];
         snprintf(login, sizeof(login), "/login?next=%s", target);
@@ -2439,7 +2954,9 @@ static int emit_item_page(const BfRequest *r) {
     ui_close(stdout, "nav");
     page_emit_reuse(item);
     if(!snapshot)bf_public_code_emit_details(stdout,host,target);
-    fputs("<p class=\"link-line\"><label>Link <input readonly value=\"", stdout); html(self); (ui_lit(stdout, "\">"), ui_close(stdout, "label"), ui_close(stdout, "p"), ui_close(stdout, "details"));
+    ui_open(stdout, "p", "link-line"); ui_open(stdout, "label", NULL); ui_lit(stdout, "Link ");
+    ui_open_a(stdout, "input", "readonly", (const char *)NULL, UI_DYN, "value", "", self);
+    ui_close(stdout, "label"); ui_close(stdout, "p"); ui_close(stdout, "details");
     if (item->placed && (page_image_url_safe(item->image) || item->asset[0])) {
         /* A place with a picture also shows where it is. */
         PageStream *one = calloc(1, sizeof(*one));
@@ -2523,10 +3040,12 @@ static int emit_item_page(const BfRequest *r) {
     if (!actor[0]) {
         /* Saving needs an account; the band says what signing in adds and
          * comes back to this page. */
-        fputs("<aside class=\"item-join\"><p>Sign in to save items, keep your own shelves and follow the sources you trust.</p><a class=\"verb\" href=\"/login?next=", stdout);
-        html(target); (ui_lit(stdout, "\">Sign in or join Aurekai"), ui_close(stdout, "a"), ui_close(stdout, "aside"));
+        ui_open(stdout, "aside", "item-join"); ui_open(stdout, "p", NULL);
+        ui_lit(stdout, "Sign in to save items, keep your own shelves and follow the sources you trust."); ui_close(stdout, "p");
+        ui_open_a(stdout, "a", "class", "verb", UI_DYN, "href", "/login?next=", target);
+        ui_lit(stdout, "Sign in or join Aurekai"); ui_close(stdout, "a"); ui_close(stdout, "aside");
     }
-    fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
+    ui_close(stdout, "main"); fputs(BF_ESTATE_FOOT, stdout); ui_close(stdout, "body"); ui_close(stdout, "html");
 done:
     free(template); free(material); free(family_material); free(snapshot); free(depth); free(relations);
     estate_reference_close(&stores);
@@ -2651,7 +3170,8 @@ static int serve_page_changes(const BfRequest *r) {
     }
     (ui_close(stdout, "head"), ui_elem(stdout, "body", (const UiAttr[]){{"class", "journal item-page"}, {"data-character", "journal"}}, 2, 0), ui_open(stdout, "main", "wrap"));
     { PageDocument nav = {0}; nav.actor = actor[0] ? actor : NULL; nav.self_path = target; page_emit_nav(&nav); }
-    fputs("<p class=\"crumbs\"><a href=\"/o/", stdout); page_url_escape(source); ui_lit(stdout, "/"); html(key); ui_lit(stdout, "\">"); html(item->title); ui_close_n(stdout, "a", "p", NULL);
+    ui_open(stdout, "p", "crumbs"); ui_start(stdout, "a"); ui_attr_open(stdout, "href"); ui_copy(stdout, "/o/");
+    page_url_escape(source); ui_copy(stdout, "/"); html(key); ui_lit(stdout, "\">"); html(item->title); ui_close_n(stdout, "a", "p", NULL);
     (ui_open(stdout, "header", "hero"), ui_open(stdout, "h1", NULL), ui_lit(stdout, "How this page changed"), ui_close(stdout, "h1"), ui_open(stdout, "p", "lede")); html(item->href); ui_close_n(stdout, "p", "header", NULL);
     if (have) {
         char *text = malloc(262144), err[160];
@@ -2666,7 +3186,9 @@ static int serve_page_changes(const BfRequest *r) {
             char first[16] = "", last[16] = "", when[32];
             page_json_text(bf_json_arr_get(doc, list[1], 0), 1, first, sizeof(first));
             page_json_text(bf_json_arr_get(doc, list[count - 1], 0), 1, last, sizeof(last));
-            printf("<p class=\"narrowed\">The Internet Archive saw this page's content change %d time%s between %.4s and %.4s.</p>", count - 1, count == 2 ? "" : "s", first, last);
+            ui_open(stdout, "p", "narrowed");
+            printf("The Internet Archive saw this page's content change %d time%s between %.4s and %.4s.", count - 1, count == 2 ? "" : "s", first, last);
+            ui_close(stdout, "p");
             ui_open(stdout, "ol", "results changes");
             for (i = count - 1; i >= 1 && shown < 60; i--, shown++) {
                 char stamp[16] = "", status[8] = "";
@@ -2674,8 +3196,10 @@ static int serve_page_changes(const BfRequest *r) {
                 page_json_text(bf_json_arr_get(doc, list[i], 1), 1, status, sizeof(status));
                 if (strlen(stamp) != 14 || strspn(stamp, "0123456789") != 14) continue;
                 snprintf(when, sizeof(when), "%.4s-%.2s-%.2s %.2s:%.2s", stamp, stamp + 4, stamp + 6, stamp + 8, stamp + 10);
-                fputs("<li><a class=\"result\" rel=\"noopener\" target=\"_blank\" href=\"https://web.archive.org/web/", stdout); html(stamp); ui_lit(stdout, "/"); html(item->href);
-                (ui_lit(stdout, "\">"), ui_open(stdout, "span", "kind")); page_glyph("text"); (ui_close(stdout, "span"), ui_open(stdout, "span", "what"), ui_open(stdout, "b", NULL));
+                ui_open(stdout, "li", NULL); ui_start(stdout, "a"); ui_attr(stdout, "class", "result");
+                ui_attr(stdout, "rel", "noopener"); ui_attr(stdout, "target", "_blank");
+                ui_attr_open(stdout, "href"); ui_copy(stdout, "https://web.archive.org/web/"); html(stamp); ui_copy(stdout, "/"); html(item->href); ui_lit(stdout, "\">");
+                ui_open(stdout, "span", "kind"); page_glyph("text"); (ui_close(stdout, "span"), ui_open(stdout, "span", "what"), ui_open(stdout, "b", NULL));
                 fputs(i == 1 ? "First seen" : !strcmp(status, "200") || !strcmp(status, "-") ? "Content changed" : "Answered differently", stdout);
                 (ui_close(stdout, "b"), ui_open(stdout, "span", "by"), ui_open(stdout, "span", NULL)); html(when); (ui_lit(stdout, " UTC"), ui_close(stdout, "span"));
                 if (status[0] && strcmp(status, "200") && strcmp(status, "-")) { (ui_open(stdout, "span", "via"), ui_lit(stdout, "answered ")); html(status); ui_close(stdout, "span"); }
@@ -2693,9 +3217,11 @@ static int serve_page_changes(const BfRequest *r) {
         ui_text(stdout, "p", "narrowed", "Its history has not been looked up yet.");
     }
     if (!fresh) {
-        fputs("<form class=\"verb-form\" method=\"post\" action=\"/o/changes\"><input type=\"hidden\" name=\"item\" value=\"", stdout);
-        html(source); ui_lit(stdout, "/"); html(key);
-        (ui_lit(stdout, "\">"), ui_elem(stdout, "button", (const UiAttr[]){{"class", "verb primary"}, {"type", "submit"}}, 2, 0)); page_glyph("search"); fputs(have ? "<span>Look again</span>" : "<span>Look up its history</span>", stdout);
+        ui_open_a(stdout, "form", "class", "verb-form", "method", "post", "action", "/o/changes");
+        ui_start(stdout, "input"); ui_attr(stdout, "type", "hidden"); ui_attr(stdout, "name", "item");
+        ui_attr_open(stdout, "value"); html(source); ui_lit(stdout, "/"); html(key); ui_attr_close(stdout); ui_gt(stdout);
+        ui_elem(stdout, "button", (const UiAttr[]){{"class", "verb primary"}, {"type", "submit"}}, 2, 0);
+        page_glyph("search"); if (have) ui_text(stdout, "span", NULL, "Look again"); else ui_text(stdout, "span", NULL, "Look up its history");
         ui_close_n(stdout, "button", "form", NULL);
     }
     (ui_open(stdout, "footer", "src"), ui_lit(stdout, "Captures are what the Internet Archive's crawler saw at those moments, not what every visitor saw or what is true."), ui_close(stdout, "footer"), ui_close(stdout, "main"), ui_close(stdout, "body"), ui_close(stdout, "html"));
@@ -2790,7 +3316,7 @@ static int emit_about_page(const BfRequest *rq) {
             EstateReferenceStores stores = {0}; EstateReference self;
             estate_reference_open(&stores);
             if (estate_reference_resolve(&stores, ident, &self) && strncmp(self.url, "/about/", 7)) {
-                fputs("<p class=\"jump\"><a href=\"", stdout); html(self.url); ui_lit(stdout, "\">");
+                ui_open(stdout, "p", "jump"); ui_open_a(stdout, "a", UI_DYN, "href", "", self.url);
                 html(self.name[0] ? self.name : title); (ui_lit(stdout, " at its own address"), ui_close(stdout, "a"), ui_close(stdout, "p"));
             }
             estate_reference_close(&stores);
@@ -2859,7 +3385,7 @@ static int emit_about_page(const BfRequest *rq) {
             }
         }
     }
-    fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
+    ui_close(stdout, "main"); fputs(BF_ESTATE_FOOT, stdout); ui_close(stdout, "body"); ui_close(stdout, "html");
 done:
     free(template); free(material); free(scratch); free(pictures);
     sqlite3_close(db);
@@ -2898,7 +3424,9 @@ static int emit_native_world_shelf(const char *path) {
         const char *grammars = (const char *)sqlite3_column_text(st, 3);
         char grammar_copy[1024], *part;
         if (!world || !title || !family || !studio_safe_slug_arg(world) || !studio_safe_slug_arg(family)) continue;
-        fputs("<a class=\"cover c-", stdout); html(family); ui_lit(stdout, "\" href=\"/w/"); html(world); (ui_lit(stdout, "\">"), ui_open(stdout, "div", "t")); html(title); (ui_close(stdout, "div"), ui_open(stdout, "div", NULL), ui_open(stdout, "div", "m")); html(family); (ui_lit(stdout, " publication"), ui_close(stdout, "div"), ui_open(stdout, "div", "g"));
+        ui_start(stdout, "a"); ui_attr_open(stdout, "class"); ui_copy(stdout, "cover c-"); html(family); ui_attr_close(stdout);
+        ui_attr_open(stdout, "href"); ui_copy(stdout, "/w/"); html(world); ui_lit(stdout, "\">"); ui_open(stdout, "div", "t");
+        html(title); (ui_close(stdout, "div"), ui_open(stdout, "div", NULL), ui_open(stdout, "div", "m")); html(family); (ui_lit(stdout, " publication"), ui_close(stdout, "div"), ui_open(stdout, "div", "g"));
         snprintf(grammar_copy, sizeof(grammar_copy), "%s", grammars ? grammars : "");
         part = grammar_copy;
         while (part && *part) {
@@ -2910,7 +3438,7 @@ static int emit_native_world_shelf(const char *path) {
         ui_close_n(stdout, "div", "div", "a", NULL); count++;
     }
     if (!count) ui_text(stdout, "p", "note", "No World is published yet.");
-    fputs("</section></main>" BF_ESTATE_FOOT "</body></html>", stdout);
+    ui_close(stdout, "section"); ui_close(stdout, "main"); fputs(BF_ESTATE_FOOT, stdout); ui_close(stdout, "body"); ui_close(stdout, "html");
     sqlite3_finalize(st); sqlite3_close(db); free(template); return 1;
 out:
     if (f) fclose(f);

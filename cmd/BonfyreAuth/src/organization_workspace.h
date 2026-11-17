@@ -103,8 +103,22 @@ static int org_revoke(sqlite3 *db,const char *token,char args[6][321]){
  char label[161];long revision;if(!org_exists(db,args[0],label)||!auth_institution_authorized(db,token,args[0],"admin"))ORG_FAIL(403,"Administrator access is required.");if(!org_nonce(args[1])||!org_number(args[2],1,INT_MAX-1,&revision))ORG_FAIL(400,"Invalid reviewed invitation.");sqlite3_stmt *q=NULL;
  if(sqlite3_prepare_v2(db,"UPDATE institution_invitations SET state='revoked',revision=revision+1 WHERE institution=? AND digest=? AND revision=? AND state='pending'",-1,&q,NULL)!=SQLITE_OK)ORG_FAIL(503,"Could not revoke the invitation.");sqlite3_bind_text(q,1,args[0],-1,SQLITE_STATIC);sqlite3_bind_text(q,2,args[1],-1,SQLITE_STATIC);sqlite3_bind_int64(q,3,revision);int step=sqlite3_step(q),changed=sqlite3_changes(db);sqlite3_finalize(q);if(step!=SQLITE_DONE||changed!=1)ORG_FAIL(409,"The invitation changed. Review its current state.");return org_response(db,200,"Invitation revoked. Existing memberships are managed separately.",NULL,0,"");
 }
-/* A child destination is an Auth-owned scope identity, not a user, membership
- * grant, verified legal organization or publisher's publication approval. */
+/* A child destination is an Auth-owned scope identity, not a user, verified
+ * legal organization or publisher's publication approval. Its creator holds
+ * administration on the child id itself; nothing else is granted, inherited,
+ * or implied for any other account, and a removed grant is never restored by
+ * replaying creation. */
+static int org_subaccount_grant(sqlite3 *db,int caller,const char *child,const char *now){
+ sqlite3_stmt *q=NULL;
+ if(sqlite3_prepare_v2(db,"SELECT active FROM institution_grants WHERE user_id=? AND institution=?",-1,&q,NULL)!=SQLITE_OK)return -1;
+ sqlite3_bind_int(q,1,caller);sqlite3_bind_text(q,2,child,-1,SQLITE_STATIC);int step=sqlite3_step(q),active=step==SQLITE_ROW?sqlite3_column_int(q,0):-1;sqlite3_finalize(q);
+ if(step!=SQLITE_DONE&&step!=SQLITE_ROW)return -1;
+ if(active==0)return 0;
+ if(active==1)return 1;
+ if(sqlite3_prepare_v2(db,"INSERT INTO institution_grants(user_id,institution,role,granted_at,active) VALUES(?,?,'admin',?,1)",-1,&q,NULL)!=SQLITE_OK)return -1;
+ sqlite3_bind_int(q,1,caller);sqlite3_bind_text(q,2,child,-1,SQLITE_STATIC);sqlite3_bind_text(q,3,now,-1,SQLITE_STATIC);step=sqlite3_step(q);sqlite3_finalize(q);
+ return step==SQLITE_DONE?1:-1;
+}
 static int org_subaccount_create(sqlite3 *db,const char *token,int caller,const char *parent,const char *label,const char *nonce){
  char parent_label[161];if(!org_exists(db,parent,parent_label)||!auth_institution_authorized(db,token,parent,"admin"))ORG_FAIL(403,"Parent organization administration is required.");
  if(!*label||strlen(label)>160||label[0]==' '||label[strlen(label)-1]==' '||!org_nonce(nonce))ORG_FAIL(400,"Choose a child workspace name and a fresh request.");
@@ -121,8 +135,11 @@ static int org_subaccount_create(sqlite3 *db,const char *token,int caller,const 
   if(sqlite3_prepare_v2(db,"INSERT INTO institution_subaccounts VALUES(?,?,?,?,?,?)",-1,&q,NULL)!=SQLITE_OK)ORG_FAIL(503,"Could not create child workspace.");
   sqlite3_bind_text(q,1,child,-1,SQLITE_STATIC);sqlite3_bind_text(q,2,parent,-1,SQLITE_STATIC);sqlite3_bind_int(q,3,caller);sqlite3_bind_text(q,4,request,-1,SQLITE_STATIC);sqlite3_bind_text(q,5,label,-1,SQLITE_STATIC);sqlite3_bind_text(q,6,now,-1,SQLITE_STATIC);step=sqlite3_step(q);sqlite3_finalize(q);if(step!=SQLITE_DONE)ORG_FAIL(409,"Child workspace creation conflicted.");
  }
+ int grant=org_subaccount_grant(db,caller,child,now);
+ if(grant<0)ORG_FAIL(503,"Child workspace administration was not saved.");
+ if(!grant)ORG_FAIL(403,"Replaying creation cannot restore removed child administration.");
  bf_mp_writer_t rows;bf_mp_writer_init(&rows,256);int bad=org_member_row(&rows,child,label,parent,"");
- int rc=bad?org_response(db,503,"Could not prepare result.",NULL,0,""):org_response(db,replay?200:201,"Child workspace recorded without inherited permissions or publication authority.",&rows,1,"");bf_mp_writer_free(&rows);return rc;
+ int rc=bad?org_response(db,503,"Could not prepare result.",NULL,0,""):org_response(db,replay?200:201,"Child workspace recorded with creator administration. Nothing else is inherited, and nothing is published.",&rows,1,"");bf_mp_writer_free(&rows);return rc;
 }
 static int org_subaccounts_list(sqlite3 *db,const char *token,const char *parent,const char *after){
  char label[161];if(!org_exists(db,parent,label)||!auth_institution_authorized(db,token,parent,"read"))ORG_FAIL(403,"Current parent membership is required.");

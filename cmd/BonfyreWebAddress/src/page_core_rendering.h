@@ -1377,6 +1377,9 @@ static void page_finalize_material(PageMaterial *material) {
  * details, but a body that moved, expired or no longer parses must not erase
  * an item this estate demonstrably retained from that source. */
 static sqlite3 *page_archive_open(int writable);
+static int page_emit_archive_matches(const char *q);
+static int page_collect_archive_about(const char *q, PageMaterial *material);
+static int page_emit_archive_thread(const PageItem *lead, time_t now);
 static int page_collect_archive_source(const char *source, PageMaterial *material);
 
 static int page_material_count(const PageMaterial *material) {
@@ -1607,26 +1610,26 @@ static int page_item_has_page(const PageItem *item) {
 /* Opens an item's link and returns the closing tag to write after it. */
 static const char *page_emit_item_open(const PageItem *item, const char *class_name) {
     if (page_item_has_page(item)) {
-        fputs("<a", stdout);
-        if (class_name) { ui_lit(stdout, " class=\""); html(class_name); ui_lit(stdout, "\""); }
-        ui_lit(stdout, " href=\"/o/"); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key); ui_lit(stdout, "\">");
+        ui_start(stdout,"a");
+        if (class_name) { ui_attr_open(stdout,"class"); html(class_name); ui_attr_close(stdout); }
+        ui_attr_open(stdout,"href"); ui_lit(stdout,"/o/"); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key); ui_attr_close(stdout);ui_gt(stdout);
         return "</a>";
     }
     if (item && estate_address_is_ours(item->href)) {
-        fputs("<a", stdout);
-        if (class_name) { ui_lit(stdout, " class=\""); html(class_name); ui_lit(stdout, "\""); }
-        ui_lit(stdout, " href=\""); html(item->href); ui_lit(stdout, "\">");
+        ui_start(stdout,"a");
+        if (class_name) { ui_attr_open(stdout,"class"); html(class_name); ui_attr_close(stdout); }
+        ui_attr_open(stdout,"href"); html(item->href); ui_attr_close(stdout);ui_gt(stdout);
         return "</a>";
     }
     if (item && public_http_url(item->href)) {
-        fputs("<a", stdout);
-        if (class_name) { ui_lit(stdout, " class=\""); html(class_name); ui_lit(stdout, "\""); }
-        ui_lit(stdout, " rel=\"noopener\" target=\"_blank\" href=\""); html(item->href); ui_lit(stdout, "\">");
+        ui_start(stdout,"a");
+        if (class_name) { ui_attr_open(stdout,"class"); html(class_name); ui_attr_close(stdout); }
+        ui_attr(stdout,"rel","noopener");ui_attr(stdout,"target","_blank");ui_attr_open(stdout,"href"); html(item->href); ui_attr_close(stdout);ui_gt(stdout);
         return "</a>";
     }
-    fputs("<span", stdout);
-    if (class_name) { ui_lit(stdout, " class=\""); html(class_name); ui_lit(stdout, "\""); }
-    ui_lit(stdout, ">");
+    ui_start(stdout,"span");
+    if (class_name) { ui_attr_open(stdout,"class"); html(class_name); ui_attr_close(stdout); }
+    ui_gt(stdout);
     return "</span>";
 }
 
@@ -1638,7 +1641,7 @@ static void page_emit_by(const PageItem *item, time_t now) {
     if (when[0]) {
         char iso[32]; struct tm tm;
         if (gmtime_r(&item->at, &tm) && strftime(iso, sizeof(iso), "%Y-%m-%dT%H:%M:%SZ", &tm)) {
-            fputs(" <time datetime=\"", stdout); html(iso); ui_lit(stdout, "\">"); html(when); ui_close(stdout, "time");
+            ui_lit(stdout," ");ui_start(stdout,"time");ui_attr_open(stdout,"datetime");html(iso);ui_attr_close(stdout);ui_gt(stdout);html(when);ui_close(stdout, "time");
         }
     }
 }
@@ -1648,25 +1651,25 @@ static void page_emit_by(const PageItem *item, time_t now) {
 static void page_emit_item_continuations(const PageItem *item) {
     if (!page_item_has_page(item)) return;
     ui_elem(stdout, "nav", (const UiAttr[]){{"class", "page-item-continuations"}, {"aria-label", "Retained item continuations"}}, 2, 0);
-    fputs("<a data-item-detail href=\"/o/",stdout); page_url_escape(item->source);
-    ui_lit(stdout, "/"); page_url_escape(item->key); (ui_lit(stdout, "\">Read item"), ui_close(stdout, "a"));
+    ui_start(stdout,"a");ui_flag(stdout,"data-item-detail");ui_attr_open(stdout,"href");ui_lit(stdout,"/o/"); page_url_escape(item->source);
+    ui_lit(stdout, "/"); page_url_escape(item->key); (ui_attr_close(stdout),ui_gt(stdout),ui_lit(stdout, "Read item"), ui_close(stdout, "a"));
     if (item->by[0]) {
-        fputs("<a data-item-credit href=\"/people?who=",stdout); page_url_escape(item->by);
+        ui_start(stdout,"a");ui_flag(stdout,"data-item-credit");ui_attr_open(stdout,"href");ui_lit(stdout,"/people?who="); page_url_escape(item->by);
         ui_lit(stdout, "&amp;source="); page_url_escape(item->source);
-        (ui_lit(stdout, "\">Credited maker"), ui_close(stdout, "a"));
+        (ui_attr_close(stdout),ui_gt(stdout),ui_lit(stdout, "Credited maker"), ui_close(stdout, "a"));
     }
-    fputs("<a data-item-keep href=\"/o/",stdout);page_url_escape(item->source);
-    ui_lit(stdout, "/");page_url_escape(item->key);(ui_lit(stdout, "#item-keep\">Keep for later"), ui_close(stdout, "a"));
-    fputs("<a data-item-continue href=\"/feed-use?context=self&amp;item=",stdout);
+    ui_start(stdout,"a");ui_flag(stdout,"data-item-keep");ui_attr_open(stdout,"href");ui_lit(stdout,"/o/");page_url_escape(item->source);
+    ui_lit(stdout, "/");page_url_escape(item->key);(ui_lit(stdout, "#item-keep"),ui_attr_close(stdout),ui_gt(stdout),ui_lit(stdout, "Keep for later"), ui_close(stdout, "a"));
+    ui_start(stdout,"a");ui_flag(stdout,"data-item-continue");ui_attr_open(stdout,"href");ui_lit(stdout,"/feed-use?context=self&amp;item=");
     page_url_escape(item->source); fputs("%2F",stdout); page_url_escape(item->key);
-    (ui_lit(stdout, "\">Use in my apps"), ui_close(stdout, "a"), ui_close(stdout, "nav"));
+    (ui_attr_close(stdout),ui_gt(stdout),ui_lit(stdout, "Use in my apps"), ui_close(stdout, "a"), ui_close(stdout, "nav"));
 }
 
 
 static void page_emit_picture(const char *url, const char *class_name) {
     if (!page_image_url_safe(url)) return;
-    fputs("<img class=\"", stdout); html(class_name); ui_lit(stdout, "\" src=\""); html(url);
-    ui_lit(stdout, "\" alt=\"\" loading=\"lazy\" decoding=\"async\" referrerpolicy=\"no-referrer\">");
+    ui_start(stdout,"img");ui_attr_open(stdout,"class"); html(class_name); ui_attr_close(stdout);ui_attr_open(stdout,"src"); html(url);
+    ui_attr_close(stdout);ui_attr(stdout,"alt","");ui_attr(stdout,"loading","lazy");ui_attr(stdout,"decoding","async");ui_attr(stdout,"referrerpolicy","no-referrer");ui_gt(stdout);
 }
 
 static int item_says(const char *hay, const char *needle) {
@@ -1832,8 +1835,8 @@ static void page_emit_reading_query(const char *query, const char *replace, cons
 }
 
 static void page_emit_filter_link(const PageEmitContext *ctx, const char *key, const char *value) {
-    fputs("<a href=\"", stdout); html(ctx && ctx->route ? ctx->route : "/discover");
-    page_emit_reading_query(ctx ? ctx->query : NULL, key, value); ui_lit(stdout, "\">");
+    ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(ctx && ctx->route ? ctx->route : "/discover");
+    page_emit_reading_query(ctx ? ctx->query : NULL, key, value); ui_attr_close(stdout);ui_gt(stdout);
 }
 
 /* Web Mercator pixels at a zoom level: the projection street map tiles use. */
@@ -1902,7 +1905,7 @@ static void page_emit_map_plate(const PageStream *stream, int take, int numbered
             if (!item->placed) continue;
             page_mercator(item->lon, item->lat, zoom, &px, &py);
             px = (px - x0) * scale; py = (py - y0) * scale;
-            if (page_item_has_page(item)) { fputs("<a href=\"/o/", stdout); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key); ui_lit(stdout, "\">"); }
+            if (page_item_has_page(item)) page_emit_item_open(item,NULL);
             printf("<g class=\"point%s\" data-map-point=\"%d\"><circle cx=\"%.1f\" cy=\"%.1f\" r=\"%s\"/>", k == 0 ? " newest" : "", k, px, py, numbered ? "11" : "20");
             if (numbered) printf("<text x=\"%.1f\" y=\"%.1f\">%d</text>", px, py + 4.0, k + 1);
             ui_open(stdout, "title", NULL); html(item->title); ui_close_n(stdout, "title", "g", NULL);
@@ -1919,7 +1922,7 @@ static void page_emit_map_plate(const PageStream *stream, int take, int numbered
     for (k = 0; k < take; k++) {
         const PageItem *item = &stream->item[stream->cursor + k];
         if (!item->placed) continue;
-        if (page_item_has_page(item)) { fputs("<a href=\"/o/", stdout); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key); ui_lit(stdout, "\">"); }
+        if (page_item_has_page(item)) page_emit_item_open(item,NULL);
         printf("<circle class=\"point%s\" data-map-point=\"%d\" cx=\"%.2f\" cy=\"%.2f\" r=\"%s\"><title>", k == 0 ? " newest" : "", k, item->lon + 180.0, 90.0 - item->lat, k == 0 ? "3" : "1.9");
         if (numbered) printf("%d. ", k + 1);
         html(item->title); ui_close_n(stdout, "title", "circle", NULL);
@@ -1943,7 +1946,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         { char sized[1024]; page_picture_at(first->image, 960, sized, sizeof(sized)); page_emit_picture(sized, "lead-picture"); }
         ui_text(stdout, "h2", NULL, first->title); fputs(close, stdout);
         if (first->body[0]) { ui_text(stdout, "p", "dek", first->body); }
-        ui_open(stdout, "p", "by"); page_emit_by(first, now); ui_close(stdout, "p"); page_emit_item_continuations(first); ui_close(stdout, "article");
+        ui_open(stdout, "p", "by"); page_emit_by(first, now); ui_close(stdout, "p"); page_emit_item_continuations(first); ms_keep(first, ctx ? ctx->route : NULL, 1); ui_close(stdout, "article");
         break;
     case BF_PAGE_TOPOLOGY_INDEX:
         ui_open(stdout, "div", "index");
@@ -1955,6 +1958,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close(stdout, "span");
             page_emit_picture(item->image, "thumb");
             fputs(close, stdout);
+            ms_keep(item, ctx ? ctx->route : NULL, 1);
         }
         ui_close(stdout, "div");
         break;
@@ -2000,7 +2004,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             }
             if (when[0]) { ui_text(stdout, "span", "starts", when); }
             if (item->where[0]) { ui_text(stdout, "span", "at", item->where); }
-            ui_open(stdout, "span", "by"); html(item->by); ui_close_n(stdout, "span", "li", NULL);
+            ui_open(stdout, "span", "by"); html(item->by); ui_close(stdout, "span"); ms_keep(item, ctx ? ctx->route : NULL, 1); ui_close(stdout, "li");
         }
         ui_close(stdout, "ol");
         ui_script(stdout, "(function(){\n const script=document.currentScript,agenda=script?.previousElementSibling,tools=agenda?.previousElementSibling;\n if(!agenda?.matches('ol.agenda')||!tools?.hasAttribute('data-agenda-controls'))return;\n const entries=[...agenda.children].filter(n=>n.matches('li.agenda-item'));\n const dates=[...agenda.children].filter(n=>n.matches('li.agenda-day'));\n const query=tools.querySelector('[data-agenda-search]'),count=tools.querySelector('[data-agenda-count]');\n const filters=[...tools.querySelectorAll('[data-agenda-filter]')];let mode='all';\n function update(){const term=query.value.trim().toLocaleLowerCase();let visible=0;\n  for(const item of entries){const signal=item.querySelector('[data-agenda-weekend]');const weekend=signal?.dataset.agendaWeekend==='1';const offset=Number(signal?.dataset.agendaDayOffset);const known=signal&&Number.isInteger(offset)&&offset>=0;const windowOk=mode==='all'||(mode==='weekend'&&weekend)||(mode==='today'&&known&&offset===0)||(mode==='seven'&&known&&offset<7);\n   const match=windowOk&&(!term||item.textContent.toLocaleLowerCase().includes(term));\n   item.hidden=!match;if(match)visible++;}\n  for(const date of dates){let cursor=date.nextElementSibling,hasVisible=false;\n   while(cursor&&!cursor.matches('li.agenda-day')){if(cursor.matches('li.agenda-item')&&!cursor.hidden)hasVisible=true;cursor=cursor.nextElementSibling;}\n   date.hidden=!hasVisible;}\n  for(const button of filters)button.setAttribute('aria-pressed',String(button.dataset.agendaFilter===mode));\n  count.textContent='Showing '+visible+' of '+entries.length+' published events on this page.';\n }\n for(const button of filters)button.addEventListener('click',()=>{mode=['all','today','seven','weekend'].includes(button.dataset.agendaFilter)?button.dataset.agendaFilter:'all';update();});\n query.addEventListener('input',update);update();\n})();");
@@ -2010,7 +2014,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             ui_open(stdout, "li", NULL); close = page_emit_item_open(item, NULL); html(item->title);
-            fputs(close, stdout); ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close_n(stdout, "span", "li", NULL);
+            fputs(close, stdout); ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close(stdout, "span"); ms_keep(item, ctx ? ctx->route : NULL, 1); ui_close(stdout, "li");
         }
         ui_close(stdout, "ol");
         break;
@@ -2019,16 +2023,17 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             if (item->asset[0]) {
-                fputs("<figure class=\"clip\"><video controls playsinline preload=\"none\" src=\"", stdout); html(item->asset); ui_lit(stdout, "\"");
-                if (item->poster[0]) { ui_lit(stdout, " poster=\""); html(item->poster); ui_lit(stdout, "\""); }
+                ui_open(stdout,"figure","clip");ui_start(stdout,"video");ui_flag(stdout,"controls");ui_flag(stdout,"playsinline");ui_attr(stdout,"preload","none");ui_attr_open(stdout,"src"); html(item->asset); ui_attr_close(stdout);
+                if (item->poster[0]) { ui_attr_open(stdout,"poster"); html(item->poster); ui_attr_close(stdout); }
                 (ui_lit(stdout, ">"), ui_close(stdout, "video"), ui_open(stdout, "figcaption", NULL)); html(item->title);
                 if (item->duration_ms > 0) { ui_open(stdout, "span", "by"); page_emit_duration(item->duration_ms); ui_close(stdout, "span"); }
+                ms_keep(item, ctx ? ctx->route : NULL, 1);
                 ui_close_n(stdout, "figcaption", "figure", NULL);
             } else {
                 ui_open(stdout, "figure", "clip"); close = page_emit_item_open(item, NULL);
                 ui_open(stdout, "span", "frame"); page_emit_picture(item->image, "poster"); ui_open(stdout, "span", "play"); page_glyph("play"); ui_close_n(stdout, "span", "span", NULL);
                 ui_open(stdout, "figcaption", NULL); html(item->title);
-                ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close_n(stdout, "span", "figcaption", NULL); fputs(close, stdout); ui_close(stdout, "figure");
+                ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close_n(stdout, "span", "figcaption", NULL); fputs(close, stdout); ms_keep(item, ctx ? ctx->route : NULL, 1); ui_close(stdout, "figure");
             }
         }
         ui_close(stdout, "div");
@@ -2042,7 +2047,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             ui_open(stdout, "figcaption", NULL); html(item->title);
             ui_open(stdout, "span", "by"); page_emit_by(item, now);
             if (item->rights[0]) { ui_text(stdout, "span", "terms", item->rights); }
-            ui_close_n(stdout, "span", "figcaption", NULL); fputs(close, stdout); ui_close(stdout, "figure");
+            ui_close_n(stdout, "span", "figcaption", NULL); fputs(close, stdout); ms_keep(item, ctx ? ctx->route : NULL, 1); ui_close(stdout, "figure");
         }
         ui_close(stdout, "div");
         break;
@@ -2070,8 +2075,8 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             char when[48];
             const char *media_kind = item->kind == BF_PAGE_MATERIAL_VIDEO ? "video" :
                 item->kind == BF_PAGE_MATERIAL_AUDIO ? "audio" : item->kind == BF_PAGE_MATERIAL_PHOTO ? "photo" : "other";
-            fputs("<article class=\"page-media-card\" data-media-card data-media-kind=\"",stdout);
-            fputs(media_kind,stdout); ui_lit(stdout, "\">");
+            ui_start(stdout,"article");ui_attr(stdout,"class","page-media-card");ui_flag(stdout,"data-media-card");ui_attr_open(stdout,"data-media-kind");
+            fputs(media_kind,stdout); ui_attr_close(stdout);ui_gt(stdout);
             page_when(item->at, now, when, sizeof(when));
             close = page_emit_item_open(item, "video");
             ui_open(stdout, "span", "frame"); page_emit_picture(item->image, "poster");
@@ -2088,7 +2093,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             (ui_open(stdout, "div", "media-catalogue-proof"), ui_open(stdout, "span", NULL), ui_lit(stdout, "Source: "));html(item->source);ui_close(stdout, "span");
             if(item->rights[0]){(ui_open(stdout, "span", "terms"), ui_lit(stdout, "Terms: "));html(item->rights);ui_close(stdout, "span");}
             if(item->duration_ms>0){(ui_open(stdout, "span", NULL), ui_lit(stdout, "Duration: "));page_emit_duration(item->duration_ms);ui_close(stdout, "span");}
-            ui_close(stdout, "div");page_emit_item_continuations(item);ui_close(stdout, "article");
+            ui_close(stdout, "div");ms_keep(item, ctx ? ctx->route : NULL, 1);page_emit_item_continuations(item);ui_close(stdout, "article");
         }
         ui_close(stdout, "div");
         if (!ctx->preview) {
@@ -2105,7 +2110,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             const char *kind = page_is_video(item) ? "is-video" : page_is_photo(item) || page_image_url_safe(item->image) ? "is-picture" : "is-story";
-            fputs("<article class=\"tile ", stdout); fputs(kind, stdout); ui_lit(stdout, "\">");
+            ui_start(stdout,"article");ui_attr_open(stdout,"class");ui_lit(stdout,"tile ");fputs(kind, stdout);ui_attr_close(stdout);ui_gt(stdout);
             close = page_emit_item_open(item, NULL);
             if (page_image_url_safe(item->image)) {
                 ui_open(stdout, "span", "frame"); page_emit_picture(item->image, "picture");
@@ -2115,7 +2120,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             ui_text(stdout, "b", NULL, item->title);
             if (item->body[0] && !page_image_url_safe(item->image)) { ui_text(stdout, "span", "dek", item->body); }
             fputs(close, stdout);
-            ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close(stdout, "span"); page_emit_item_continuations(item); ui_close(stdout, "article");
+            ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close(stdout, "span"); ms_keep(item, ctx ? ctx->route : NULL, 1); page_emit_item_continuations(item); ui_close(stdout, "article");
         }
         ui_close(stdout, "div");
         ui_script(stdout, "(()=>{\n const feed=document.currentScript?.previousElementSibling,tools=feed?.previousElementSibling;\n if(!feed?.matches('.feed')||!tools?.matches('[data-feed-tools]'))return;\n const cards=[...feed.querySelectorAll(':scope > article.tile')],search=tools.querySelector('[data-feed-search]');\n const modes=[...tools.querySelectorAll('[data-feed-mode]')],count=tools.querySelector('[data-feed-count]');\n let mode='all';function update(){const term=search.value.trim().toLocaleLowerCase();let shown=0;\n  for(const card of cards){const yes=(mode==='all'||card.classList.contains(mode))&&(!term||card.textContent.toLocaleLowerCase().includes(term));card.hidden=!yes;if(yes)shown++;}\n  for(const button of modes)button.setAttribute('aria-pressed',String(mode===button.dataset.feedMode));\n  count.textContent='Showing '+shown+' of '+cards.length+' retained items loaded on this page. Other feeds and earlier pages are unchanged.';\n }\n search.addEventListener('input',update);for(const button of modes)button.addEventListener('click',()=>{mode=button.dataset.feedMode;update();});update();\n})();");
@@ -2131,7 +2136,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             if (item->body[0]) { ui_text(stdout, "span", "dek", item->body); }
             ui_open(stdout, "span", "by"); page_emit_by(item, now); ui_close_n(stdout, "span", "span", NULL);
             page_emit_picture(item->image, "thumb");
-            fputs(close, stdout); ui_close(stdout, "li");
+            fputs(close, stdout); ms_keep(item, ctx ? ctx->route : NULL, 1); ui_close(stdout, "li");
         }
         ui_close(stdout, "ol");
         break;
@@ -2154,7 +2159,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 snprintf(title, sizeof(title), "%s", item->title);
                 if ((cut = strstr(title, "\\\\\\")) != NULL) snprintf(cut, sizeof(title) - (size_t)(cut - title), "%s", "\xE2\x80\xA6");
                 page_when(item->at, now, when, sizeof(when));
-                printf("<tr><td class=\"lot\">%02d</td><td class=\"name\">", k + 1);
+                ui_open(stdout,"tr",NULL);ui_open(stdout,"td","lot");printf("%02d",k + 1);ui_lit(stdout,"</td>");ui_open(stdout,"td","name");
                 close = page_emit_item_open(item, NULL); html(title); fputs(close, stdout);
                 ui_open(stdout, "span", "dek");
                 if (item->note[0]) { page_emit_filter_link(ctx, "from", item->note); html(item->note); ui_close(stdout, "a"); }
@@ -2209,7 +2214,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             const char *name = names[order[g]];
             (ui_open(stdout, "section", "community"), ui_open(stdout, "header", NULL));
             page_emit_filter_link(ctx, "from", name); ui_open(stdout, "h3", NULL); html(name[0] ? name : "Elsewhere"); ui_close_n(stdout, "h3", "a", NULL);
-            printf("<small>%d post%s</small></header><ol>", counts[order[g]], counts[order[g]] == 1 ? "" : "s");
+            ui_open(stdout,"small",NULL);printf("%d",counts[order[g]]);ui_lit(stdout," post");ui_lit(stdout,counts[order[g]] == 1 ? "" : "s");ui_lit(stdout,"</small></header>");ui_open(stdout,"ol",NULL);
             for (k = 0; k < take && shown < (ctx->preview ? 2 : 4); k++) {
                 const PageItem *item = &stream->item[stream->cursor + k];
                 const char *item_name = item->by[0] ? item->by : item->note;
@@ -2241,7 +2246,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 char when[48];
                 if (!item->placed) continue;
                 page_when(item->at, now, when, sizeof(when));
-                printf("<li data-map-point=\"%d\"><button type=\"button\" data-locate-point=\"%d\" aria-pressed=\"false\" aria-label=\"Highlight place %d on map\">Locate</button>", k, k, k+1); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
+                ui_start(stdout,"li");ui_attr_open(stdout,"data-map-point");printf("%d",k);ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr_open(stdout,"data-locate-point");printf("%d",k);ui_attr_close(stdout);ui_attr(stdout,"aria-pressed","false");ui_attr_open(stdout,"aria-label");printf("Highlight place %d on map",k+1);ui_attr_close(stdout);ui_gt(stdout);ui_lit(stdout,"Locate");ui_close(stdout,"button"); close = page_emit_item_open(item, NULL); html(item->title); fputs(close, stdout);
                 (ui_open(stdout, "span", "by"), ui_open(stdout, "span", NULL)); html(item->note[0] ? item->note : item->by); ui_close(stdout, "span");
                 if (when[0]) { ui_text(stdout, "time", NULL, when); }
                 ui_close_n(stdout, "span", "li", NULL);
@@ -2249,7 +2254,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             ui_close(stdout, "ol");
         }
         if (!ctx->preview) (ui_elem(stdout, "aside", (const UiAttr[]){{"data-map-inspector", NULL}, {"class", "map-inspector"}, {"aria-label", "Selected source-placed location"}, {"aria-live", "polite"}, {"hidden", NULL}}, 5, 0), ui_open(stdout, "h3", NULL), ui_lit(stdout, "Selected place"), ui_close(stdout, "h3"), ui_elem(stdout, "div", (const UiAttr[]){{"data-map-inspector-body", NULL}}, 1, 0), ui_close(stdout, "div"), ui_open(stdout, "p", NULL), ui_lit(stdout, "This view repeats the retained source. It does not verify whether a position is current."), ui_close(stdout, "p"), ui_elem(stdout, "button", (const UiAttr[]){{"type", "button"}, {"data-map-clear", NULL}}, 2, 0), ui_lit(stdout, "Clear map focus"), ui_close(stdout, "button"), ui_close(stdout, "aside"));
-        printf("<figcaption>%d place%s", take, take == 1 ? "" : "s");
+        ui_open(stdout,"figcaption",NULL);printf("%d",take);ui_lit(stdout," place");ui_lit(stdout,take == 1 ? "" : "s");
         if (first->title[0]) { ui_lit(stdout, " &middot; newest: "); html(first->title); }
         ui_close_n(stdout, "figcaption", "figure", NULL);
         if (!ctx->preview) ui_script(stdout, "(()=>{\nconst figure=document.currentScript?.previousElementSibling;\nif(!figure?.matches('figure.map.with-list'))return;\nconst tools=figure.querySelector('[data-map-tools]'),rows=[...figure.querySelectorAll('ol.places-list>li[data-map-point]')];\nif(!tools||!rows.length)return;\nconst search=tools.querySelector('[data-map-search]'),count=tools.querySelector('[data-map-count]');\nconst markers=[...figure.querySelectorAll('svg [data-map-point]')],inspector=figure.querySelector('[data-map-inspector]');\nconst inspectorBody=inspector?.querySelector('[data-map-inspector-body]'),clear=inspector?.querySelector('[data-map-clear]');\nlet selected='';\nfunction update(){const query=search.value.trim().toLocaleLowerCase();let visible=0;\n for(const row of rows){const yes=!query||row.textContent.toLocaleLowerCase().includes(query);row.hidden=!yes;if(yes)visible++;}\n count.textContent=visible+' of '+rows.length+' source-placed locations in this list. All plotted positions remain visible.';\n for(const row of rows)row.querySelector('[data-locate-point]')?.setAttribute('aria-pressed',String(row.dataset.mapPoint===selected));\n for(const mark of markers)mark.dataset.selected=String(mark.dataset.mapPoint===selected);\n}\nfunction inspect(id){const row=rows.find(r=>r.dataset.mapPoint===id);if(!row)return;selected=id;update();if(!inspectorBody)return;inspectorBody.replaceChildren();\n const source=row.querySelector('a[href]'),name=source?.textContent?.trim()||row.textContent.replace(/^Locate\\s*/,'').trim();\n const title=document.createElement('strong');title.textContent=name;inspectorBody.append(title);\n const about=row.querySelector('.by')?.textContent?.trim();if(about){const meta=document.createElement('p');meta.textContent=about;inspectorBody.append(meta);}\n if(source){const link=document.createElement('a');link.href=source.href;link.textContent='Open the exact retained source';inspectorBody.append(link);}\n else{const label=document.createElement('p');label.textContent='This source did not declare a navigable record address.';inspectorBody.append(label);}\n inspector.hidden=false;inspector.dataset.selected=id;\n figure.querySelector('.plate')?.scrollIntoView({block:'nearest',behavior:'instant'});\n}\nfunction reset(){selected='';if(inspector){inspector.hidden=true;delete inspector.dataset.selected;}update();}\nfor(const row of rows)row.querySelector('[data-locate-point]')?.addEventListener('click',()=>inspect(row.dataset.mapPoint));\nclear?.addEventListener('click',reset);\nfigure.addEventListener('keydown',event=>{if(event.key==='Escape'&&selected){event.preventDefault();reset();}});\nsearch.addEventListener('input',update);update();\n})();");
@@ -2300,9 +2305,9 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
             (ui_open(stdout, "div", "panes"), ui_elem(stdout, "nav", (const UiAttr[]){{"class", "pane-list"}, {"aria-label", "Places"}}, 2, 0), ui_open(stdout, "ol", NULL));
             for (g = 0; g < group_count; g++) {
                 ui_open(stdout, "li", NULL);
-                fputs("<a href=\"", stdout); html(ctx->route ? ctx->route : "/channels"); ui_lit(stdout, "?s="); page_url_escape(groups[g]); ui_lit(stdout, "\"");
+                ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(ctx->route ? ctx->route : "/channels"); ui_lit(stdout, "?s="); page_url_escape(groups[g]); ui_attr_close(stdout);
                 if (g == selected) ui_lit(stdout, " aria-current=\"true\"");
-                ui_lit(stdout, ">"); html(groups[g][0] ? groups[g] : "Elsewhere"); printf("<small>%d</small></a></li>", counts[g]);
+                ui_gt(stdout); html(groups[g][0] ? groups[g] : "Elsewhere");ui_open(stdout,"small",NULL);printf("%d",counts[g]);ui_lit(stdout,"</small></a></li>");
             }
             (ui_close(stdout, "ol"), ui_close(stdout, "nav"), ui_open(stdout, "section", "pane-topics"), ui_open(stdout, "h3", NULL)); html(group_count ? groups[selected] : ""); (ui_close(stdout, "h3"), ui_open(stdout, "ol", NULL));
             for (k = 0; k < take; k++) {
@@ -2375,7 +2380,7 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
         for (k = 0; k < take; k++) {
             const PageItem *item = &stream->item[stream->cursor + k];
             char sized[1024];
-            printf("<li%s", item == first ? " class=\"is-first\"" : "");
+            ui_start(stdout,"li");if (item == first) ui_attr(stdout,"class","is-first");ui_gt(stdout);
             if (item->asset[0]) {
                 playable++;
                 ui_lit(stdout, " data-play=\""); html(item->asset);
@@ -2401,8 +2406,8 @@ static void page_emit_region(const BfPageRegion *region, const PageStream *strea
                 ui_elem(stdout, "button", (const UiAttr[]){{"class", "lift"}, {"type", "button"}}, 2, 0); page_glyph("play"); (ui_open(stdout, "span", NULL), ui_lit(stdout, "Play"), ui_close(stdout, "span"), ui_close(stdout, "button"));
             } else if (page_item_has_page(item)) {
                 /* Played by its host's own player, on its page. */
-                fputs("<a class=\"play-on-page\" href=\"/o/", stdout); page_url_escape(item->source); ui_lit(stdout, "/"); html(item->key);
-                ui_lit(stdout, "\">"); page_glyph("play"); (ui_open(stdout, "span", NULL), ui_lit(stdout, "Play"), ui_close(stdout, "span"), ui_close(stdout, "a"));
+                page_emit_item_open(item,"play-on-page");
+                page_glyph("play"); (ui_open(stdout, "span", NULL), ui_lit(stdout, "Play"), ui_close(stdout, "span"), ui_close(stdout, "a"));
             }
             ui_close(stdout, "li");
         }
@@ -2540,8 +2545,8 @@ static int page_emit_house(sqlite3 *db, const char *selector, char *name_out, si
     if (whole && !strncmp(font, "https://fonts.googleapis.com/css2?", 34) && !strpbrk(font, "\"' ")) {
         ui_open_a(stdout, "link", "rel", "stylesheet", "data-bf-fonts", NULL, "href", font);
     }
-    fputs("<style data-bf-source=\"presentation_template\" data-bf-profile=\"", stdout); html(template);
-    ui_lit(stdout, "\" data-bf-standing=\"published\" data-bf-band=\""); html(band); ui_lit(stdout, "\">");
+    ui_start(stdout,"style");ui_attr(stdout,"data-bf-source","presentation_template");ui_attr_open(stdout,"data-bf-profile"); html(template);
+    ui_attr_close(stdout);ui_attr(stdout,"data-bf-standing","published");ui_attr_open(stdout,"data-bf-band"); html(band); ui_attr_close(stdout);ui_gt(stdout);
     /* The estate's shared front rules dress body, column and bands at this
      * weight; a house says the same at the same weight, later, so it wins. */
     if (whole) ui_lit(stdout, "html body[data-character],html body[data-character] .wrap{");
@@ -2655,11 +2660,11 @@ static void page_emit_profile_for(sqlite3 *db, const char *seed, BfPageMaterial 
             const char *standing = pool[index].standing;
             /* Which catalogued palette dressed this, and at what standing: a
              * reader can check the claim against the census row. */
-            fputs("<style data-bf-source=\"presentation_template\" data-bf-profile=\"", stdout);
+            ui_start(stdout,"style");ui_attr(stdout,"data-bf-source","presentation_template");ui_attr_open(stdout,"data-bf-profile");
             html(template ? template : "");
-            ui_lit(stdout, "\" data-bf-standing=\"");
+            ui_attr_close(stdout);ui_attr_open(stdout,"data-bf-standing");
             html(standing ? standing : "");
-            ui_lit(stdout, "\">");
+            ui_attr_close(stdout);ui_gt(stdout);
             /* The page's dress reaches its edges: the column alone left the
              * character's own ground showing down both sides of it. */
             if (!strcmp(selector, ".wrap")) ui_lit(stdout, "body[data-character],");
@@ -2791,6 +2796,7 @@ static int page_front_shown;   /* set once a front's own program has led; see pa
 static int page_emit_regions(PageMaterial *material, const unsigned char *sequence, size_t sequence_count,
                              const PageEmitContext *ctx) {
     size_t i, count = sequence ? sequence_count : BF_PAGE_REGION_COUNT;
+    ms_saved_open();
     int shown = 0, experience_open = 0;
     const BfNativeExperienceProgram *experience =
         ctx && !ctx->preview ? bf_native_experience_find(ctx->experience_pattern) : NULL;
@@ -2844,21 +2850,21 @@ static int page_emit_regions(PageMaterial *material, const unsigned char *sequen
             snprintf(seed, sizeof(seed), "%s|%s|%u", ctx && ctx->route ? ctx->route : "", region->role, (unsigned)i);
             snprintf(selector, sizeof(selector), ".region-dress-%u", (unsigned)i);
             page_emit_profile_for(ctx ? ctx->db : NULL, seed, region->material, selector, NULL, 0);
-            printf("<section class=\"region region-dress-%u region-", (unsigned)i);
+            ui_start(stdout,"section");ui_attr_open(stdout,"class");printf("region region-dress-%u region-", (unsigned)i);
         }
-        html(region->role); ui_lit(stdout, "\"");
+        html(region->role); ui_attr_close(stdout);
         if (experience_open) bf_native_experience_region(stdout,experience,index,i);
         {
             PageCompatSceneRegion *surface_region =
                 ctx && ctx->surface_scene ? page_surface_scene_record(ctx->surface_scene, region, i) : NULL;
             if (surface_region) {
-                ui_lit(stdout, " data-bonfyre-region=\""); html(surface_region->id);
-                ui_lit(stdout, "\" data-bonfyre-continuity=\""); html(surface_region->continuity);
-                ui_lit(stdout, "\"");
+                ui_attr_open(stdout,"data-bonfyre-region"); html(surface_region->id);
+                ui_attr_close(stdout);ui_attr_open(stdout,"data-bonfyre-continuity"); html(surface_region->continuity);
+                ui_attr_close(stdout);
             }
         }
-        if (region->label[0]) { ui_lit(stdout, " aria-label=\""); html(region->label); (ui_lit(stdout, "\">"), ui_open(stdout, "h2", "region-label")); html(region->label); ui_close(stdout, "h2"); }
-        else ui_lit(stdout, ">");
+        if (region->label[0]) { ui_attr_open(stdout,"aria-label"); html(region->label); (ui_attr_close(stdout),ui_gt(stdout), ui_open(stdout, "h2", "region-label")); html(region->label); ui_close(stdout, "h2"); }
+        else ui_gt(stdout);
         if (experience_open) bf_native_experience_focus(stdout,experience);
         page_emit_region(region, stream, take, ctx);
         ui_close(stdout, "section");
@@ -2874,6 +2880,7 @@ static int page_emit_regions(PageMaterial *material, const unsigned char *sequen
         }
     }
     if (experience_open) bf_native_experience_end(stdout,experience);
+    ms_saved_close();
     return shown;
 }
 
@@ -2907,9 +2914,9 @@ static void page_emit_head(const char *template, const char *head_end, const cha
             for (seen = 0; seen < k; seen++)
                 if (!strcmp(bf_page_picture_origins[seen].host, host)) break;
             if (seen < k) continue;
-            fputs("<link rel=\"preconnect\" href=\"https://", stdout); html(host);
-            fputs("\" crossorigin><link rel=\"dns-prefetch\" href=\"https://", stdout); html(host);
-            ui_lit(stdout, "\">");
+            ui_start(stdout,"link");ui_attr(stdout,"rel","preconnect");ui_attr_open(stdout,"href");ui_lit(stdout,"https://");html(host);
+            ui_attr_close(stdout);ui_flag(stdout,"crossorigin");ui_gt(stdout);ui_start(stdout,"link");ui_attr(stdout,"rel","dns-prefetch");ui_attr_open(stdout,"href");ui_lit(stdout,"https://");html(host);
+            ui_attr_close(stdout);ui_gt(stdout);
             said++;
         }
     }
@@ -3102,7 +3109,7 @@ static void page_emit_world_tabs(sqlite3 *db, const PageDocument *doc) {
         char nested_route[320]; const char *route, *label = page_grammar_label(tabs[t]); int k, repeat = 0;
         for (k = 0; k < t; k++) if (!strcmp(tabs[k], tabs[t])) repeat = 1;
         route = label && !repeat ? world_nested_grammar_route(doc->world, tabs[t], nested_route, sizeof(nested_route)) : NULL;
-        if (route) { fputs("<a href=\"", stdout); html(route); page_emit_reading_query(doc->raw_query, NULL, NULL); ui_lit(stdout, "\">"); html(label); ui_close(stdout, "a"); }
+        if (route) { ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(route); page_emit_reading_query(doc->raw_query, NULL, NULL); ui_attr_close(stdout);ui_gt(stdout); html(label); ui_close(stdout, "a"); }
     }
 }
 
@@ -3550,6 +3557,22 @@ static int page_subject_projection_regions(PageProjectionRead *read,
  * estate has material rather than for as long as one screen. */
 static unsigned page_source_offset;
 
+/* One admitted channel candidate with what the reading archive proves about
+ * it: the last sweep that kept one of its items, and how many it keeps.
+ * The frontier's own freshness bookkeeping is unmaintained (1 of 2,590 live
+ * admitted channels carries a last_contributed), so the archive is the only
+ * live signal. last_read sweeps tie broadly; depth then decides. */
+typedef struct { char source[128]; char root[128]; char proto[48]; int fam; char lr[24]; long depth; } PfCand;
+static int pf_cand_cmp(const void *a, const void *b) {
+    const PfCand *x = (const PfCand *)a, *y = (const PfCand *)b;
+    int d;
+    if (x->fam != y->fam) return y->fam - x->fam;
+    d = strcmp(y->lr, x->lr);
+    if (d) return d;
+    if (x->depth != y->depth) return x->depth > y->depth ? -1 : 1;
+    return strcmp(x->source, y->source);
+}
+
 static unsigned page_frontier_sources(const BfPageProgram *program, unsigned limit, char *sources, size_t cap) {
     sqlite3 *db = page_frontier_open(), *archive = NULL;
     sqlite3_stmt *st = NULL, *archived = NULL;
@@ -3603,12 +3626,12 @@ static unsigned page_frontier_sources(const BfPageProgram *program, unsigned lim
      * The page still takes at most program->source_limit sources, and the
      * route-number guard remains 400, so this restores reachability without
      * turning one request into an unbounded page. */
-    if (sqlite3_prepare_v2(db, "SELECT census_source, root_id, protocol FROM channel"
+    if (sqlite3_prepare_v2(db, "SELECT census_source, root_id, protocol, (material=?1) FROM channel"
                                " WHERE state IN ('admitted','active') AND census_source<>''"
                                " AND (material=?1 OR instr(','||COALESCE(carries,'')||',', ','||?1||',')>0)"
                                " ORDER BY (material=?1) DESC, (last_contributed='') DESC, last_contributed ASC, contributions ASC, first_seen ASC, state, rowid",
                            -1, &st, NULL) != SQLITE_OK &&
-        sqlite3_prepare_v2(db, "SELECT census_source, root_id, protocol FROM channel"
+        sqlite3_prepare_v2(db, "SELECT census_source, root_id, protocol, (material=?1) FROM channel"
                                " WHERE state IN ('admitted','active') AND census_source<>'' AND material=?1"
                                " ORDER BY (last_contributed='') DESC, last_contributed ASC, contributions ASC, first_seen ASC, state, rowid",
                            -1, &st, NULL) != SQLITE_OK) {
@@ -3629,6 +3652,64 @@ static unsigned page_frontier_sources(const BfPageProgram *program, unsigned lim
      *   3  the publisher share is lifted too, rather than leave a page thin
      * Diversity is preferred and then yielded, in that order, so an estate
      * whose admitted channels are nearly all one kind still fills its pages. */
+    /* When the archive answers, each family's candidates are read once, proven
+     * against it, and sorted best first, so the first length carries the
+     * liveliest sources and later lengths walk down the same stable order.
+     * Without the archive the cursor below is the compatibility path. */
+    PfCand **fam = NULL;
+    unsigned *famn = NULL;
+    if (archive && program->family_count &&
+        (fam = calloc(program->family_count, sizeof(*fam))) &&
+        (famn = calloc(program->family_count, sizeof(*famn)))) {
+        sqlite3_stmt *agg = NULL;
+        if (sqlite3_prepare_v2(archive, "SELECT COALESCE(MAX(last_read),''), COUNT(*) FROM item WHERE source=?1",
+                               -1, &agg, NULL) != SQLITE_OK) {
+            free(fam); free(famn); fam = NULL; famn = NULL;
+        } else {
+            for (k = 0; k < program->family_count; k++) {
+                PfCand *list = NULL; unsigned n = 0, capn = 0;
+                sqlite3_reset(st); sqlite3_clear_bindings(st);
+                sqlite3_bind_text(st, 1, program->families[k], -1, SQLITE_STATIC);
+                while (sqlite3_step(st) == SQLITE_ROW) {
+                    const char *source = (const char *)sqlite3_column_text(st, 0);
+                    const char *root = (const char *)sqlite3_column_text(st, 1);
+                    const char *protocol = (const char *)sqlite3_column_text(st, 2);
+                    const char *lr; long depth;
+                    PfCand *c;
+                    if (!source || !*source || strchr(source, ',')) continue;
+                    if (strlen(source) >= sizeof(c->source)) continue;
+                    sqlite3_reset(agg); sqlite3_clear_bindings(agg);
+                    sqlite3_bind_text(agg, 1, source, -1, SQLITE_TRANSIENT);
+                    if (sqlite3_step(agg) != SQLITE_ROW) continue;
+                    lr = (const char *)sqlite3_column_text(agg, 0);
+                    depth = sqlite3_column_int64(agg, 1);
+                    if (depth <= 0) continue;
+                    if (n >= capn) {
+                        PfCand *grown;
+                        unsigned want = capn ? capn * 2 : 64;
+                        if (want > 8192) break;
+                        grown = realloc(list, want * sizeof(*grown));
+                        if (!grown) break;
+                        list = grown; capn = want;
+                    }
+                    c = &list[n++];
+                    snprintf(c->source, sizeof(c->source), "%s", source);
+                    snprintf(c->root, sizeof(c->root), "%s", root ? root : "");
+                    snprintf(c->proto, sizeof(c->proto), "%s", protocol ? protocol : "");
+                    c->fam = sqlite3_column_int(st, 3);
+                    snprintf(c->lr, sizeof(c->lr), "%s", lr ? lr : "");
+                    c->depth = depth;
+                }
+                /* Best first within the family: filed here beats merely
+                 * carried here, then the liveliest and deepest archive. */
+                qsort(list, n, sizeof(*list), pf_cand_cmp);
+                fam[k] = list; famn[k] = n;
+            }
+            sqlite3_finalize(agg);
+        }
+    } else {
+        free(fam); free(famn); fam = NULL; famn = NULL;
+    }
     /* Replay prior selections through their exact family/root/protocol
      * allowances.  The offset spans the whole selected ledger, never a
      * per-family raw row cursor. */
@@ -3636,20 +3717,31 @@ static unsigned page_frontier_sources(const BfPageProgram *program, unsigned lim
     for (pass = 0; pass < 4 && count < limit; pass++)
     for (k = 0; k < program->family_count && count < limit; k++) {
         unsigned taken = 0, share = pass == 0 && program->family_count ? limit / (unsigned)program->family_count : limit;
+        unsigned fi = 0;
         if (share < 1) share = 1;
-        sqlite3_reset(st); sqlite3_clear_bindings(st);
+        if (!fam) {
+            sqlite3_reset(st); sqlite3_clear_bindings(st);
             sqlite3_bind_text(st, 1, program->families[k], -1, SQLITE_STATIC);
-        while (count < limit && taken < share && sqlite3_step(st) == SQLITE_ROW) {
-            const char *source = (const char *)sqlite3_column_text(st, 0);
-            const char *root = (const char *)sqlite3_column_text(st, 1);
-            const char *protocol = (const char *)sqlite3_column_text(st, 2);
+        }
+        for (;;) {
+            const char *source, *root, *protocol;
             int n;
             size_t source_n;
-            if (!source || !*source || strchr(source, ',')) continue;
-            if (archived) {
-                sqlite3_reset(archived); sqlite3_clear_bindings(archived);
-                sqlite3_bind_text(archived, 1, source, -1, SQLITE_TRANSIENT);
-                if (sqlite3_step(archived) != SQLITE_ROW) continue;
+            if (count >= limit || taken >= share) break;
+            if (fam) {
+                if (fi >= famn[k]) break;
+                source = fam[k][fi].source; root = fam[k][fi].root; protocol = fam[k][fi].proto; fi++;
+            } else {
+                if (sqlite3_step(st) != SQLITE_ROW) break;
+                source = (const char *)sqlite3_column_text(st, 0);
+                root = (const char *)sqlite3_column_text(st, 1);
+                protocol = (const char *)sqlite3_column_text(st, 2);
+                if (!source || !*source || strchr(source, ',')) continue;
+                if (archived) {
+                    sqlite3_reset(archived); sqlite3_clear_bindings(archived);
+                    sqlite3_bind_text(archived, 1, source, -1, SQLITE_TRANSIENT);
+                    if (sqlite3_step(archived) != SQLITE_ROW) continue;
+                }
             }
             source_n = strlen(source);
             if (source_n + 2 > walked_cap - walked_used || page_csv_has(walked, source)) continue;
@@ -3674,6 +3766,11 @@ static unsigned page_frontier_sources(const BfPageProgram *program, unsigned lim
     sqlite3_close(db);
     sqlite3_finalize(archived);
     if (archive) sqlite3_close(archive);
+    if (fam) {
+        for (k = 0; k < program->family_count; k++) free(fam[k]);
+        free(fam);
+    }
+    free(famn);
     free(walked);
     return count;
 }
@@ -3953,19 +4050,19 @@ static void page_emit_nav(const PageDocument *doc) {
     size_t i, p;
     /* The same bar as every other page family (BF_ESTATE_BAR), printed here
      * because this renderer knows the place and the reader without a script. */
-    fputs(BF_ESTATE_BAR_HEAD "<header class=\"ak-bar\"><div class=\"ak-bar-top\"><a class=\"ak-brand\" href=\"/\">Aurekai</a>"
-          "<nav class=\"ak-places\" aria-label=\"Territories\">", stdout);
+    ui_lit(stdout,BF_ESTATE_BAR_HEAD);ui_open(stdout,"header","ak-bar");ui_open(stdout,"div","ak-bar-top");ui_elem(stdout,"a",(const UiAttr[]){{"class","ak-brand"},{"href","/"}},2,0);ui_lit(stdout,"Aurekai");ui_close(stdout,"a");
+    ui_start(stdout,"nav");ui_attr(stdout,"class","ak-places");ui_attr(stdout,"aria-label","Territories");ui_gt(stdout);
     for (p = 0; p < sizeof(places) / sizeof(places[0]); p++) {
-        fputs("<a href=\"https://aurekai.", stdout); html(places[p].territory); ui_lit(stdout, "/\"");
+        ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_lit(stdout,"https://aurekai."); html(places[p].territory); ui_lit(stdout, "/");ui_attr_close(stdout);
         /* A front page names its territory; any other page stands in the one the request came to. */
         if (!strcmp(doc->territory ? doc->territory : estate_request_territory, places[p].territory)) ui_lit(stdout, " aria-current=\"page\"");
-        ui_lit(stdout, ">"); page_glyph(places[p].glyph); ui_open(stdout, "span", NULL); html(places[p].label); ui_close_n(stdout, "span", "a", NULL);
+        ui_gt(stdout); page_glyph(places[p].glyph); ui_open(stdout, "span", NULL); html(places[p].label); ui_close_n(stdout, "span", "a", NULL);
     }
     ui_close(stdout, "nav");
     /* Search is a form, so it works before and without any script. */
-    fputs("<form class=\"ak-find\" action=\"", stdout);
+    ui_start(stdout,"form");ui_attr(stdout,"class","ak-find");ui_attr_open(stdout,"action");
     html(doc->world && doc->route ? doc->route : "/search");
-    ui_lit(stdout, "\" method=\"get\" role=\"search\">");
+    ui_attr_close(stdout);ui_attr(stdout,"method","get");ui_attr(stdout,"role","search");ui_gt(stdout);
     if (doc->world) {
         if (doc->from && *doc->from) { ui_open_a(stdout, "input", "type", "hidden", "name", "from", "value", doc->from); }
         if (doc->stream && *doc->stream) { ui_open_a(stdout, "input", "type", "hidden", "name", "s", "value", doc->stream); }
@@ -3981,9 +4078,9 @@ static void page_emit_nav(const PageDocument *doc) {
     ui_close(stdout, "div");
     (ui_close(stdout, "div"), ui_elem(stdout, "nav", (const UiAttr[]){{"class", "ak-sections"}, {"aria-label", "Sections"}}, 2, 0));
     for (i = 0; !doc->world && i < BF_PAGE_NAV_COUNT; i++) {
-        fputs("<a href=\"", stdout); html(bf_page_nav[i].route); ui_lit(stdout, "\"");
+        ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(bf_page_nav[i].route); ui_attr_close(stdout);
         if (doc->route && !strcmp(doc->route, bf_page_nav[i].route)) ui_lit(stdout, " aria-current=\"page\"");
-        ui_lit(stdout, ">"); page_glyph(page_nav_glyph(bf_page_nav[i].route)); ui_open(stdout, "span", NULL); html(bf_page_nav[i].label); ui_close_n(stdout, "span", "a", NULL);
+        ui_gt(stdout); page_glyph(page_nav_glyph(bf_page_nav[i].route)); ui_open(stdout, "span", NULL); html(bf_page_nav[i].label); ui_close_n(stdout, "span", "a", NULL);
     }
     /* The two places a visitor arriving from an offer is looking for. */
     fputs(BF_ESTATE_BAR_OUT "</nav>", stdout);
@@ -4142,12 +4239,12 @@ static void page_emit_section(sqlite3 *db, PageProjectionRead *projection, const
                 snprintf(seed, sizeof(seed), "section|%s|%s", program->route, region->role);
                 snprintf(selector, sizeof(selector), ".section-dress-%.40s", program->route + 1);
                 page_emit_profile_for(db, seed, region->material, selector, NULL, 0);
-                fputs("<section class=\"section section-dress-", stdout); html(program->route + 1);
+                ui_start(stdout,"section");ui_attr_open(stdout,"class");ui_lit(stdout,"section section-dress-"); html(program->route + 1);
                 ui_lit(stdout, " section-");
             }
-            html(region->role); fputs("\"><header class=\"section-head\"><h2><a href=\"", stdout);
-            html(program->route); ui_lit(stdout, "\">"); html(program->title); ui_close_n(stdout, "a", "h2", NULL);
-            fputs("<a class=\"see-all\" href=\"", stdout); html(program->route); (ui_lit(stdout, "\">See all"), ui_close(stdout, "a"), ui_close(stdout, "header"));
+            html(region->role); ui_attr_close(stdout);ui_gt(stdout);ui_open(stdout,"header","section-head");ui_open(stdout,"h2",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");
+            html(program->route); ui_attr_close(stdout);ui_gt(stdout); html(program->title); ui_close_n(stdout, "a", "h2", NULL);
+            ui_start(stdout,"a");ui_attr(stdout,"class","see-all");ui_attr_open(stdout,"href"); html(program->route); (ui_attr_close(stdout),ui_gt(stdout),ui_lit(stdout, "See all"), ui_close(stdout, "a"), ui_close(stdout, "header"));
             page_emit_region(region, stream, take, &ctx);
             ui_close(stdout, "section");
         }
@@ -4177,10 +4274,10 @@ static void page_emit_keep_reading(const char *route, unsigned offset, unsigned 
      * publishers" link pointing at https://2/, live and unnoticed, because the
      * same function is correct for every other route. */
     const char *base = (route && route[0] == '/' && route[1] == '\0') ? "" : route;
-    fputs("<nav class=\"keep-reading\" data-keep-reading><a rel=\"next\" href=\"", stdout);
+    ui_start(stdout,"nav");ui_attr(stdout,"class","keep-reading");ui_flag(stdout,"data-keep-reading");ui_gt(stdout);ui_start(stdout,"a");ui_attr(stdout,"rel","next");ui_attr_open(stdout,"href");
     html(base);
-    printf("/%u\">More from other publishers</a></nav>", next);
-    fputs("<script>(function(){"
+    ui_lit(stdout,"/");printf("%u",next);ui_attr_close(stdout);ui_gt(stdout);ui_lit(stdout,"More from other publishers</a></nav>");
+    ui_script(stdout,"(function(){"
           "var foot=document.currentScript.previousElementSibling,busy=false,done=false;"
           "function next(){"
           "if(busy||done||!foot)return;var link=foot.querySelector('a[rel=next]');if(!link){done=true;return;}"
@@ -4257,7 +4354,7 @@ static void page_emit_keep_reading(const char *route, unsigned offset, unsigned 
           "document.addEventListener('DOMContentLoaded',function(){apertures(document);});"
           "}else{apertures(document);}"
           "window.bfApertures=apertures;"
-          "})();</script>", stdout);
+          "})();");
 }
 
 /* Routes a front's own program already composed, so the declared sections
@@ -4272,6 +4369,22 @@ static int page_front_route_taken(const char *route) {
     int i;
     for (i = 0; route && i < page_front_took_count; i++) if (!strcmp(page_front_took[i], route)) return 1;
     return 0;
+}
+/* Material that does not date (schemas/control/page-composition.cue,
+ * nativeTimelessFamilies): a recipe or a museum's object is shown without the
+ * day it was posted. A program is timeless when every family it reads is. */
+static int page_family_timeless(const char *family) {
+    size_t i;
+    if (!family || !*family) return 0;
+    for (i = 0; i < BF_PAGE_TIMELESS_FAMILY_COUNT; i++)
+        if (bf_page_timeless_families[i] && !strcmp(bf_page_timeless_families[i], family)) return 1;
+    return 0;
+}
+static int page_program_timeless(const BfPageProgram *program) {
+    size_t i;
+    if (!program || !program->family_count) return 0;
+    for (i = 0; i < program->family_count; i++) if (!page_family_timeless(program->families[i])) return 0;
+    return 1;
 }
 #include "front_editorial.h"
 
@@ -4298,25 +4411,26 @@ static void page_emit_search_identity(const PageDocument *doc, const FrontBrandC
         strspn(route, "/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~%") != strlen(route))
         return;
     title = page_search_apex_title(host, route);
-    fputs("<link rel=\"canonical\" href=\"https://", stdout);
+    ui_start(stdout,"link");ui_attr(stdout,"rel","canonical");ui_attr_open(stdout,"href");ui_lit(stdout,"https://");
     html(host); html(route);
-    (ui_lit(stdout, "\">"), ui_elem(stdout, "meta", (const UiAttr[]){{"property", "og:type"}, {"content", "website"}}, 2, 0), ui_elem(stdout, "meta", (const UiAttr[]){{"property", "og:site_name"}, {"content", "Aurekai"}}, 2, 0));
-    fputs("<meta property=\"og:url\" content=\"https://", stdout);
+    (ui_attr_close(stdout),ui_gt(stdout), ui_elem(stdout, "meta", (const UiAttr[]){ {"property", "og:type"}, {"content", "website"}}, 2, 0), ui_elem(stdout, "meta", (const UiAttr[]){ {"property", "og:site_name"}, {"content", "Aurekai"}}, 2, 0));
+    ui_start(stdout,"meta");ui_attr(stdout,"property","og:url");ui_attr_open(stdout,"content");ui_lit(stdout,"https://");
     html(host); html(route);
-    fputs("\"><meta property=\"og:title\" content=\"", stdout);
+    ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"meta");ui_attr(stdout,"property","og:title");ui_attr_open(stdout,"content");
     html(brand ? brand->headline : title ? title : doc->title);
-    fputs("\"><meta property=\"og:description\" content=\"", stdout);
+    ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"meta");ui_attr(stdout,"property","og:description");ui_attr_open(stdout,"content");
     html(brand ? brand->description : doc->lede ? doc->lede : "");
-    (ui_lit(stdout, "\">"), ui_elem(stdout, "meta", (const UiAttr[]){{"name", "twitter:card"}, {"content", "summary"}}, 2, 0));
+    (ui_attr_close(stdout),ui_gt(stdout), ui_elem(stdout, "meta", (const UiAttr[]){ {"name", "twitter:card"}, {"content", "summary"}}, 2, 0));
     if (title) {
         const char *name = !strcmp(host, "aurekai.work") ? "Aurekai Work" :
                            !strcmp(host, "aurekai.live") ? "Aurekai Live" :
                            !strcmp(host, "aurekai.shop") ? "Aurekai Shop" : "Aurekai Life";
-        printf("<script type=\"application/ld+json\">"
-               "{\"@context\":\"https://schema.org\",\"@type\":\"WebSite\","
+        ui_start(stdout,"script");ui_attr(stdout,"type","application/ld+json");ui_gt(stdout);
+        printf("{\"@context\":\"https://schema.org\",\"@type\":\"WebSite\","
                "\"name\":\"%s\",\"url\":\"https://%s/\","
                "\"publisher\":{\"@type\":\"Organization\",\"name\":\"Aurekai\","
-               "\"url\":\"" BF_ORIGIN_WORK "/\"}}</script>", name, host);
+               "\"url\":\"" BF_ORIGIN_WORK "/\"}}", name, host);
+        ui_close(stdout,"script");
     }
 }
 /* Date the material actually present in this view, not the entire estate. */
@@ -4396,10 +4510,10 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     if (doc->route)
         ui_elem(stdout, "link", (const UiAttr[]){{"rel", "alternate"}, {"type", "application/atom+xml"}, {"title", "Aurekai public updates"}, {"href", "/feed.atom"}}, 4, 0);
     if (doc->world) {
-        fputs("<link rel=\"alternate\" type=\"application/atom+xml\" href=\"/w/",stdout); html(doc->world); ui_lit(stdout, "/feed.atom\">");
-        fputs("<link rel=\"alternate\" type=\"application/activity+json\" href=\"/w/",stdout); html(doc->world); ui_lit(stdout, "/ap/outbox\">");
-        fputs("<link rel=\"alternate\" type=\"application/cloudevents-batch+json\" href=\"/w/",stdout); html(doc->world); ui_lit(stdout, "/events\">");
-        fputs("<link rel=\"describedby\" type=\"application/json\" href=\"/w/",stdout); html(doc->world); ui_lit(stdout, "/manifest.json\">");
+        ui_start(stdout,"link");ui_attr(stdout,"rel","alternate");ui_attr(stdout,"type","application/atom+xml");ui_attr_open(stdout,"href");ui_lit(stdout,"/w/"); html(doc->world); ui_lit(stdout, "/feed.atom");ui_attr_close(stdout);ui_gt(stdout);
+        ui_start(stdout,"link");ui_attr(stdout,"rel","alternate");ui_attr(stdout,"type","application/activity+json");ui_attr_open(stdout,"href");ui_lit(stdout,"/w/"); html(doc->world); ui_lit(stdout, "/ap/outbox");ui_attr_close(stdout);ui_gt(stdout);
+        ui_start(stdout,"link");ui_attr(stdout,"rel","alternate");ui_attr(stdout,"type","application/cloudevents-batch+json");ui_attr_open(stdout,"href");ui_lit(stdout,"/w/"); html(doc->world); ui_lit(stdout, "/events");ui_attr_close(stdout);ui_gt(stdout);
+        ui_start(stdout,"link");ui_attr(stdout,"rel","describedby");ui_attr(stdout,"type","application/json");ui_attr_open(stdout,"href");ui_lit(stdout,"/w/"); html(doc->world); ui_lit(stdout, "/manifest.json");ui_attr_close(stdout);ui_gt(stdout);
     }
     if (doc->cannot && *doc->cannot) { ui_open_a(stdout, "meta", "name", "bonfyre:cannot-infer", "content", doc->cannot); }
     if (doc->route && (!strcmp(doc->route, "/discover") || !strcmp(doc->route, "/board") ||
@@ -4408,23 +4522,38 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
     ui_elem(stdout, "link", (const UiAttr[]){{"rel", "stylesheet"}, {"href", "/assets/page-components.css"}}, 2, 0);
     if (brand_head) ui_elem(stdout, "link", (const UiAttr[]){{"rel", "stylesheet"}, {"href", "/assets/front-brand.css"}}, 2, 0);
     ui_close(stdout, "head");
-    fputs("<body class=\"ak-app ", stdout); html(doc->character);
+    ui_start(stdout,"body");ui_attr_open(stdout,"class");ui_lit(stdout,"ak-app "); html(doc->character);
     if (doc->route) { ui_lit(stdout, " route-"); html(doc->route[1] ? doc->route + 1 : "front"); }
     if (doc->requested_grammar && *doc->requested_grammar) { ui_lit(stdout, " world-grammar-"); html(doc->requested_grammar); }
-    ui_lit(stdout, "\" data-character=\""); html(doc->character);
-    if (doc->template_name && *doc->template_name && studio_safe_slug_arg(doc->template_name)) { ui_lit(stdout, "\" data-template=\""); html(doc->template_name); }
-    ui_lit(stdout, "\"");
+    ui_attr_close(stdout);ui_attr_open(stdout,"data-character"); html(doc->character);
+    if (doc->template_name && *doc->template_name && studio_safe_slug_arg(doc->template_name)) { ui_attr_close(stdout);ui_attr_open(stdout,"data-template"); html(doc->template_name); }
+    ui_attr_close(stdout);
     bf_route_presentation_emit_body_attribute_for(stdout, bf_route_presentation_territory(page_render_host),
         doc->route, doc->raw_query, ctx.experience_pattern);
-    (ui_lit(stdout, ">"), ui_elem(stdout, "main", (const UiAttr[]){{"class", "wrap"}, {"data-bonfyre-region", "page-main"}, {"data-bonfyre-continuity", "page-main"}}, 3, 0));
+    (ui_gt(stdout), ui_elem(stdout, "main", (const UiAttr[]){{"class", "wrap"}, {"data-bonfyre-region", "page-main"}, {"data-bonfyre-continuity", "page-main"}}, 3, 0));
     page_emit_nav(doc);
     if (doc->world) { ui_elem(stdout, "nav", (const UiAttr[]){{"class", "tabs"}, {"aria-label", "Ways in"}}, 2, 0); page_emit_world_tabs(db, doc); ui_close(stdout, "nav"); }
+    /* An explored subject has every way in to the same material. */
+    if (doc->route && !strcmp(doc->route, "/explore") && doc->title && *doc->title && strcmp(doc->title, "Explore")) {
+        static const char *const ways[][2] = {{"", "Everything"}, {"listen", "Listen"}, {"watch", "Watch"}, {"look", "Look"}};
+        char as[16] = ""; size_t w;
+        if (doc->raw_query) query_value(doc->raw_query, "as", as, sizeof as);
+        ui_elem(stdout, "nav", (const UiAttr[]){{"class", "tabs"}, {"aria-label", "Ways in"}}, 2, 0);
+        for (w = 0; w < sizeof(ways) / sizeof(ways[0]); w++) {
+            ui_start(stdout, "a"); ui_attr_open(stdout, "href"); ui_copy(stdout, "/explore?q="); url_query_value(doc->title);
+            if (ways[w][0][0]) { ui_copy(stdout, "&amp;as="); ui_copy(stdout, ways[w][0]); }
+            ui_attr_close(stdout);
+            if (!strcmp(as, ways[w][0])) ui_attr(stdout, "aria-current", "page");
+            ui_gt(stdout); ui_copy(stdout, ways[w][1]); ui_close(stdout, "a");
+        }
+        ui_close(stdout, "nav");
+    }
     /* Listen, Watch, Film, Music, Stage, Sports and Art are one screen each
      * (page_media_spaces.h), not the generic region sequence below. */
     if (!doc->world && doc->program &&
         page_media_screen(db, page_render_host, doc->route, doc->raw_query, doc->title, doc->lede,
                           doc->from, doc->q, material, ctx.now)) {
-        fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
+        ui_close(stdout,"main");fputs(BF_ESTATE_FOOT, stdout);ui_lit(stdout,"</body></html>");
         free(template); if (material != doc->prefilled) free(material);
         return 1;
     }
@@ -4460,14 +4589,14 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
         struct tm utc; char day[24] = "";
         if (gmtime_r(&page_newest, &utc)) strftime(day, sizeof(day), "%Y-%m-%d", &utc);
         ui_elem(stdout, "p", (const UiAttr[]){{"class", "note archive-freshness"}, {"data-source-freshness", "stale"}, {"role", "status"}}, 3, 0);
-        fputs("Latest dated item in this view: <time datetime=\"", stdout); html(day); ui_lit(stdout, "\">"); html(day);
+        ui_lit(stdout,"Latest dated item in this view: ");ui_start(stdout,"time");ui_attr_open(stdout,"datetime"); html(day); ui_attr_close(stdout);ui_gt(stdout); html(day);
         (ui_close(stdout, "time"), ui_lit(stdout, ". This is older material, not today's updates. "), ui_elem(stdout, "a", (const UiAttr[]){{"href", "/sources"}}, 1, 0), ui_lit(stdout, "Browse sources"), ui_close(stdout, "a"), ui_lit(stdout, "."), ui_close(stdout, "p"));
     }
     if (narrowed) {
         (ui_open(stdout, "p", "narrowed"), ui_lit(stdout, "Showing "));
         if (doc->q && *doc->q) { (ui_lit(stdout, "matches for "), ui_open(stdout, "b", NULL)); html(doc->q); ui_close(stdout, "b"); }
         if (doc->from && *doc->from) { fputs(doc->q && *doc->q ? " from <b>" : "items from <b>", stdout); html(doc->from); ui_close(stdout, "b"); }
-        fputs(" &middot; <a href=\"", stdout); html(doc->route ? doc->route : "/"); (ui_lit(stdout, "\">Show all"), ui_close(stdout, "a"), ui_close(stdout, "p"));
+        ui_lit(stdout," &middot; ");ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(doc->route ? doc->route : "/"); (ui_attr_close(stdout),ui_gt(stdout),ui_lit(stdout, "Show all"), ui_close(stdout, "a"), ui_close(stdout, "p"));
     }
     if (ctx.experience_pattern && !strcmp(ctx.experience_pattern, "market") && material) {
         /* The index's ledger of itself, counted from what the page holds:
@@ -4484,16 +4613,16 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
             if (h == host_count && host_count < 12) snprintf(hosts[host_count++], sizeof(hosts[0]), "%s", it->note);
         }
         if (newest) page_when(newest, ctx.now ? ctx.now : time(NULL), when, sizeof(when));
-        printf("<dl class=\"market-ledger\"><div><dt>Listed here</dt><dd>%d</dd></div><div><dt>Sources</dt><dd>%d</dd></div>"
-               "<div><dt>State a price</dt><dd>%d</dd></div><div><dt>Newest</dt><dd>", mix->count, host_count, priced);
+        ui_open(stdout,"dl","market-ledger");ui_lit(stdout,"<div><dt>Listed here</dt><dd>");printf("%d",mix->count);ui_lit(stdout,"</dd></div><div><dt>Sources</dt><dd>");printf("%d",host_count);ui_lit(stdout,"</dd></div>"
+               "<div><dt>State a price</dt><dd>");printf("%d",priced);ui_lit(stdout,"</dd></div><div><dt>Newest</dt><dd>");
         html(when[0] ? when : "Nothing yet"); ui_close_n(stdout, "dd", "div", "dl", NULL);
         if (host_count > 1 || (doc->from && *doc->from)) {
-            fputs("<nav class=\"market-from\" aria-label=\"Listings by source\"><a href=\"", stdout); html(doc->route ? doc->route : "/");
-            fputs((doc->from && *doc->from) ? "\">All sources</a>" : "\" aria-current=\"page\">All sources</a>", stdout);
+            ui_start(stdout,"nav");ui_attr(stdout,"class","market-from");ui_attr(stdout,"aria-label","Listings by source");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(doc->route ? doc->route : "/");
+            ui_attr_close(stdout);if(!(doc->from && *doc->from))ui_lit(stdout," aria-current=\"page\"");ui_gt(stdout);ui_lit(stdout,"All sources");ui_close(stdout,"a");
             for (h = 0; h < host_count; h++) {
                 int on = doc->from && !strcmp(doc->from, hosts[h]);
-                fputs("<a href=\"", stdout); html(doc->route ? doc->route : "/"); ui_lit(stdout, "?from="); page_url_escape(hosts[h]);
-                fputs(on ? "\" aria-current=\"page\">" : "\">", stdout); html(hosts[h]); ui_close(stdout, "a");
+                ui_start(stdout,"a");ui_attr_open(stdout,"href"); html(doc->route ? doc->route : "/"); ui_lit(stdout, "?from="); page_url_escape(hosts[h]);
+                ui_attr_close(stdout);if(on)ui_lit(stdout," aria-current=\"page\"");ui_gt(stdout); html(hosts[h]); ui_close(stdout, "a");
             }
             ui_close(stdout, "nav");
         }
@@ -4682,6 +4811,8 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
                 page_emit_keep_reading(doc->route, page_source_offset, doc->program->source_limit);
         }
     }
+    /* A search also reaches every source the estate has ever read. */
+    if (doc->route && !strcmp(doc->route, "/search") && doc->q && *doc->q) shown += page_emit_archive_matches(doc->q);
     if (!shown && !page_front_shown) {
         (ui_open(stdout, "p", "note"), ui_lit(stdout, "Nothing here"));
         if (doc->q && *doc->q) { (ui_lit(stdout, " matches "), ui_open(stdout, "b", NULL)); html(doc->q); ui_close(stdout, "b"); }
@@ -4691,7 +4822,7 @@ static int page_emit_document(sqlite3 *db, const char *path, const PageDocument 
 close_page:
     if (front_community_route(page_render_host,doc->route)) front_community_emit(db);
     page_emit_surface_scene(doc, &surface_scene);
-    fputs("</main>" BF_ESTATE_FOOT "</body></html>", stdout);
+    ui_close(stdout,"main");fputs(BF_ESTATE_FOOT, stdout);ui_lit(stdout,"</body></html>");
     free(template); if (material != doc->prefilled) free(material);
     return 1;
 }

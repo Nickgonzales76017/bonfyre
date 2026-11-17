@@ -10,7 +10,7 @@ architecture broadcast
   owns BroadcastProgramme
   owns BroadcastPlan
   owns BroadcastRender
-  consumes ItemArchive
+  consumes KeptItem
   consumes MediaProgram
   publishes MediaProgram
   command BonfyreBroadcast

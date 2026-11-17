@@ -1,5 +1,5 @@
 {
-  "atlas_declaration_digest": "f470f6cfadb220b0bf578636232f2f051ff1e6ad2d357eaf7efe06df99c06598",
+  "atlas_declaration_digest": "542f9ea1d5f681c10499f377ddfa84f3b3c5ca5936d3ef360162325da8420d21",
   "interactions": [
     {
       "destination": "occurrence-spine",
@@ -160,6 +160,78 @@
       ],
       "relation": "writes_records",
       "source": "account-device-keys"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "DeviceKey shown at /account/devices -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "account-device-keys-fact-device-key-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /account/devices (Device list), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "account-device-keys"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "DevicePairing shown at /account/move -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "account-device-move-fact-device-pairing-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /account/move (Move codes), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "account-device-move"
+    },
+    {
+      "destination": "cmd-credentials",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "account-enrollment-invokes-cmd-credentials",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "account-enrollment"
+    },
+    {
+      "destination": "cmd-source-frontier",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "account-enrollment-invokes-cmd-source-frontier",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "account-enrollment"
     },
     {
       "destination": "credential-boundary",
@@ -641,6 +713,60 @@
       "source": "address-plane"
     },
     {
+      "destination": "cmd-channel",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "address-plane-invokes-cmd-channel",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "address-plane"
+    },
+    {
+      "destination": "cmd-media-delivery",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "address-plane-invokes-cmd-media-delivery",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "address-plane"
+    },
+    {
+      "destination": "cmd-media-library",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "address-plane-invokes-cmd-media-library",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "address-plane"
+    },
+    {
       "destination": "route-ranker",
       "drops": [
         "nothing (ranking never removes an eligible candidate)"
@@ -822,6 +948,24 @@
       "source": "artifact-graph"
     },
     {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "assent-signature-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "assent-signature"
+    },
+    {
       "destination": "realization-measurement",
       "drops": [
         "every architecture that was not asked about"
@@ -857,6 +1001,24 @@
       "source": "atlas-context-provider"
     },
     {
+      "destination": "cmd-braid-audit",
+      "drops": [
+        "freshness; the audit reads whatever file is on disk"
+      ],
+      "forbidden_inferences": [
+        "reading the index -> the index matches the .yaff declarations"
+      ],
+      "id": "atlas-provenance-index-read-by-cmd-braid-audit",
+      "invalidates_on": [
+        "the index export format changing"
+      ],
+      "preserves": [
+        "the exported atlas.index.json as the audit's input file"
+      ],
+      "relation": "reads_exported_index",
+      "source": "atlas-provenance"
+    },
+    {
       "destination": "cmd-experience-map",
       "drops": [
         "inferred inheritance from a schema to its parent command or neighboring files"
@@ -890,6 +1052,24 @@
       ],
       "relation": "reorders",
       "source": "standing-address-compiler"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "AccountActivityPresentation shown at /apps/_activity -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "aurekai-activity-fact-account-activity-presentation-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /apps/_activity (Activity panel), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "aurekai-activity"
     },
     {
       "destination": "browser-host",
@@ -1232,6 +1412,78 @@
       "source": "blogger-publication-surface"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "CarrierSyncRequest shown at /connections/bluesky/sync -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "bluesky-sync-request-fact-carrier-sync-request-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /connections/bluesky/sync (Sync requests), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "bluesky-sync-request"
+    },
+    {
+      "destination": "cmd-proxy",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "bonfyre-fabric-names-cmd-proxy",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "bonfyre-fabric"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "CanonicalDomain shown at /x/domains -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "bonfyre-matrix-fact-canonical-domain-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the matrix store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "bonfyre-matrix"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "MatrixSubject shown at /x/subjects -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "bonfyre-matrix-fact-matrix-subject-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the matrix store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "bonfyre-matrix"
+    },
+    {
       "destination": "information-policy",
       "drops": [
         "implied public disclosure from execution success or local publication"
@@ -1535,6 +1787,24 @@
       "source": "capability-lattice"
     },
     {
+      "destination": "cmd-capability",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "capability-discovery-gap-realized-in-cmd-capability",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "capability-discovery-gap"
+    },
+    {
       "destination": "service-site",
       "drops": [
         "no inquiry is submitted by discovery and no catalogue or payment state is transferred"
@@ -1755,6 +2025,24 @@
       "source": "civic-transparency"
     },
     {
+      "destination": "evidence-graph",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "claim-graph-shares-source-with-evidence-graph",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "claim-graph"
+    },
+    {
       "destination": "database-bridge",
       "drops": [
         "any inference of external account authority from command availability"
@@ -1957,6 +2245,1626 @@
       "source": "cloudflare-workgraph-transport"
     },
     {
+      "destination": "cmd-auth",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-a-p-i-invokes-cmd-auth",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-a-p-i"
+    },
+    {
+      "destination": "cmd-agent-contract",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-actors-builds-with-cmd-agent-contract",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-actors"
+    },
+    {
+      "destination": "cmd-household",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-actors-builds-with-cmd-household",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-actors"
+    },
+    {
+      "destination": "cmd-origin",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-actors-builds-with-cmd-origin",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-actors"
+    },
+    {
+      "destination": "cmd-standing",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-actors-builds-with-cmd-standing",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-actors"
+    },
+    {
+      "destination": "cmd-admission",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-admission",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-arrow-stream",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-arrow-stream",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-bridge",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-bridge",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-clips",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-clips",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-compete",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-compete",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-detect-objects",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-detect-objects",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-distribute",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-distribute",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-f-p-qx",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-f-p-qx",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-family",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-family",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-flash-q-l-a",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-flash-q-l-a",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-fragment",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-fragment",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-frame-extract",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-frame-extract",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-git-hub-watch",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-git-hub-watch",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-layer",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-layer",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-leapfrog",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-leapfrog",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-learn",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-learn",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-m-f-a-dict",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-m-f-a-dict",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-net",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-net",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-offer",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-offer",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-operator",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-operator",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-outreach",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-outreach",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-provider",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-provider",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-quant",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-quant",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-reason",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-reason",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-scene-detect",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-scene-detect",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-space",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-space",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-sync",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-sync",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-tel",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-tel",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-tier",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-tier",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-time",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-time",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-video-demux",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-video-demux",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-violence",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-violence",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-watch",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-watch",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-weaviate-index",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-weaviate-index",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-wire",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-wire",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-workflow",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "cmd-c-l-i-lists-cmd-workflow",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "cmd-c-l-i"
+    },
+    {
+      "destination": "cmd-commerce",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-c-m-s-builds-with-cmd-commerce",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-c-m-s"
+    },
+    {
+      "destination": "cmd-admission",
+      "drops": [
+        "admission authority; the test only compares outputs"
+      ],
+      "forbidden_inferences": [
+        "a parity test running admission -> production ContextCut runs admission"
+      ],
+      "id": "cmd-context-cut-parity-test-runs-cmd-admission",
+      "invalidates_on": [
+        "the test's admission invocation or the binary path changing"
+      ],
+      "preserves": [
+        "the admission binary's own output as the parity test's oracle"
+      ],
+      "relation": "witness_runs_binary",
+      "source": "cmd-context-cut"
+    },
+    {
+      "destination": "cmd-s-a-e",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-control-invokes-cmd-s-a-e",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-control"
+    },
+    {
+      "destination": "cmd-scoped-demand",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-demand-convergence-builds-with-cmd-scoped-demand",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-demand-convergence"
+    },
+    {
+      "destination": "cmd-bridge-readiness",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-experience-convergence-builds-with-cmd-bridge-readiness",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-experience-convergence"
+    },
+    {
+      "destination": "cmd-disturbance-audit",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-experience-convergence-builds-with-cmd-disturbance-audit",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-experience-convergence"
+    },
+    {
+      "destination": "cmd-experience-binding",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-experience-convergence-builds-with-cmd-experience-binding",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-experience-convergence"
+    },
+    {
+      "destination": "cmd-experience-stage",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-experience-convergence-builds-with-cmd-experience-stage",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-experience-convergence"
+    },
+    {
+      "destination": "cmd-observation-boundary",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-experience-convergence-builds-with-cmd-observation-boundary",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-experience-convergence"
+    },
+    {
+      "destination": "cmd-run",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-flow-invokes-cmd-run",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-flow"
+    },
+    {
+      "destination": "cmd-c-m-s",
+      "drops": [
+        "any publication effect; the receipt itself states publication_effect false"
+      ],
+      "forbidden_inferences": [
+        "a declared write owner -> a write has happened or was authorized"
+      ],
+      "id": "cmd-fragment-migration-names-write-owner-cmd-c-m-s",
+      "invalidates_on": [
+        "the contract's write_owner or the admission receipt shape changing"
+      ],
+      "preserves": [
+        "the draft-admission receipt's write_owner field and the contract's CMS batch transaction as the only write path"
+      ],
+      "relation": "declares_write_owner",
+      "source": "cmd-fragment-migration"
+    },
+    {
+      "destination": "cmd-sign",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-gate-builds-with-cmd-sign",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-gate"
+    },
+    {
+      "destination": "cmd-mo-e",
+      "drops": [
+        "any call between the two programs"
+      ],
+      "forbidden_inferences": [
+        "a boundary comment -> infer calls MoE"
+      ],
+      "id": "cmd-infer-defers-distributed-execution-to-cmd-mo-e",
+      "invalidates_on": [
+        "the Makefile adapter or MoE's execution ownership changing"
+      ],
+      "preserves": [
+        "the stated split: infer keeps retained planning objects, MoE owns the distributed execution path"
+      ],
+      "relation": "declares_ownership_boundary",
+      "source": "cmd-infer"
+    },
+    {
+      "destination": "cmd-external-estate",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-interaction-grammar-builds-with-cmd-external-estate",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-interaction-grammar"
+    },
+    {
+      "destination": "cmd-graph",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-m-c-p-proof-invokes-cmd-graph",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-m-c-p-proof"
+    },
+    {
+      "destination": "cmd-material-lease",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-material-weather-gate-builds-with-cmd-material-lease",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-material-weather-gate"
+    },
+    {
+      "destination": "cmd-resource-weather-delta",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-material-weather-reheat-builds-with-cmd-resource-weather-delta",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-material-weather-reheat"
+    },
+    {
+      "destination": "cmd-swarm",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-model-invokes-cmd-swarm",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-model"
+    },
+    {
+      "destination": "capability-lattice",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "cmd-owner-contract-shares-source-with-capability-lattice",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "cmd-owner-contract"
+    },
+    {
+      "destination": "cmd-pack-condition",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-pack-condition-delta-builds-with-cmd-pack-condition",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-pack-condition-delta"
+    },
+    {
+      "destination": "cmd-scoped-reheat",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-pack-condition-delta-builds-with-cmd-scoped-reheat",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-pack-condition-delta"
+    },
+    {
+      "destination": "cmd-context-cut",
+      "drops": [
+        "selection and lowerer handoff; the manifest is not a selection"
+      ],
+      "forbidden_inferences": [
+        "a built manifest -> ContextCut selected or admitted any body"
+      ],
+      "id": "cmd-provider-frontier-feeds-material-manifest-to-cmd-context-cut",
+      "invalidates_on": [
+        "the manifest contract or the verify-before-build ordering changing"
+      ],
+      "preserves": [
+        "the strict material-manifest contract the provider frontier writes after verify, consumed as a diagnostic representation input"
+      ],
+      "relation": "builds_manifest_for",
+      "source": "cmd-provider-frontier"
+    },
+    {
+      "destination": "cmd-showcase-estate",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-public-world-builds-with-cmd-showcase-estate",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-public-world"
+    },
+    {
+      "destination": "cmd-paragraph",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-recall-invokes-cmd-paragraph",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-recall"
+    },
+    {
+      "destination": "cmd-narrate",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-render-invokes-cmd-narrate",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-render"
+    },
+    {
+      "destination": "cmd-pack",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-render-invokes-cmd-pack",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-render"
+    },
+    {
+      "destination": "cmd-brief",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-repurpose-builds-with-cmd-brief",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-repurpose"
+    },
+    {
+      "destination": "cmd-resource-weather-transition",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-resource-weather-refresh-builds-with-cmd-resource-weather-transition",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-resource-weather-refresh"
+    },
+    {
+      "destination": "cmd-gen",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-runtime-invokes-cmd-gen",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-runtime"
+    },
+    {
+      "destination": "cmd-ledger",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-runtime-invokes-cmd-ledger",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-runtime"
+    },
+    {
+      "destination": "cmd-orchestrate",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-runtime-invokes-cmd-orchestrate",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-runtime"
+    },
+    {
+      "destination": "cmd-pipeline",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-runtime-invokes-cmd-pipeline",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-runtime"
+    },
+    {
+      "destination": "cmd-proxy",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-runtime-invokes-cmd-proxy",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-runtime"
+    },
+    {
+      "destination": "cmd-stitch",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-runtime-invokes-cmd-stitch",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-runtime"
+    },
+    {
+      "destination": "cmd-scoped-frontier",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-scoped-convergence-builds-with-cmd-scoped-frontier",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-scoped-convergence"
+    },
+    {
+      "destination": "cmd-scoped-demand",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-scoped-respecialize-builds-with-cmd-scoped-demand",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-scoped-respecialize"
+    },
+    {
+      "destination": "cmd-scoped-lease-reheat",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-scoped-weather-convergence-builds-with-cmd-scoped-lease-reheat",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-scoped-weather-convergence"
+    },
+    {
+      "destination": "cmd-web-sub-lease-gate",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-scoped-weather-convergence-builds-with-cmd-web-sub-lease-gate",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-scoped-weather-convergence"
+    },
+    {
+      "destination": "cmd-showcase-estate",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-showcase-crosswalk-builds-with-cmd-showcase-estate",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-showcase-crosswalk"
+    },
+    {
+      "destination": "cmd-transcript-clean",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-speech-loop-invokes-cmd-transcript-clean",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-speech-loop"
+    },
+    {
+      "destination": "cmd-c-m-s",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-surface-invokes-cmd-c-m-s",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-surface"
+    },
+    {
+      "destination": "cmd-attention",
+      "drops": [
+        "the sibling's runtime state; building it says nothing about it running or being authorized"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "cmd-target-attention-builds-with-cmd-attention",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the sibling program's own build and its command-line contract; the Makefile rule runs it as built"
+      ],
+      "relation": "test_or_build_target_builds_sibling",
+      "source": "cmd-target-attention"
+    },
+    {
+      "destination": "cmd-media-prep",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-transcribe-invokes-cmd-media-prep",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-transcribe"
+    },
+    {
+      "destination": "cmd-paragraph",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-transcript-family-invokes-cmd-paragraph",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-transcript-family"
+    },
+    {
+      "destination": "cmd-domain",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-web-address-invokes-cmd-domain",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-web-address"
+    },
+    {
+      "destination": "cmd-pay",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-web-address-invokes-cmd-pay",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-web-address"
+    },
+    {
+      "destination": "cmd-upper90",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-web-address-invokes-cmd-upper90",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-web-address"
+    },
+    {
+      "destination": "cmd-project",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "cmd-web-sub-invokes-cmd-project",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "cmd-web-sub"
+    },
+    {
+      "destination": "cmd-c-m-s",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "cmd-world-compiler-names-cmd-c-m-s",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "cmd-world-compiler"
+    },
+    {
       "destination": "address-plane",
       "drops": [
         "CMS row bodies, actor authority, disclosure standing, source truth, evidence/proof, provider state, commitment, reservation and effects"
@@ -2041,6 +3949,24 @@
       "source": "command-vectors"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "CommerceStage shown at /x/exchange-stages -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "commerce-chain-fact-commerce-stage-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the commerce store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "commerce-chain"
+    },
+    {
       "destination": "marketplace-observation",
       "drops": [
         "checkout, quote, reservation, payment, settlement, fulfilment, delivery, and ownership state"
@@ -2057,6 +3983,60 @@
         "a retained source receipt, merchant address, observation time, and the distinction among identity, offer, price, and availability"
       ],
       "relation": "materializes_observed_offer_facets",
+      "source": "commerce-observation-provider"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "MerchantOffer shown at /x/offers -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "commerce-observation-provider-fact-merchant-offer-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_public_surface",
+      "source": "commerce-observation-provider"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "PriceObservation shown at /x/prices -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "commerce-observation-provider-fact-price-observation-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_public_surface",
+      "source": "commerce-observation-provider"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "ProductIdentity shown at /x/products -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "commerce-observation-provider-fact-product-identity-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_public_surface",
       "source": "commerce-observation-provider"
     },
     {
@@ -2180,6 +4160,24 @@
       "source": "content-write-surface"
     },
     {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "compounding-slice-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "compounding-slice"
+    },
+    {
       "destination": "native-file-digest",
       "drops": [
         "a generation digest when the source cannot be read completely"
@@ -2212,6 +4210,24 @@
       ],
       "relation": "refines",
       "source": "frappe-condition-plan"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "ConnectionSourceCandidate shown at /apps/connections -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "connection-source-catalog-fact-connection-source-candidate-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /apps/connections (Connection catalogue), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "connection-source-catalog"
     },
     {
       "destination": "web-address-edge",
@@ -2715,6 +4731,24 @@
       "source": "institutional-product-contracts"
     },
     {
+      "destination": "cmd-lex",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "demand-book-names-cmd-lex",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "demand-book"
+    },
+    {
       "destination": "resource-activation",
       "drops": [
         "activate authority, activate actor selection, mechanism binding, payment-rail selection, spend approval and execution"
@@ -2822,6 +4856,42 @@
       "source": "detail-depth"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "ItemFacet shown at /x/item-details -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "detail-depth-fact-item-facet-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the detail_depth store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_public_surface",
+      "source": "detail-depth"
+    },
+    {
+      "destination": "cmd-semantic-optimizer",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "detail-depth-names-cmd-semantic-optimizer",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "detail-depth"
+    },
+    {
       "destination": "page-composition",
       "drops": [
         "other accounts' sites, credentials"
@@ -2877,6 +4947,204 @@
       "source": "discipl-composition"
     },
     {
+      "destination": "cmd-s-l-i",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "discipl-composition-invokes-cmd-s-l-i",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-canon",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-canon",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-emit",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-emit",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-entity",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-entity",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-f-p-q",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-f-p-q",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-index",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-index",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-proof",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-proof",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-segment",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-segment",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-tag",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-tag",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-tone",
+      "drops": [
+        "whether the destination is built, installed or authorized; a table row is a name, not a call result"
+      ],
+      "forbidden_inferences": [
+        "a row in the source's table -> the destination binary exists on this machine or accepts that verb"
+      ],
+      "id": "discipl-composition-lists-cmd-tone",
+      "invalidates_on": [
+        "the table row, the destination's binary name or its verbs changing"
+      ],
+      "preserves": [
+        "the destination's declared verb or binary name and the one-line description the source's table routes by"
+      ],
+      "relation": "names_in_dispatch_table",
+      "source": "discipl-composition"
+    },
+    {
+      "destination": "cmd-facet",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "discipl-composition-names-cmd-facet",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "discipl-composition"
+    },
+    {
       "destination": "source-frontier",
       "drops": [
         "any path by which proposing a candidate could read, admit, or contact the publisher"
@@ -2923,6 +5191,24 @@
       ],
       "relation": "host-selected-arrival-character",
       "source": "territory-door"
+    },
+    {
+      "destination": "cmd-frappe-compiler",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "drive-shares-source-with-cmd-frappe-compiler",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "drive"
     },
     {
       "destination": "mcp-project-native-owner",
@@ -3044,6 +5330,24 @@
       "source": "cmd-embed"
     },
     {
+      "destination": "cmd-frappe-compiler",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "erpnext-shares-source-with-cmd-frappe-compiler",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "erpnext"
+    },
+    {
       "destination": "discipl-composition",
       "drops": [
         "the phenotype's own account of what the source offers, which describes the source and not the bytes this estate retained from it",
@@ -3133,6 +5437,24 @@
       ],
       "relation": "resolved_reference_to_relation_material",
       "source": "estate-reference"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "estate-version-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "estate-version"
     },
     {
       "destination": "event-material",
@@ -3353,6 +5675,24 @@
       "source": "dual-agent-fabric-native-owner"
     },
     {
+      "destination": "cmd-web-address",
+      "drops": [
+        "every write path; the renderer has none"
+      ],
+      "forbidden_inferences": [
+        "a page under /x -> a new authority, a verified record or a permitted action"
+      ],
+      "id": "fact-surface-registry-renders-in-web-address",
+      "invalidates_on": [
+        "the route table, the shell or the session checks changing"
+      ],
+      "preserves": [
+        "each row's audience check, store lease, row limit and plain words"
+      ],
+      "relation": "registry_rows_to_shell_pages",
+      "source": "fact-surface-registry"
+    },
+    {
       "destination": "profile-runner-legibility",
       "drops": [
         "the assumption that printing a failure reports one"
@@ -3385,6 +5725,24 @@
       "source": "registry-federation"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "FeedAgentPolicy shown at /account/agents -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "feed-agent-policy-fact-feed-agent-policy-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /account/agents (Feed rules), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "feed-agent-policy"
+    },
+    {
       "destination": "proof-frontier",
       "drops": [
         "the need to recompute the whole answer on a change"
@@ -3401,6 +5759,24 @@
       ],
       "relation": "incremental_maintenance",
       "source": "feldera"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "FieldDispatch shown at /dispatch -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "field-dispatch-fact-field-dispatch-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /dispatch (Dispatch queue), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "field-dispatch"
     },
     {
       "destination": "cmd-c-m-s",
@@ -3591,6 +5967,24 @@
       "source": "food-combination-graph"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "ForeignOccurrence shown at /sources -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "foreign-link-desk-fact-foreign-occurrence-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /sources (Source desk), unchanged"
+      ],
+      "relation": "produced_fact_to_public_surface",
+      "source": "foreign-link-desk"
+    },
+    {
       "destination": "source-frontier",
       "drops": [
         "applicant post bodies from the original-poster projection, executable interpretation of HTML and inference of job availability"
@@ -3621,6 +6015,24 @@
       ],
       "relation": "decodes_retained_observation",
       "source": "foreign-twin"
+    },
+    {
+      "destination": "cmd-c-m-s",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "foreign-publication-corpus-realized-in-cmd-c-m-s",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "foreign-publication-corpus"
     },
     {
       "destination": "housing-concession-arbitrage",
@@ -3712,6 +6124,24 @@
       "source": "foundry-behavior-compiler"
     },
     {
+      "destination": "cmd-f-p-q",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "fpq-mode-select-realized-in-cmd-f-p-q",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "fpq-mode-select"
+    },
+    {
       "destination": "proof-frontier",
       "drops": [
         "nothing"
@@ -3766,6 +6196,24 @@
       "source": "cmd-frappe-compiler"
     },
     {
+      "destination": "cmd-frappe-compiler",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "frappe-core-shares-source-with-cmd-frappe-compiler",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "frappe-core"
+    },
+    {
       "destination": "work-graph",
       "drops": [
         "business-fact ownership, live Frappe mutation, effect authority and any claim that a surface record proves the represented subject"
@@ -3816,6 +6264,24 @@
       ],
       "relation": "binding_condition_to_work",
       "source": "funding-frontier"
+    },
+    {
+      "destination": "cmd-gate",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "gate-entitlement-realized-in-cmd-gate",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "gate-entitlement"
     },
     {
       "destination": "live-semantic-track",
@@ -3984,6 +6450,78 @@
       "source": "gigatoken"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "GitHubAppConnection shown at /connect/github-app/customers -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "github-app-connection-fact-git-hub-app-connection-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /connect/github-app/customers (Installations), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "github-app-connection"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "github-app-connection-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "github-app-connection"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "glyph-vocabulary-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "glyph-vocabulary"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "governance-grammar-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "governance-grammar"
+    },
+    {
       "destination": "capability-lattice",
       "drops": [
         "any path by which naming a grammar could commit an organ to a surface, a schedule, or a way of looking"
@@ -4032,6 +6570,24 @@
       "source": "guild-records"
     },
     {
+      "destination": "cmd-hash",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "hash-identity-realized-in-cmd-hash",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "hash-identity"
+    },
+    {
       "destination": "native-file-digest",
       "drops": [
         "digest publication on failed reads"
@@ -4048,6 +6604,24 @@
       ],
       "relation": "file_and_duplicate_reads_to_shared_digest",
       "source": "cmd-hash"
+    },
+    {
+      "destination": "cmd-frappe-compiler",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "helpdesk-shares-source-with-cmd-frappe-compiler",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "helpdesk"
     },
     {
       "destination": "commitment-graph",
@@ -4101,6 +6675,24 @@
       ],
       "relation": "reads_through",
       "source": "cmd-recipe"
+    },
+    {
+      "destination": "cmd-frappe-compiler",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "hrms-shares-source-with-cmd-frappe-compiler",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "hrms"
     },
     {
       "destination": "social-presence-graph",
@@ -4321,6 +6913,24 @@
       "source": "cmd-ingest"
     },
     {
+      "destination": "cmd-frappe-compiler",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "insights-shares-source-with-cmd-frappe-compiler",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "insights"
+    },
+    {
       "destination": "cmd-c-m-s",
       "drops": [
         "source text, private findings, workbook/database bytes, credentials, personal identities, grants and original private record addresses from public design material"
@@ -4337,6 +6947,78 @@
       ],
       "relation": "publishes_and_reconciles_native_page_aggregate",
       "source": "surface-ir"
+    },
+    {
+      "destination": "cmd-sign",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "institution-identity-realized-in-cmd-sign",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "institution-identity"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "institution-planes-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "institution-planes"
+    },
+    {
+      "destination": "money-graph",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "institutional-cost-graph-shares-source-with-money-graph",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "institutional-cost-graph"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "institutional-worlds-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "institutional-worlds"
     },
     {
       "destination": "address-plane",
@@ -4375,6 +7057,24 @@
       ],
       "relation": "weakest_semantic_rung",
       "source": "protocol-facet-compiler"
+    },
+    {
+      "destination": "cmd-semantic-operation",
+      "drops": [
+        "owners not present in the generated grammar"
+      ],
+      "forbidden_inferences": [
+        "a compiled grammar -> every owner predicate is checkable"
+      ],
+      "id": "inverse-compiler-header-built-into-cmd-semantic-operation",
+      "invalidates_on": [
+        "the inverse-programs generator output changing"
+      ],
+      "preserves": [
+        "the generated inverse_programs.h owner grammar compiled in through -I of the optimizer's generated directory"
+      ],
+      "relation": "compiled_or_built_with",
+      "source": "inverse-compiler"
     },
     {
       "destination": "work-graph",
@@ -4537,6 +7237,24 @@
       "source": "javascript-static-audit"
     },
     {
+      "destination": "cmd-k-v-cache",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "kv-temporal-realized-in-cmd-k-v-cache",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "kv-temporal"
+    },
+    {
       "destination": "surface-ir",
       "drops": [
         "submitted foreign response bodies, ForeignTwin admission, provider credentials, browser bearer storage, authority grants, account details, weather assertions, settlement, publication, and every external effect"
@@ -4588,6 +7306,42 @@
         "exact subject addresses, comparability contracts, source digests and the rule that similarity is not identity"
       ],
       "relation": "extends_polytypically",
+      "source": "latent-coordinate-atlas"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "LatentChart shown at /x/similarity-charts -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "latent-coordinate-atlas-fact-latent-chart-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the latent_atlas store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "latent-coordinate-atlas"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "NeighbourhoodSnapshot shown at /x/neighbourhoods -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "latent-coordinate-atlas-fact-neighbourhood-snapshot-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the latent_atlas store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
       "source": "latent-coordinate-atlas"
     },
     {
@@ -4692,6 +7446,24 @@
       "source": "listen-program"
     },
     {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "live-session-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "live-session"
+    },
+    {
       "destination": "attention-cooling",
       "drops": [
         "the content of what expires; cooling needs to know that a moment may go, not what was said in it"
@@ -4729,6 +7501,24 @@
       ],
       "relation": "evidences_commitment",
       "source": "live-semantic-track"
+    },
+    {
+      "destination": "cmd-frappe-compiler",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "lms-shares-source-with-cmd-frappe-compiler",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "lms"
     },
     {
       "destination": "surface-pattern",
@@ -5581,6 +8371,24 @@
       "source": "model-commons"
     },
     {
+      "destination": "cmd-f-p-q",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "model-representation-graph-realized-in-cmd-f-p-q",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "model-representation-graph"
+    },
+    {
       "destination": "address-plane",
       "drops": [
         "model bytes, generated output, tokenizer state, task quality, cache residency, authority, provider capability, resource grant, proof standing and effect aperture"
@@ -5598,6 +8406,24 @@
       ],
       "relation": "measured_representation_candidate_forwarding",
       "source": "model-representation-passport-registry"
+    },
+    {
+      "destination": "institutional-cost-graph",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "money-graph-shares-source-with-institutional-cost-graph",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "money-graph"
     },
     {
       "destination": "decision-plane",
@@ -5648,6 +8474,24 @@
       ],
       "relation": "prepares_content_addressed_assembly",
       "source": "service-creator-audio"
+    },
+    {
+      "destination": "cmd-project",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "native-build-truthfulness-realized-in-cmd-project",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "native-build-truthfulness"
     },
     {
       "destination": "decision-plane",
@@ -5704,6 +8548,42 @@
       "source": "cmd-c-m-s"
     },
     {
+      "destination": "cmd-lifecycle",
+      "drops": [
+        "authority for any verb"
+      ],
+      "forbidden_inferences": [
+        "a verb resolved -> the verb is authorized"
+      ],
+      "id": "native-command-dispatch-lookup-in-cmd-lifecycle",
+      "invalidates_on": [
+        "bf_command_lookup.h interface changing"
+      ],
+      "preserves": [
+        "the shared verb lookup table call; handlers keep their own arguments"
+      ],
+      "relation": "compiled_or_built_with",
+      "source": "native-command-dispatch"
+    },
+    {
+      "destination": "release-approval-mcp",
+      "drops": [
+        "authority for any verb"
+      ],
+      "forbidden_inferences": [
+        "a verb resolved -> the verb is authorized"
+      ],
+      "id": "native-command-dispatch-lookup-in-release-approval-mcp",
+      "invalidates_on": [
+        "bf_command_lookup.h interface changing"
+      ],
+      "preserves": [
+        "the shared verb lookup; handlers keep their own arguments and exit codes"
+      ],
+      "relation": "compiled_or_built_with",
+      "source": "native-command-dispatch"
+    },
+    {
       "destination": "cmd-web-address",
       "drops": [],
       "forbidden_inferences": [
@@ -5748,6 +8628,24 @@
       ],
       "relation": "site_presentation_binding",
       "source": "web-address-edge"
+    },
+    {
+      "destination": "cmd-qwen-f-p-q",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "native-spines-bun-owner-invokes-cmd-qwen-f-p-q",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "native-spines-bun-owner"
     },
     {
       "destination": "mcp-bounded-wire-boundary",
@@ -6034,6 +8932,24 @@
       "source": "autonomous-operator-native-owner"
     },
     {
+      "destination": "appliance-release-manifest",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "organ-drift-shares-source-with-appliance-release-manifest",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "organ-drift"
+    },
+    {
       "destination": "provider-customer-accounts",
       "drops": [
         "provider keys, connection strings and provider response bodies"
@@ -6304,6 +9220,24 @@
       "source": "physical-derivation"
     },
     {
+      "destination": "runtime-parity-graph",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "placement-graph-shares-source-with-runtime-parity-graph",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "placement-graph"
+    },
+    {
       "destination": "placement-plane",
       "drops": [
         "geometry as a routing term, subject identity ownership, disclosure decisions, authority, effect rights and a claim that a projection is a source observation"
@@ -6498,6 +9432,24 @@
       "source": "the-press"
     },
     {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "price-observatory-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "price-observatory"
+    },
+    {
       "destination": "cmd-c-m-s",
       "drops": [
         "any authority over another site's selections, other placements, or the underlying source artwork"
@@ -6513,6 +9465,24 @@
       ],
       "relation": "requests_conditional_update",
       "source": "site-presentation-composition"
+    },
+    {
+      "destination": "cmd-auth",
+      "drops": [
+        "any other user's binding, any handle already held, and any authority or site grant; binding alone publishes nothing"
+      ],
+      "forbidden_inferences": [
+        "a bound actor -> a published site, a public presence, or authority over anything"
+      ],
+      "id": "profile-claim-binds-once-through-auth",
+      "invalidates_on": [
+        "the actor-bind verb, the actor_closure_bindings shape, or the claim handler changing"
+      ],
+      "preserves": [
+        "the session's own user id, the validated lowercase handle, and the one-address-per-account rule enforced by re-reading the binding after the call"
+      ],
+      "relation": "invokes_actor_bind_for_unbound_self_only",
+      "source": "human-community-body"
     },
     {
       "destination": "cmd-participation",
@@ -7136,6 +10106,42 @@
       "source": "protocol-contract"
     },
     {
+      "destination": "claim-graph",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "provenance-graph-shares-source-with-claim-graph",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "provenance-graph"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "ProviderCustomerAccount shown at /organizations -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "provider-customer-accounts-fact-provider-customer-account-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /organizations (Provider accounts), unchanged"
+      ],
+      "relation": "produced_fact_to_member_surface",
+      "source": "provider-customer-accounts"
+    },
+    {
       "destination": "autonomous-operator-native-owner",
       "drops": [
         "credentials, recovery material, identity-pack values, provider responses and any claim that an account exists"
@@ -7220,6 +10226,24 @@
       ],
       "relation": "continues",
       "source": "foreign-link-desk"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "public-observation-aperture-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "public-observation-aperture"
     },
     {
       "destination": "authority-graph",
@@ -7607,6 +10631,24 @@
       "source": "mcp-recursive-native-overlay"
     },
     {
+      "destination": "institutional-cost-graph",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "recursive-value-graph-shares-source-with-institutional-cost-graph",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "recursive-value-graph"
+    },
+    {
       "destination": "content-write-surface",
       "drops": [
         "the ordering and the separator once resolved; what survives is whether each name finds a row"
@@ -7656,6 +10698,42 @@
       ],
       "relation": "blocker_resolution",
       "source": "relationship-graph"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "ReleaseApproval shown at /work-board -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "release-approval-fact-release-approval-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /work-board (Open approvals), unchanged"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "release-approval"
+    },
+    {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "release-approval-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "release-approval"
     },
     {
       "destination": "work-graph",
@@ -7766,6 +10844,42 @@
       "source": "fpq-transform"
     },
     {
+      "destination": "cmd-arrow-flight",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "representation-manifold-names-cmd-arrow-flight",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "representation-manifold"
+    },
+    {
+      "destination": "cmd-zarr-forge",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "representation-manifold-names-cmd-zarr-forge",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "representation-manifold"
+    },
+    {
       "destination": "representation-manifold",
       "drops": [
         "Python import as a runtime readiness test, implicit package installation, and any claim that a loaded driver executed SQL"
@@ -7799,6 +10913,24 @@
         "the canonical Parquet input digest and frontier, a content-addressed Flight catalog, native executable identity, and separate installed versus serving states"
       ],
       "relation": "verified_physical_to_columnar_transport",
+      "source": "representation-manifold"
+    },
+    {
+      "destination": "cmd-a-d-b-c-probe",
+      "drops": [
+        "any database, query or Flight SQL service; the state stays driver_initialized_unserved"
+      ],
+      "forbidden_inferences": [
+        "an initialized driver ABI -> a served database or a working query"
+      ],
+      "id": "representation-manifold-runs-c-adbc-probe",
+      "invalidates_on": [
+        "the ADBC ABI, the probe digest or the binder changing"
+      ],
+      "preserves": [
+        "the probe's driver-initialization result and the exact driver and probe digests the Bun binder records"
+      ],
+      "relation": "binds_probe",
       "source": "representation-manifold"
     },
     {
@@ -7906,6 +11038,24 @@
       "source": "resource-admission"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "ResourceGrant shown at /x/resource-grants -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "resource-admission-fact-resource-grant-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the admission store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "resource-admission"
+    },
+    {
       "destination": "compression-law",
       "drops": [
         "representation selection, persistent capacity proof, candidate authorization, owner truth, evidence/proof standing, commitment/reservation, and effect authority"
@@ -7994,6 +11144,24 @@
       "source": "foreign-twin"
     },
     {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "retained-body-service-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "retained-body-service"
+    },
+    {
       "destination": "source-frontier",
       "drops": [
         "manual copying between inspectors, provider replay, automatic record writes and presentation of a newly read mismatching passage as the compared original"
@@ -8046,6 +11214,42 @@
       ],
       "relation": "searches_exact_text_in_current_source_inspector",
       "source": "web-address-edge"
+    },
+    {
+      "destination": "cmd-retention",
+      "drops": [
+        "runtime behavior of every other program that compiles the same file or builds the same sibling"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "retention-gc-builds-with-cmd-retention",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the source file's declarations as compiled into the destination program, or the sibling program the destination's Makefile builds first"
+      ],
+      "relation": "compiled_or_built_with",
+      "source": "retention-gc"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "RoleProgram shown at /x/roles -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "role-program-compiler-fact-role-program-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "role-program-compiler"
     },
     {
       "destination": "foundry-behavior-compiler",
@@ -8118,6 +11322,42 @@
       "source": "institutional-root"
     },
     {
+      "destination": "cmd-external-estate",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "route-arbitrage-invokes-cmd-external-estate",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "route-arbitrage"
+    },
+    {
+      "destination": "cmd-finance",
+      "drops": [
+        "the destination's stores, in-process state and authority; the source holds only what the child returns"
+      ],
+      "forbidden_inferences": [
+        "the source names the destination's binary or binary-path variable -> every invocation succeeds, or the destination's effect is authorized by the source"
+      ],
+      "id": "route-arbitrage-invokes-cmd-finance",
+      "invalidates_on": [
+        "the destination's command line or output format, or the source's lookup of the binary path, changing"
+      ],
+      "preserves": [
+        "the destination program's own command line, exit status and output as the only contract the source sees"
+      ],
+      "relation": "invokes_binary_by_name",
+      "source": "route-arbitrage"
+    },
+    {
       "destination": "capital-transformation-network",
       "drops": [
         "the claim that five routes all satisfy cash-position, which made a vendor term and a grant the same row"
@@ -8132,6 +11372,24 @@
       ],
       "relation": "route_to_transformation",
       "source": "funding-closure"
+    },
+    {
+      "destination": "placement-graph",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "runtime-parity-graph-shares-source-with-placement-graph",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "runtime-parity-graph"
     },
     {
       "destination": "saved-item",
@@ -8274,6 +11532,24 @@
       ],
       "relation": "sufficiency_consequence",
       "source": "serm"
+    },
+    {
+      "destination": "cmd-external-estate",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "served-answer-names-cmd-external-estate",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "served-answer"
     },
     {
       "destination": "work-graph",
@@ -8630,6 +11906,24 @@
       "source": "relationship-graph"
     },
     {
+      "destination": "cmd-c-m-s",
+      "drops": [
+        "any guarantee of a call: nothing at this binding is shown to execute the destination"
+      ],
+      "forbidden_inferences": [
+        "a name in the source -> a call, a shared store or a runtime dependency"
+      ],
+      "id": "shell-static-audit-names-cmd-c-m-s",
+      "invalidates_on": [
+        "the named path or string changing"
+      ],
+      "preserves": [
+        "the name the source uses for the destination in a path, string or message"
+      ],
+      "relation": "named_collaborator",
+      "source": "shell-static-audit"
+    },
+    {
       "destination": "program-fabric",
       "drops": [
         "the profile owner's identity, records and site, the example's provenance material, and any automatic review, preparation or write"
@@ -8850,6 +12144,60 @@
       "source": "source-frontier"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "SourceChannel shown at /x/source-channels -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "source-frontier-fact-source-channel-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the source_frontier store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "source-frontier"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "SourceContributionReceipt shown at /x/source-contributions -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "source-frontier-fact-source-contribution-receipt-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the source_frontier store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "source-frontier"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "columns the row does not name, cells past 240 bytes, rows past the limit and every write path"
+      ],
+      "forbidden_inferences": [
+        "SourceGap shown at /x/source-gaps -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "source-frontier-fact-source-gap-reaches-people",
+      "invalidates_on": [
+        "the producer changing its table or columns, or the row's audience changing"
+      ],
+      "preserves": [
+        "the records the producer wrote to the source_frontier store, read as written, newest first, at most 50 rows and a total count"
+      ],
+      "relation": "produced_fact_to_admin_surface",
+      "source": "source-frontier"
+    },
+    {
       "destination": "page-composition",
       "drops": [
         "unrelated retained body content, route-level item selection, source quality judgement, endpoint liveness and authority to fetch again"
@@ -9029,6 +12377,78 @@
       "source": "web-address-edge"
     },
     {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "SearchIndex shown at /_search/index.bfsi -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "static-semantic-search-fact-search-index-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /_search/index.bfsi (Search index), unchanged"
+      ],
+      "relation": "produced_fact_to_public_surface",
+      "source": "static-semantic-search"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "SearchPassage shown at /_search/passages.json -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "static-semantic-search-fact-search-passage-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /_search/passages.json (Passages), unchanged"
+      ],
+      "relation": "produced_fact_to_public_surface",
+      "source": "static-semantic-search"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "SiteSearchIndex shown at /_search/index.bfsi -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "static-semantic-search-fact-site-search-index-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /_search/index.bfsi (Search index), unchanged"
+      ],
+      "relation": "produced_fact_to_public_surface",
+      "source": "static-semantic-search"
+    },
+    {
+      "destination": "fact-surface-registry",
+      "drops": [
+        "nothing the route shows; the row adds no read of its own"
+      ],
+      "forbidden_inferences": [
+        "StaticEmbeddingModel shown at /_search/model.bfse -> it is current, verified or the viewer may act on it"
+      ],
+      "id": "static-semantic-search-fact-static-embedding-model-reaches-people",
+      "invalidates_on": [
+        "the producer changing its route, or the row's audience changing"
+      ],
+      "preserves": [
+        "the page the producer already serves at /_search/model.bfse (Model file), unchanged"
+      ],
+      "relation": "produced_fact_to_public_surface",
+      "source": "static-semantic-search"
+    },
+    {
       "destination": "web-address-edge",
       "drops": [
         "section formatting, offers, unpublished drafts and passages the model cannot see"
@@ -9097,6 +12517,24 @@
       "source": "store-schema-registry"
     },
     {
+      "destination": "cmd-latent-atlas",
+      "drops": [
+        "whether the store file exists or is populated"
+      ],
+      "forbidden_inferences": [
+        "a declared store -> rows exist or the writer ran"
+      ],
+      "id": "store-schema-registry-declares-cmd-latent-atlas-store",
+      "invalidates_on": [
+        "the store declaration in schemas/storage/stores/cmd-BonfyreWebAddress.cue changing"
+      ],
+      "preserves": [
+        "the declared sqlite store, its macro and env variable, with bonfyre-latent-atlas named as writer"
+      ],
+      "relation": "declares_store_writer",
+      "source": "store-schema-registry"
+    },
+    {
       "destination": "presentation-template",
       "drops": [
         "arbitrary CSS, foreign font URLs and semantic data ownership in the template"
@@ -9125,6 +12563,24 @@
       "source": "training-studio-appearance"
     },
     {
+      "destination": "cmd-web-address",
+      "drops": [
+        "the destination program's other commands and files, which this architecture does not claim"
+      ],
+      "forbidden_inferences": [
+        "a source file of the program listed under this architecture -> every command of the program exercises the architecture's contract"
+      ],
+      "id": "subject-room-program-realized-in-cmd-web-address",
+      "invalidates_on": [
+        "the listed source file or the architecture's declared contract changing"
+      ],
+      "preserves": [
+        "the architecture's declared contract as implemented in this source file of the destination program"
+      ],
+      "relation": "realized_in_program_source",
+      "source": "subject-room-program"
+    },
+    {
       "destination": "web-address-edge",
       "drops": [
         "coverage that held and every metric the floor does not name"
@@ -9141,6 +12597,24 @@
       ],
       "relation": "reports_lake_regressions",
       "source": "cmd-surface-maturity"
+    },
+    {
+      "destination": "cmd-semantic-operation",
+      "drops": [
+        "the operation's authority; the receipt truth line says a proposal is not proof, work or effect"
+      ],
+      "forbidden_inferences": [
+        "building the store in -> a proposal is an authorized obligation"
+      ],
+      "id": "target-obligation-built-into-cmd-semantic-operation",
+      "invalidates_on": [
+        "target_obligation.c or its header interface changing"
+      ],
+      "preserves": [
+        "the target-obligation C store compiled into the semantic-operation program"
+      ],
+      "relation": "compiled_or_built_with",
+      "source": "target-obligation"
     },
     {
       "destination": "inverse-compiler",
@@ -9195,6 +12669,24 @@
       ],
       "relation": "projects",
       "source": "presentation-template"
+    },
+    {
+      "destination": "claim-graph",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "temporal-evidence-graph-shares-source-with-claim-graph",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "temporal-evidence-graph"
     },
     {
       "destination": "financial-metabolism",
@@ -9706,6 +13198,24 @@
       "source": "store-schema-registry"
     },
     {
+      "destination": "cmd-actors",
+      "drops": [
+        "runtime behavior of every other program that compiles the same file or builds the same sibling"
+      ],
+      "forbidden_inferences": [
+        "the destination's Makefile building or including the source -> the source architecture's witness holds inside that program at run time"
+      ],
+      "id": "verification-ledger-builds-with-cmd-actors",
+      "invalidates_on": [
+        "the included path, the Makefile rule or the source file's interface changing"
+      ],
+      "preserves": [
+        "the source file's declarations as compiled into the destination program, or the sibling program the destination's Makefile builds first"
+      ],
+      "relation": "compiled_or_built_with",
+      "source": "verification-ledger"
+    },
+    {
       "destination": "unlock-graph",
       "drops": [
         "asserted-only identity"
@@ -9996,6 +13506,42 @@
       ],
       "relation": "references",
       "source": "training-weekly-plans"
+    },
+    {
+      "destination": "cmd-frappe-compiler",
+      "drops": [
+        "each architecture's own invariants; sharing a file does not merge their claims"
+      ],
+      "forbidden_inferences": [
+        "two architectures listing one source file -> one holds the other's witness or maturity"
+      ],
+      "id": "wiki-shares-source-with-cmd-frappe-compiler",
+      "invalidates_on": [
+        "the shared source file being split or either entry's source_path changing"
+      ],
+      "preserves": [
+        "the declared contract of each architecture as implemented in the one shared source file"
+      ],
+      "relation": "realized_by_shared_source",
+      "source": "wiki"
+    },
+    {
+      "destination": "witness-grade",
+      "drops": [
+        "each rule's own verdict; grading does not decide backing"
+      ],
+      "forbidden_inferences": [
+        "an included grader -> every witness is graded at validate time"
+      ],
+      "id": "witness-enforcement-grades-through-witness-grade",
+      "invalidates_on": [
+        "witness_grade.h or the validate pass changing"
+      ],
+      "preserves": [
+        "the atlas program's maturity-backing check and the witness-grade header it includes"
+      ],
+      "relation": "same_program_includes",
+      "source": "witness-enforcement"
     },
     {
       "destination": "role-program-compiler",
@@ -21663,7 +25209,8 @@
       "experience_chains": [],
       "family": "command",
       "forbidden_inferences": [
-        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+        "the command exists -> its effect is authorized (read-only, but scope still applies)",
+        "the per-worker /people memo and the public projection cache are speed, not freshness: a first request on each worker after a store change or clock bucket still pays the full archive aggregate"
       ],
       "id": "cmd-web-address",
       "internal_calculi": [
@@ -21674,6 +25221,7 @@
       ],
       "known_gaps": [
         "native WebAddress builds and deployed consumer paths have separate witnesses; full WiringSpec consumes/produces completion remains separate",
+        "uncached fronts (/, /listen, /watch) still compose 0.4-1.0 s on an idle machine: per-request CMS connections lose the SQLite page cache and publication_occurrence row reads dominate; a per-source material cache was not built",
         "the selected consumer tests and binary build pass; the earlier broader all target failed in the unrelated compile_subject_projection SQLITE_CANTOPEN fixture and has not been certified by these passes"
       ],
       "layer": "",
@@ -21685,12 +25233,17 @@
       "semantic_question": "What does the BonfyreWebAddress capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreWebAddress/src/main.c",
-        "cmd/BonfyreRecipe/src/recipe_nutrition.c"
+        "cmd/BonfyreRecipe/src/recipe_nutrition.c",
+        "cmd/BonfyreWebAddress/src/ui_tree.h"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "cmd/BonfyreWebAddress/tests/week_web.test.mjs passes 39 source, native formulation, browser form, request/field-capacity and private CMS/Desk checks"
+        "2026-11-15 dogfood: 24 mistyped ui_open_v(struct-array) call sites across front_community/front_editorial/page_media_spaces/page_routes_and_emitters/page_core_rendering converted to ui_open_a string pairs; tree binary then renders /discover on all four territories in <2s (previously spun in strpbrk), verified against preview lane copies",
+        "2026-11-16 dogfood P0 batch: login-redirect allowlist covers all 14 profile tabs (participant-journey-witness: 14x303 + bogus 400, Makefile-gated); companions -1 path renders sign-in/empty state with footer instead of truncating; /packs registry emits via bf_jsonw (differential probe: legacy shape invalid on hostile fields, new shape valid with identical keys)",
+        "cmd/BonfyreWebAddress/tests/week_web.test.mjs passes 39 source, native formulation, browser form, request/field-capacity and private CMS/Desk checks",
+        "2026-11-15 speed lane: retained feed reader (page_tag_attr, rss_tag_text, page_feed_picture, author/podcast:person in page_collect_retained) searched with unbounded strstr, rescanning the rest of the feed for every optional tag an item lacked; bounded bf_span_find (site_and_world_material.h, fuzzed equal to strstr-then-<end over 5M cases) took cold item pages on lane preview copies from 0.24-2.4 s to 0.14-0.37 s with byte-identical HTML apart from relative times",
+        "2026-11-15 speed lane: /people aggregate memoized per worker in people_projection.c, keyed by archive and CMS file+WAL identity, query, page and a ten-minute clock, and the duplicate COUNT DISTINCT scan folded into one pass; repeat uncached /people 1.0-1.5 s to 0.06-0.13 s, output identical"
       ]
     },
     {
@@ -25284,7 +28837,7 @@
         "cmd/BonfyreExperienceMap/tools/participation-law.generated.json",
         "cmd/BonfyreExperienceMap/tools/participation_report.mjs",
         "cmd/BonfyreExternalEstate/tools/estate-refresh.sh",
-        "cmd/BonfyreExternalEstate/tools/estate-refresh-summary.mjs",
+        "cmd/BonfyreExternalEstate/tools/estate-refresh-summary.jq",
         "cmd/BonfyreExternalEstate/tests/participation_contract.mjs",
         "cmd/BonfyreFacet/tests/reader_agreement.mjs",
         "cmd/BonfyreExperienceMap/tools/tsv_contract.mjs",
@@ -25445,6 +28998,79 @@
         "Aurekai/tests/external-estate-runtime.test.mjs proves the local 4,891-occurrence native AddressPlane index rejects 4,760 records before exact ownership for Farm Cold Chain Household and that all 131 survivors remain within the measured World reservoir",
         "Aurekai/tests/external-estate-runtime.test.mjs proves every rendered public World card exposes an explicit POST transport-check carrier and that the resulting human receipt names its no-body/non-admission boundary",
         "local 2026-09-15 server witness at 127.0.0.1:8872 returned Farm Cold Chain Household HTML and JSON with closure sha256:2bfb77eb17f049b210a63ec6d9a5d36712c3149eec2f6a8579d06ae91101576a, 131 occurrences and six eight-candidate lenses; an If-None-Match request returned 304 without a body"
+      ]
+    },
+    {
+      "canonical_name": "FactSurfaceRegistry",
+      "commands": [],
+      "consumes": [
+        "PriceObservation",
+        "MerchantOffer",
+        "ProductIdentity",
+        "ItemFacet",
+        "RoleProgram",
+        "SourceChannel",
+        "SourceGap",
+        "SourceContributionReceipt",
+        "MatrixSubject",
+        "CanonicalDomain",
+        "LatentChart",
+        "NeighbourhoodSnapshot",
+        "CommerceStage",
+        "ResourceGrant",
+        "DeviceKey",
+        "DevicePairing",
+        "FeedAgentPolicy",
+        "CarrierSyncRequest",
+        "FieldDispatch",
+        "AccountActivityPresentation",
+        "GitHubAppConnection",
+        "ProviderCustomerAccount",
+        "ConnectionSourceCandidate",
+        "ReleaseApproval",
+        "ForeignOccurrence",
+        "SiteSearchIndex",
+        "SearchIndex",
+        "SearchPassage",
+        "StaticEmbeddingModel"
+      ],
+      "derived": [],
+      "domain": "Surface / Fact surfaces",
+      "edge_types": [],
+      "experience_chains": [],
+      "family": "surface",
+      "forbidden_inferences": [
+        "a fact shown -> it is current, verified or the viewer may act on it",
+        "a fact listed in the registry -> that its producer is healthy or still running",
+        "an empty surface -> that the producer has nothing; the store may be absent on this host"
+      ],
+      "id": "fact-surface-registry",
+      "internal_calculi": [],
+      "invariants": [
+        "every page row reads one declared store read-only through its declared lease, with one SELECT bound to a row limit, a progress deadline and a per-cell byte cap",
+        "public rows are only facts already public; member rows need a signed-in session; admin rows need the bonfyre admin grant /studio/admin checks",
+        "no row submits, publishes, pays or changes a record"
+      ],
+      "known_gaps": [
+        "a fact whose producer writes no store WebAddress may open (files, JSON receipts, stores absent on this host) has no row; tools/compile_fact_surfaces.sh lists none of them"
+      ],
+      "layer": "surface/web",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "Which fact an organ produces reaches which person, on which page, through which read?",
+      "source_paths": [
+        "schemas/control/fact-surfaces.cue",
+        "cmd/BonfyreWebAddress/tools/compile_fact_surfaces.sh",
+        "cmd/BonfyreWebAddress/src/fact_surface_web.h",
+        "schemas/storage/stores/cmd-BonfyreAdmission.cue"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh builds stores from nothing, shows a public row to anyone, sends a signed-out visitor to sign in for an admin row, refuses a signed-in non-admin, and lists only permitted rows on /x"
       ]
     },
     {
@@ -28486,7 +32112,8 @@
         "a public post or membership -> authority over another actor or an effect",
         "a federation projection -> human membership or speech in this community",
         "a homepage conversation preview -> community membership, participant identity disclosure, current external-platform activity or permission to publish",
-        "a like -> mutual interest, a conversation, or permission to contact; only a computed mutual opens anything, and a pass -> rejection of the person rather than exclusion from one discovery surface"
+        "a like -> mutual interest, a conversation, or permission to contact; only a computed mutual opens anything, and a pass -> rejection of the person rather than exclusion from one discovery surface",
+        "a claimed handle -> a published site, a public presence, identity proof, or authority over anything; only the publish review opens pages"
       ],
       "id": "human-community-body",
       "internal_calculi": [],
@@ -28508,7 +32135,8 @@
         "companions rows render through the shared native components (ui:card, ui:badge, ui:action) built as an authoring tree and lowered by the same native renderer as authored articles; no directory-specific row markup or classes remain",
         "quiz agreement adds the lower of two stated importances (1..3) per co-answered bank question capped at +6 with a quiz+N reason token; answers are latest-wins rows and anything off-bank or mis-weighted reads as never-existed, so interests stay the primary signal",
         "companions, clubs, events, notices, attention, plans, report, quiz and theme surfaces compose ui:card, ui:badge, ui:action, ui:choice and ui:field data through shared form-tree builders and the one native renderer; control markup never appears in C, and the reader stylesheet dresses components on light and dark surfaces alike",
-        "every companions route renders in the one estate shell (BF_ESTATE_BAR, BF_ESTATE_FOOT) with a hero counting distinct published member addresses and a switchboard of the seven companion views; the unfiltered listing composes events, people and clubs from their existing owners and links plans; layout in aurekai-native.css under [data-companions]"
+        "every companions route renders in the one estate shell (BF_ESTATE_BAR, BF_ESTATE_FOOT) with a hero counting distinct published member addresses and a switchboard of the seven companion views; the unfiltered listing composes events, people and clubs from their existing owners and links plans; layout in aurekai-native.css under [data-companions]",
+        "a new account claims one address once through POST /profile/claim: handle validation, a one-time user-to-person binding, Matrix subject/institution/domain/presence bootstrap and one draft site per territory; claimed drafts wait for the existing publish review and the profile shows the waiting state instead of the setup loop"
       ],
       "known_gaps": [],
       "layer": "surface",
@@ -28560,7 +32188,9 @@
         "cmd/BonfyreCMS/content-types/person_quiz_answer.json",
         "cmd/BonfyreCMS/tests/person_quiz_answer.test.mjs",
         "cmd/BonfyreWebAddress/src/profile_home.h",
-        "cmd/BonfyreWebAddress/src/form_tree.h"
+        "cmd/BonfyreWebAddress/src/form_tree.h",
+        "schemas/control/web-routes.cue",
+        "cmd/BonfyreWebAddress/tests/profile_claim.test.mjs"
       ],
       "subscribes": [],
       "views": [],
@@ -28578,7 +32208,8 @@
         "2026-11-11 affinity_projection_test.c proves capping, latest-wins, invalid-answer refusal and the token in HTML and JSON carriers; person_quiz_answer.test.mjs proves typed create and conditional archive; the profile edit tab answers and clears all eight bank questions",
         "2026-11-11 companions filters, report reason and quiz answers purged every <select> for radio-pill groups with identical POST/GET contracts; live pages render pills with zero selects and quiz answers record 303 end to end",
         "2026-11-11 every dating/profile form and row renders from trees (Chrome-verified pixels on companions, edit and report); dead cp-*/bf-program-* CSS removed; witnesses assert ak-pattern output across all five projection suites",
-        "2026-11-11 form_tree.h builders compose every companions/profile form (filters, report, plans, quiz, both theme pickers) from ui:action/ui:choice/ui:field; JSON carriers moved to bf_jsonw and the duplicate esc/jes escapers are deleted"
+        "2026-11-11 form_tree.h builders compose every companions/profile form (filters, report, plans, quiz, both theme pickers) from ui:action/ui:choice/ui:field; JSON carriers moved to bf_jsonw and the duplicate esc/jes escapers are deleted",
+        "2026-11-15 preview claimed riverstone end to end (303, binding plus 4 domains plus 4 presences plus 8 drafts), refused rival, second-handle, anonymous and bad-handle claims (409, 409, 401, 400), and served the live profile and public apex after CMS publish; profile_claim.test.mjs holds the same contract with 4 passing tests"
       ]
     },
     {
@@ -34277,11 +37908,12 @@
         "a page is deterministic; the same request returns the same rows, or pagination is a lie and the dialects are free to disagree",
         "determinism is bought on a stored column, never a parsed one; ordering on account is json_extract_string over the whole estate, measured at twenty seconds a request and enough concurrent memory to take the host off the network",
         "the ordering key is not served; an internal key projected into a carrier payload is an undeclared field, and a deployment growing one of those is how one meaning becomes three grammars again",
-        "the limit is applied before the extraction, not after; the cost of a page must not scale with the estate"
+        "the limit is applied before the extraction, not after; the cost of a page must not scale with the estate",
+        "every SQL-backed carrier walks: ?offset= skips rows of the same ordered projection, a full page links next in the carrier's own grammar (OGC links, OData nextLink, ActivityPub next), a short page ends the walk with no next link, and a bad offset is 400 rather than page one served twice"
       ],
       "known_gaps": [
         "a deterministic page costs about two seconds against under one for the nondeterministic one; the remaining cost is the top-n over six and a half million rows, and a materialised parcel index would remove it",
-        "only the first page is ordered; there is no cursor, so a caller cannot ask for the next page and the determinism is per request rather than across a walk"
+        "the no-cursor gap is closed: ?offset= plus per-carrier next links walk the whole collection, with the combined-territory union contributing limit+offset rows per source so the outer OFFSET skips across the exact union. What remains is per-source diversification: the union orders by territory, so a page fills from one source before the other rather than interleaving them."
       ],
       "layer": "surface",
       "maturity": "measured",
@@ -34293,12 +37925,14 @@
       ],
       "semantic_question": "Do the dialects of one source agree about which rows they are showing?",
       "source_paths": [
-        "cmd/BonfyreWebAddress/src/main.c"
+        "cmd/BonfyreWebAddress/src/main.c",
+        "cmd/BonfyreWebAddress/tests/carrier_paging_test.sh"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "components/BonfyreControlPlane/tests/live-carrier-conformance.test.mjs reads all three carriers three times and requires that they agree with each other on every read and that the answer does not move between reads, that the projection orders on observation_id rather than on account, that no carrier serves the ordering key, and that a page is answered in under eight seconds"
+        "components/BonfyreControlPlane/tests/live-carrier-conformance.test.mjs reads all three carriers three times and requires that they agree with each other on every read and that the answer does not move between reads, that the projection orders on observation_id rather than on account, that no carrier serves the ordering key, and that a page is answered in under eight seconds",
+        "2026-11-15 cmd/BonfyreWebAddress/tests/carrier_paging_test.sh walks a miniature Fleming estate (17 assertions): the outbox covers every source across disjoint pages, OGC/RESO/MISMO agree on the same accounts at every offset, the combined-territory walk crosses the union and ends empty, recorded-rights and the CloudEvents batch page, and abc/-1/1000001 offsets are 400 on all five routes"
       ]
     },
     {
@@ -43244,7 +46878,8 @@
         "a records match -> the owner will answer 200 or that the record is readable by this caller",
         "a declared route -> the request is authorized, the caller is signed in, the method is allowed, or the owner will answer",
         "a row's when facts -> content negotiation is complete or the representation the owner returns",
-        "a row's declared name (as) -> a capability, scope or grant; it is a label for a path, never an authority token"
+        "a row's declared name (as) -> a capability, scope or grant; it is a label for a path, never an authority token",
+        "a declared path row for an owner that once sat on an any row -> the owner answers every request on that path; it still checks its method, host, session and sub-path"
       ],
       "id": "web-route-table",
       "internal_calculi": [],
@@ -43261,7 +46896,7 @@
         "a suggestion is offered only from a titled row whose when facts hold for a browser GET on this host and server, or from a record set's declared suggest query that applies the owner's own index rule (published and guest-readable); the status stays 404"
       ],
       "known_gaps": [
-        "some owners still sit on any rows and decide their own paths inside (studio, superuser control, account continuity, companions, matrix closure, governance acts and several app workspaces); their path checks use a spaced or different-variable form that the route_path_compares count does not see",
+        "25 any rows remain: host-scoped owners (site MCP, delegated private hosts, the Observatory), owners whose paths are data (site programs, authored pages, donor routes, the machine web and IndexNow key, spatial frontier, flows, market fronts, protocols, packs, human community, external candidates, auth) and the resolver tail; each needs a records row or a declared path family before it can leave any",
         "only one record set exists (CMS notes); member addresses (/people/<person>) stay a prefix row because that owner answers its own 404 and redirect, and route_presentation rows are presentation only (their owner keeps the route), so neither is a route source yet",
         "the ranker is the static model blended with trigrams; the BitNet address ranker is SHADOW-only on ARM and is not used here, and suggestion quality is measured only by the witness cases, not by a labelled set of missed paths",
         "other owners' own 404s (an owner that answers 404 itself) do not reach the resolver tail and show no suggestions",
@@ -43291,7 +46926,8 @@
       "witnesses": [
         "cmd/BonfyreWebAddress/tests/web_route_kinds_test.sh (make web-route-kinds-witness): a running server 404s /notes/river-crossing, answers 200 the moment the wiki_page row is inserted with no rebuild or restart, keeps the owner's 401 for a non-guest note and 404 for a draft, ranks the record first for /notes/river-crosing, offers /communities for /comunities and /what-things-cost for /prices, shows the empty state for /zqxjv, never offers non-guest or draft records, and keeps the JSON not_found verdict for machines",
         "2026-11-15 comparison of 1,720 requests (every declared path, path+x and path+/ plus 29 tail paths; GET and POST; text/html and application/json) against a binary built from HEAD on cloned stores: 0 status or redirect differences, 1,539 identical bodies, 177 differing bodies all GET text/html 404s, and 4 /ops bodies that vary between repeated requests on HEAD itself",
-        "cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh, account_continuity_test.sh, work_orders_test.sh, guild_household_records_test.sh, detail_depth_test.sh and participant_journey_browser.test.mjs drive owners through the compiled table on a running server"
+        "cmd/BonfyreWebAddress/tests/native_surface_routes_test.sh, account_continuity_test.sh, work_orders_test.sh, guild_household_records_test.sh, detail_depth_test.sh and participant_journey_browser.test.mjs drive owners through the compiled table on a running server",
+        "2026-11-16 comparison of 283 requests (every declared path plus the paths of each converted any row, GET and POST) between a binary built before and after 46 any rows became declared rows: 0 status or redirect differences except /x (a fact-surface row added by another lane meanwhile); differing bodies are per-request nonces (/organizations), /ops, pages other lanes re-marked (/sources, /link), and 404 suggestion lists"
       ]
     },
     {

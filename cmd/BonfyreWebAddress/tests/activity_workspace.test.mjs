@@ -63,10 +63,10 @@ static int aw_native_result(char *const args[],const void *body,size_t bytes,uns
 #include "${resolve(root,'cmd/BonfyreWebAddress/src/activity_workspace.h')}"
 int main(int argc,char **argv){if(argc!=8)return 2;setenv("BONFYRE_BUN_BINARY","/native/bun",1);setenv("BONFYRE_ACTIVITY_OWNER","/native/fabric_activity_cli.mjs",1);setenv("BONFYRE_SOURCE_FRONTIER_DB","/native/frontier.db",1);
  const unsigned char body[]={0x92,0x01,0x81,0xa1,'a',0};char raw[2048];fault=atoi(argv[7]);snprintf(raw,sizeof(raw),"POST /apps/_fabric HTTP/1.1\r\nHost: aurekai.life\r\nOrigin: %s\r\nContent-Type: %s\r\nContent-Length: %s\r\n\r\n",argv[4],argv[5],argv[6]);
- if(!serve_activity_workspace(argv[2],"/apps/_fabric",argv[1],(const char*)body,raw,"aurekai.life",argv[3],"/native/auth.db"))return 3;
+ BfRequest route={0};route.as="fabric";if(!serve_activity_workspace(argv[2],"/apps/_fabric",argv[1],(const char*)body,raw,"aurekai.life",argv[3],"/native/auth.db",&route))return 3;
  printf("%d %d %d %s %s %s %zu\n",status_code,native_calls,permission,native_subject,native_actor,native_operation,native_size);if(native_task[0])printf("%s\n",native_task);return 0;}
 `;
- writeFileSync(join(home,'gateway.c'),source);execFileSync(process.env.CC||'cc',['-std=c11','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-I'+resolve(root,'lib/libbonfyre/include'),join(home,'gateway.c'),resolve(root,'lib/libbonfyre/bf_msgpack.c'),'-o',binary],{stdio:'pipe'});
+ writeFileSync(join(home,'gateway.c'),source);execFileSync(process.env.CC||'cc',['-std=c11','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-include',resolve(root,'cmd/BonfyreWebAddress/src/web_request.h'),'-I'+resolve(root,'lib/libbonfyre/include'),join(home,'gateway.c'),resolve(root,'lib/libbonfyre/bf_msgpack.c'),'-o',binary],{stdio:'pipe'});
 });
 afterAll(()=>{if(home)rmSync(home,{recursive:true,force:true});});
 const call=(query,{method='GET',user='owner',origin='https://aurekai.life',type='application/msgpack',length='6',fault=0}={})=>execFileSync(binary,[query,method,user,origin,type,length,String(fault)],{encoding:'utf8'}).trim().split(' ');

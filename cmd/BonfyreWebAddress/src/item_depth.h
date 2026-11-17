@@ -560,7 +560,7 @@ static void depth_emit_facts(const ItemDepth *d) {
         ui_open(stdout, "dl", "facts record");
         for (int k = 0; k < d->facts; k++) {
             (ui_open(stdout, "div", NULL), ui_open(stdout, "dt", NULL)); html(d->fact_key[k]); (ui_close(stdout, "dt"), ui_open(stdout, "dd", NULL));
-            if (public_http_url(d->fact_val[k])) { fputs("<a href=\"", stdout); html(d->fact_val[k]); ui_lit(stdout, "\" rel=\"noopener\">"); html(d->fact_val[k]); ui_close(stdout, "a"); }
+            if (public_http_url(d->fact_val[k])) { ui_open_a(stdout,"a",UI_DYN,"href","",d->fact_val[k],"rel","noopener"); html(d->fact_val[k]); ui_close(stdout, "a"); }
             else html(d->fact_val[k]);
             ui_close_n(stdout, "dd", "div", NULL);
         }

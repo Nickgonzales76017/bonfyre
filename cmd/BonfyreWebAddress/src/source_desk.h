@@ -70,7 +70,7 @@ static void sd_page_open(const char *title,const char *host,const char *route,co
        "<link rel=\"stylesheet\" href=\"/assets/composition.css\">",stdout);
  if(!strcmp(variant,"research"))ui_open_a(stdout,"link","rel","stylesheet","href","/apps/source-desk.css");
  if(pattern)bf_route_presentation_emit_head_for(stdout,territory,route,query,pattern);
- fputs("</head><body class=\"ak-app sx-page sx-",stdout);html(variant);fputs("\"",stdout);
+ ui_close(stdout,"head");ui_start(stdout,"body");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-app sx-page sx-");html(variant);fputs("\"",stdout);
  if(pattern)bf_route_presentation_emit_body_attribute_for(stdout,territory,route,query,pattern);
  fputs(">" BF_ESTATE_BAR,stdout);
 }
@@ -88,13 +88,13 @@ static void sd_add_dialog(void){
 /* ---------------------------------------------------------- source hub */
 static void sd_chip(const char *route,const char *key,const char *value,const char *current,const char *label_family,long long n,int all){
  int on=all?!*current:!strcmp(current,value);
- fputs("<a class=\"sx-chip\" href=\"",stdout);html(route);if(!all){fputs("?",stdout);fputs(key,stdout);fputs("=",stdout);url_query_value(value);}
- fputs("\"",stdout);if(on)fputs(" aria-current=\"true\"",stdout);fputs(">",stdout);
+ ui_start(stdout,"a");ui_attr(stdout,"class","sx-chip");ui_attr_open(stdout,"href");html(route);if(!all){fputs("?",stdout);fputs(key,stdout);fputs("=",stdout);url_query_value(value);}
+ ui_attr_close(stdout);if(on)ui_attr(stdout,"aria-current","true");ui_gt(stdout);
  if(all)fputs("All sources",stdout);else sd_label(label_family);fputs(" <span>",stdout);sd_num(n);ui_close(stdout,"span"); ui_close(stdout,"a");
 }
 static void sd_card(sqlite3 *items,sqlite3 *frontier,const char *route,const char *source,const char *host,const char *family,long long n,const char *kind){
  sqlite3_stmt *s=NULL;
- fputs("<article class=\"sx-card\"><header><h3><a href=\"",stdout);html(route);fputs("?source=",stdout);url_query_value(source);fputs("\">",stdout);
+ ui_open(stdout,"article","sx-card");ui_open(stdout,"header",NULL);ui_open(stdout,"h3",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");html(route);fputs("?source=",stdout);url_query_value(source);fputs("\">",stdout);
  sd_name(frontier,host);ui_close(stdout,"a"); ui_close(stdout,"h3");
  if(*host){ui_text(stdout, "span", "sx-host", host);}
  ui_open(stdout,"span","sx-badge");sd_label(family);ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"p","sx-meta"); ui_open(stdout,"b",NULL); fputs("Kept",stdout); ui_close(stdout,"b"); fputs(" · ",stdout);
@@ -106,12 +106,12 @@ static void sd_card(sqlite3 *items,sqlite3 *frontier,const char *route,const cha
  }
  if(sqlite3_prepare_v2(items,"SELECT key,title,at,first_read FROM item WHERE source=?1 ORDER BY at DESC LIMIT 1",-1,&s,NULL)==SQLITE_OK){
   sqlite3_bind_text(s,1,source,-1,SQLITE_TRANSIENT);
-  if(sqlite3_step(s)==SQLITE_ROW){fputs("<a class=\"sx-latest\" href=\"",stdout);html(route);fputs("?source=",stdout);url_query_value(source);fputs("&amp;item=",stdout);url_query_value(sd_col(s,0));
+  if(sqlite3_step(s)==SQLITE_ROW){ui_start(stdout,"a");ui_attr(stdout,"class","sx-latest");ui_attr_open(stdout,"href");html(route);fputs("?source=",stdout);url_query_value(source);fputs("&amp;item=",stdout);url_query_value(sd_col(s,0));
    fputs("\">",stdout); ui_open(stdout,"small",NULL); fputs("Latest kept piece",stdout); ui_close(stdout,"small"); ui_open(stdout,"time",NULL);sd_ago(sqlite3_column_int64(s,2),sd_col(s,3));ui_close(stdout,"time"); ui_open(stdout,"span",NULL);html(sd_col(s,1));ui_close(stdout,"span"); ui_close(stdout,"a");}
   sqlite3_finalize(s);
  }
- fputs("<footer><a href=\"",stdout);html(route);fputs("?source=",stdout);url_query_value(source);fputs("\">",stdout);sd_icon("book");fputs("Read what was kept (",stdout);sd_num(n);fputs(")</a>",stdout);
- if(*host){fputs("<a href=\"/channels?root=",stdout);url_query_value(host);fputs("\">",stdout);sd_icon("rss");fputs("Channels</a>",stdout);}
+ ui_open(stdout,"footer",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");html(route);fputs("?source=",stdout);url_query_value(source);fputs("\">",stdout);sd_icon("book");fputs("Read what was kept (",stdout);sd_num(n);fputs(")</a>",stdout);
+ if(*host){ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/channels?root=");url_query_value(host);fputs("\">",stdout);sd_icon("rss");fputs("Channels</a>",stdout);}
  ui_close(stdout,"footer"); ui_close(stdout,"article");
 }
 static void sd_hub(const char *route,const char *host,const char *query){
@@ -129,10 +129,13 @@ static void sd_hub(const char *route,const char *host,const char *query){
        "<a class=\"sx-btn sx-primary\" href=\"/studio/\" data-sx-open=\"sx-add\">",stdout);sd_icon("plus");fputs("Add a feed</a></nav></header>",stdout);
  /* Search and the facets a person narrows by. */
  ui_open_a(stdout,"section","class","sx-panel sx-finder","aria-label","Find a source"); ui_open(stdout,"div","sx-modes"); ui_open_a(stdout,"span","aria-current","true");sd_icon("search");
- fputs("Browse known sources</span><button type=\"button\" data-sx-open=\"sx-add\">",stdout);sd_icon("link");fputs("Bring a web address</button>"
+ fputs("Browse known sources",stdout);ui_close(stdout,"span");ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"data-sx-open","sx-add");ui_gt(stdout);sd_icon("link");fputs("Bring a web address",stdout);ui_close(stdout,"button");fputs(
        "<p class=\"sx-live\">",stdout);sd_num(sources);fputs(" sources kept · ",stdout);sd_num(pieces);fputs(" pieces</p></div>",stdout);
- fputs("<form class=\"sx-search\" method=\"get\" action=\"",stdout);html(route);fputs("\" role=\"search\"><label class=\"sx-visually-hidden\" for=\"sx-q\">Search sources</label>"
-       "<input id=\"sx-q\" name=\"q\" type=\"search\" maxlength=\"120\" placeholder=\"Search by publisher, host, credited name or title\" value=\"",stdout);html(q);fputs("\">",stdout);
+ ui_start(stdout,"form");ui_attr(stdout,"class","sx-search");ui_attr(stdout,"method","get");ui_attr_open(stdout,"action");html(route);ui_attr_close(stdout);
+ ui_attr(stdout,"role","search");ui_gt(stdout);
+ ui_start(stdout,"label");ui_attr(stdout,"class","sx-visually-hidden");ui_attr(stdout,"for","sx-q");ui_gt(stdout);ui_copy(stdout,"Search sources");ui_close(stdout,"label");
+ ui_start(stdout,"input");ui_attr(stdout,"id","sx-q");ui_attr(stdout,"name","q");ui_attr(stdout,"type","search");ui_attr(stdout,"maxlength","120");
+ ui_attr(stdout,"placeholder","Search by publisher, host, credited name or title");ui_attr_open(stdout,"value");html(q);fputs("\">",stdout);
  if(*fam){ui_open_a(stdout,"input","type","hidden","name","family",UI_DYN,"value","",(fam));}
  ui_open_a(stdout,"button","class","sx-btn","type","submit"); fputs("Find",stdout); ui_close(stdout,"button"); ui_close(stdout,"form"); ui_open_a(stdout,"nav","class","sx-chips","aria-label","Kinds of source");
  sd_chip(route,"family","",fam,"",sources,1);
@@ -156,10 +159,10 @@ static void sd_hub(const char *route,const char *host,const char *query){
   ui_close(stdout,"h2"); ui_open(stdout,"p",NULL);sd_num(total);fputs(total==1?" source":" sources",stdout);if(*q){fputs(" matching “",stdout);html(q);fputs("”",stdout);}
   fputs(". Every piece links back to the publisher that printed it.</p></div><nav class=\"sx-sort\" aria-label=\"Sort sources\"><span>Sort</span>",stdout);
   for(int by_count=0;by_count<2;by_count++){
-   fputs("<a class=\"sx-chip\" href=\"",stdout);html(route);fputs(by_count?"?sort=most":"?sort=recent",stdout);
+   ui_start(stdout,"a");ui_attr(stdout,"class","sx-chip");ui_attr_open(stdout,"href");html(route);fputs(by_count?"?sort=most":"?sort=recent",stdout);
    if(*q){fputs("&amp;q=",stdout);url_query_value(q);}if(*fam){fputs("&amp;family=",stdout);url_query_value(fam);}
-   fputs("\"",stdout);if(most==by_count)fputs(" aria-current=\"true\"",stdout);
-   fputs(by_count?">Most kept</a>":">Most recent</a>",stdout);
+   ui_attr_close(stdout);if(most==by_count)ui_attr(stdout,"aria-current","true");
+   if(by_count){ui_gt(stdout);fputs("Most kept",stdout);ui_close(stdout,"a");}else{ui_gt(stdout);fputs("Most recent",stdout);ui_close(stdout,"a");}
   }
   ui_close(stdout,"nav"); ui_close(stdout,"header"); ui_open(stdout,"div","sx-grid");
   snprintf(sql,sizeof sql,"SELECT source,MAX(publisher),MAX(family),COUNT(*) n,MAX(at) last,MAX(kind) FROM item WHERE %s GROUP BY source ORDER BY %s LIMIT %d OFFSET ?4",filter,most?"n DESC,last DESC":"MAX(first_read) DESC,n DESC",SD_LIST);
@@ -174,8 +177,8 @@ static void sd_hub(const char *route,const char *host,const char *query){
   ui_close(stdout,"div");
   if(offset||offset+SD_LIST<(unsigned long long)total){ui_open_a(stdout,"nav","class","sx-pager","aria-label","More sources");
    for(int dir=-1;dir<=1;dir+=2){long long to=(long long)offset+dir*SD_LIST;if(to<0||to>=total)continue;
-    fputs("<a class=\"sx-btn\" href=\"",stdout);html(route);printf("?offset=%lld",to);if(*q){fputs("&amp;q=",stdout);url_query_value(q);}if(*fam){fputs("&amp;family=",stdout);url_query_value(fam);}if(most)fputs("&amp;sort=most",stdout);
-    fputs(dir<0?"\">Earlier sources</a>":"\">More sources</a>",stdout);}
+    ui_start(stdout,"a");ui_attr(stdout,"class","sx-btn");ui_attr_open(stdout,"href");html(route);printf("?offset=%lld",to);if(*q){fputs("&amp;q=",stdout);url_query_value(q);}if(*fam){fputs("&amp;family=",stdout);url_query_value(fam);}if(most)fputs("&amp;sort=most",stdout);
+    if(dir<0){fputs("\">Earlier sources",stdout);ui_close(stdout,"a");}else{fputs("\">More sources",stdout);ui_close(stdout,"a");}}
    ui_close(stdout,"nav");}
   ui_close(stdout,"section");}
  ui_open(stdout,"aside","sx-panel sx-notice"); ui_open(stdout,"p","sx-kicker"); fputs("About these names",stdout); ui_close(stdout,"p"); ui_open(stdout,"blockquote",NULL); fputs("A name here is what a publisher printed. It is not an account, a verified identity or consent, and the same name at two sources is not taken to be one person.",stdout); ui_close(stdout,"blockquote"); ui_open(stdout,"nav",NULL); ui_open_a(stdout,"a","class","sx-btn","href","/s/sets/all"); fputs("Explore working sets",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","class","sx-btn","href","/sources/web"); fputs("Web research",stdout); ui_close(stdout,"a"); ui_open_a(stdout,"a","class","sx-btn sx-primary","href","/connections"); fputs("Your connections",stdout); ui_close(stdout,"a"); ui_close(stdout,"nav"); ui_close(stdout,"aside");
@@ -195,7 +198,9 @@ static void sd_reading(sqlite3 *items,sqlite3 *frontier,const char *source,const
  sqlite3_bind_text(s,1,source,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,key,-1,SQLITE_TRANSIENT);
  if(sqlite3_step(s)!=SQLITE_ROW){sqlite3_finalize(s);ui_open(stdout,"article","sx-reading"); ui_text(stdout,"p","sx-empty","That piece is no longer kept here."); ui_close(stdout,"article");return;}
  const char *title=sd_col(s,0),*body=sd_col(s,1),*href=sd_col(s,2),*image=sd_col(s,3),*by=sd_col(s,4),*pub=sd_col(s,5);
- fputs("<article class=\"sx-reading\" id=\"sx-reading\"><dl class=\"sx-provenance\"><div><dt>Kept from</dt><dd><a href=\"",stdout);html(back);fputs("?source=",stdout);url_query_value(source);fputs("\">",stdout);sd_name(frontier,pub);
+ ui_start(stdout,"article");ui_attr(stdout,"class","sx-reading");ui_attr(stdout,"id","sx-reading");ui_gt(stdout);
+ ui_open(stdout,"dl","sx-provenance");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_lit(stdout,"Kept from");ui_close(stdout,"dt");
+ ui_open(stdout,"dd",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");html(back);fputs("?source=",stdout);url_query_value(source);fputs("\">",stdout);sd_name(frontier,pub);
  ui_close(stdout,"a"); ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"First read"); ui_open(stdout,"dd",NULL);html(sd_col(s,9));ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Kind"); ui_open(stdout,"dd",NULL);sd_label(sd_col(s,6));fputs(" · ",stdout);html(sd_col(s,7));ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl");
  ui_open(stdout,"h2",NULL);html(title);ui_close(stdout,"h2"); ui_open(stdout,"p","sx-byline");if(*by){fputs("By ",stdout);html(by);fputs(" · ",stdout);}sd_ago(sqlite3_column_int64(s,8),sd_col(s,9));ui_close(stdout,"p");
  if(public_http_url(image)){ui_open(stdout,"figure",NULL); ui_open_a(stdout,"img","loading","lazy","alt","",UI_DYN,"src","",(image)); ui_close(stdout,"figure");}
@@ -204,16 +209,16 @@ static void sd_reading(sqlite3 *items,sqlite3 *frontier,const char *source,const
  ui_open(stdout,"footer","sx-reading-actions");
  ui_open_a(stdout,"button","type","button","class","sx-btn","data-ak-track",(const char *)NULL,"data-narrate","#sx-reading",UI_DYN,"data-title","",(title),UI_DYN,"data-by","",(*by?by:pub));sd_icon("listen");fputs("Listen</button>",stdout);
  if(public_http_url(href)){ui_open_a(stdout,"a","class","sx-btn sx-primary","rel","nofollow noopener",UI_DYN,"href","",(href));sd_icon("link");fputs("Read at the publisher</a>",stdout);}
- fputs("<a class=\"sx-btn\" href=\"/o/",stdout);url_query_value(source);fputs("/",stdout);url_query_value(key);fputs("\">Item page</a>",stdout);
- fputs("<a class=\"sx-btn\" href=\"/feed-use?context=self&amp;item=",stdout);url_query_value(source);fputs("%2F",stdout);url_query_value(key);fputs("\">",stdout);sd_icon("briefcase");fputs("Use in your work</a></footer></article>",stdout);
+ ui_start(stdout,"a");ui_attr(stdout,"class","sx-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/o/");url_query_value(source);fputs("/",stdout);url_query_value(key);fputs("\">Item page",stdout);ui_close(stdout,"a");
+ ui_start(stdout,"a");ui_attr(stdout,"class","sx-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/feed-use?context=self&amp;item=");url_query_value(source);fputs("%2F",stdout);url_query_value(key);fputs("\">",stdout);sd_icon("briefcase");fputs("Use in your work",stdout);ui_close(stdout,"a");ui_close(stdout,"footer");ui_close(stdout,"article");
  sqlite3_finalize(s);
 }
 static void sd_register_item(sqlite3_stmt *s,const char *route,const char *param_source,const char *selected_source,const char *selected_key,int show_source,sqlite3 *frontier){
  const char *src=sd_col(s,0),*key=sd_col(s,1);int on=!strcmp(src,selected_source)&&!strcmp(key,selected_key);
- fputs("<li><a class=\"sx-dispatch\" href=\"",stdout);html(route);fputs("?",stdout);
+ ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr(stdout,"class","sx-dispatch");ui_attr_open(stdout,"href");html(route);fputs("?",stdout);
  if(param_source&&*param_source){fputs("source=",stdout);url_query_value(param_source);fputs("&amp;item=",stdout);url_query_value(key);}
  else{fputs("read=",stdout);url_query_value(src);fputs("%2F",stdout);url_query_value(key);}
- fputs("\"",stdout);if(on)fputs(" aria-current=\"true\"",stdout);fputs("><small>",stdout);
+ ui_attr_close(stdout);if(on)ui_attr(stdout,"aria-current","true");ui_gt(stdout);ui_open(stdout,"small",NULL);
  if(show_source){sd_name(frontier,sd_col(s,5));if(*sd_col(s,4)){fputs(" · ",stdout);html(sd_col(s,4));}}else html(*sd_col(s,4)?sd_col(s,4):sd_col(s,5));
  ui_open(stdout,"time",NULL);sd_ago(sqlite3_column_int64(s,6),sd_col(s,7));ui_close(stdout,"time"); ui_close(stdout,"small"); ui_open(stdout,"b",NULL);html(sd_col(s,2));ui_close(stdout,"b");
  if(*sd_col(s,3)){ui_text(stdout, "span", NULL, sd_col(s,3));}
@@ -236,10 +241,15 @@ static void sd_room(const char *route,const char *host,const char *query,const c
  ui_open(stdout,"main","sx"); ui_open_a(stdout,"nav","class","sx-crumbs","aria-label","Breadcrumb"); ui_open_a(stdout,"a","href","/"); fputs("Aurekai",stdout); ui_close(stdout,"a"); ui_open(stdout,"span",NULL); fputs("/",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"a",UI_DYN,"href","",(route)); fputs("Links and sources",stdout); ui_close(stdout,"a"); ui_open(stdout,"span",NULL); fputs("/",stdout); ui_close(stdout,"span"); ui_open(stdout,"span",NULL);sd_name(frontier,pub);ui_close(stdout,"span"); ui_close(stdout,"nav");
  ui_open(stdout,"header","sx-hero sx-hero-room"); ui_open(stdout,"div",NULL); ui_open(stdout,"h1",NULL);sd_name(frontier,pub);fputs(" <em>· Reading room</em></h1><p>",stdout);sd_num(n);fputs(n==1?" piece":" pieces",stdout);
  fputs(" kept from ",stdout);html(*pub?pub:source);if(*first){fputs(" since ",stdout);fwrite(first,1,strlen(first)>10?10:strlen(first),stdout);}fputs(", in plain type. Each one ends at the publisher's own address.</p></div><nav class=\"sx-actions\">",stdout);
- if(*pub){fputs("<a class=\"sx-btn\" href=\"/channels?root=",stdout);url_query_value(pub);fputs("\">",stdout);sd_icon("rss");fputs("Every channel from ",stdout);html(pub);ui_close(stdout,"a");}
- fputs("<a class=\"sx-btn sx-primary\" href=\"",stdout);html(route);fputs("?family=",stdout);url_query_value(fam);fputs("\">More ",stdout);sd_label(fam);fputs(" sources</a></nav></header>",stdout);
- fputs("<form class=\"sx-search sx-room-filter\" method=\"get\" action=\"",stdout);html(route);fputs("\" role=\"search\"><input type=\"hidden\" name=\"source\" value=\"",stdout);html(source);
- fputs("\"><label class=\"sx-visually-hidden\" for=\"sx-rq\">Filter kept pieces</label><input id=\"sx-rq\" name=\"q\" type=\"search\" maxlength=\"120\" placeholder=\"Filter kept pieces by title or name\" value=\"",stdout);html(q);fputs("\"><button class=\"sx-btn\" type=\"submit\">Filter</button></form>",stdout);
+ if(*pub){ui_start(stdout,"a");ui_attr(stdout,"class","sx-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/channels?root=");url_query_value(pub);fputs("\">",stdout);sd_icon("rss");fputs("Every channel from ",stdout);html(pub);ui_close(stdout,"a");}
+ ui_start(stdout,"a");ui_attr(stdout,"class","sx-btn sx-primary");ui_attr_open(stdout,"href");html(route);fputs("?family=",stdout);url_query_value(fam);fputs("\">More ",stdout);sd_label(fam);fputs(" sources",stdout);ui_close(stdout,"a");ui_close(stdout,"nav");ui_close(stdout,"header");
+ ui_start(stdout,"form");ui_attr(stdout,"class","sx-search sx-room-filter");ui_attr(stdout,"method","get");ui_attr_open(stdout,"action");html(route);ui_attr_close(stdout);
+ ui_attr(stdout,"role","search");ui_gt(stdout);
+ ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","source");ui_attr_open(stdout,"value");html(source);ui_attr_close(stdout);ui_gt(stdout);
+ ui_start(stdout,"label");ui_attr(stdout,"class","sx-visually-hidden");ui_attr(stdout,"for","sx-rq");ui_gt(stdout);ui_copy(stdout,"Filter kept pieces");ui_close(stdout,"label");
+ ui_start(stdout,"input");ui_attr(stdout,"id","sx-rq");ui_attr(stdout,"name","q");ui_attr(stdout,"type","search");ui_attr(stdout,"maxlength","120");
+ ui_attr(stdout,"placeholder","Filter kept pieces by title or name");ui_attr_open(stdout,"value");html(q);ui_attr_close(stdout);ui_gt(stdout);
+ ui_start(stdout,"button");ui_attr(stdout,"class","sx-btn");ui_attr(stdout,"type","submit");ui_gt(stdout);ui_copy(stdout,"Filter");ui_close(stdout,"button");ui_close(stdout,"form");
  ui_open(stdout,"div","sx-split"); ui_open_a(stdout,"section","class","sx-register","aria-labelledby","sx-reg"); ui_open_a(stdout,"h2","id","sx-reg"); fputs("Kept pieces",stdout); ui_close(stdout,"h2"); ui_open(stdout,"ol",NULL);
  if(sqlite3_prepare_v2(items,"SELECT source,key,title,substr(body,1,180),by,publisher,at,first_read,family FROM item WHERE source=?1 AND (?2='' OR title LIKE ?3 OR by LIKE ?3) ORDER BY at DESC LIMIT 40",-1,&s,NULL)==SQLITE_OK){
   int k=0;sqlite3_bind_text(s,1,source,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,q,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,3,like,-1,SQLITE_TRANSIENT);
@@ -266,10 +276,10 @@ static void sd_reader(const char *route,const char *host,const char *query){
  sd_page_open("Living feeds",host,route,query,"reader");
  ui_open(stdout,"main","sx"); ui_open_a(stdout,"nav","class","sx-crumbs","aria-label","Breadcrumb"); ui_open_a(stdout,"a","href","/"); fputs("Aurekai",stdout); ui_close(stdout,"a"); ui_open(stdout,"span",NULL); fputs("/",stdout); ui_close(stdout,"span"); ui_open(stdout,"span",NULL); fputs("Feeds",stdout); ui_close(stdout,"span"); ui_open(stdout,"em",NULL); fputs("reading stream",stdout); ui_close(stdout,"em"); ui_close(stdout,"nav"); ui_open(stdout,"header","sx-hero sx-hero-reader"); ui_open(stdout,"div",NULL); ui_open(stdout,"h1",NULL); fputs("Living feeds",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p",NULL); fputs("The newest pieces from every source Aurekai reads, in plain type. Nothing here tracks you, and every piece ends at its publisher.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"nav","sx-actions"); ui_open_a(stdout,"a","class","sx-btn","href","/sources");sd_icon("search");fputs("Find a source</a><a class=\"sx-btn\" href=\"/channels?roots=1\">",stdout);sd_icon("rss");
  fputs("Every publisher</a><a class=\"sx-btn sx-primary\" href=\"/studio/\" data-sx-open=\"sx-add\">",stdout);sd_icon("plus");fputs("Add a feed</a></nav></header><nav class=\"sx-chips\" aria-label=\"Feeds\">",stdout);
- fputs("<a class=\"sx-chip\" href=\"",stdout);html(route);fputs("\"",stdout);if(!*feed)fputs(" aria-current=\"true\"",stdout);fputs(">All feeds <span>",stdout);sd_num(all);ui_close(stdout,"span"); ui_close(stdout,"a");
+ ui_start(stdout,"a");ui_attr(stdout,"class","sx-chip");ui_attr_open(stdout,"href");html(route);ui_attr_close(stdout);if(!*feed)ui_attr(stdout,"aria-current","true");ui_gt(stdout);ui_copy(stdout,"All feeds ");ui_open(stdout,"span",NULL);sd_num(all);ui_close(stdout,"span");ui_close(stdout,"a");
  if(items&&sqlite3_prepare_v2(items,"SELECT family,COUNT(*) FROM item WHERE family<>'' AND at>0 GROUP BY family ORDER BY 2 DESC LIMIT 6",-1,&s,NULL)==SQLITE_OK){
-  while(sqlite3_step(s)==SQLITE_ROW){fputs("<a class=\"sx-chip\" href=\"",stdout);html(route);fputs("?feed=",stdout);url_query_value(sd_col(s,0));fputs("\"",stdout);if(!strcmp(feed,sd_col(s,0)))fputs(" aria-current=\"true\"",stdout);
-   fputs(">",stdout);sd_label(sd_col(s,0));fputs(" <span>",stdout);sd_num(sqlite3_column_int64(s,1));ui_close(stdout,"span"); ui_close(stdout,"a");}
+  while(sqlite3_step(s)==SQLITE_ROW){ui_start(stdout,"a");ui_attr(stdout,"class","sx-chip");ui_attr_open(stdout,"href");html(route);fputs("?feed=",stdout);url_query_value(sd_col(s,0));ui_attr_close(stdout);if(!strcmp(feed,sd_col(s,0)))ui_attr(stdout,"aria-current","true");
+   ui_gt(stdout);sd_label(sd_col(s,0));fputs(" ",stdout);ui_open(stdout,"span",NULL);sd_num(sqlite3_column_int64(s,1));ui_close(stdout,"span");ui_close(stdout,"a");}
   sqlite3_finalize(s);s=NULL;}
  ui_close(stdout,"nav"); ui_open(stdout,"div","sx-split sx-three"); ui_open_a(stdout,"section","class","sx-register","aria-labelledby","sx-reg"); ui_open_a(stdout,"h2","id","sx-reg"); fputs("Dispatches ",stdout); ui_open(stdout,"span",NULL);if(day>0){sd_num(day);fputs(" kept in the last day",stdout);}else fputs("newest first",stdout);ui_close(stdout,"span"); ui_close(stdout,"h2"); ui_open(stdout,"ol",NULL);
  if(items&&sqlite3_prepare_v2(items,"SELECT source,key,title,substr(body,1,140),by,publisher,at,first_read,family FROM item WHERE at>0 AND at<=CAST(strftime('%s','now') AS INTEGER) AND (?1='' OR family=?1) ORDER BY at DESC LIMIT 30",-1,&s,NULL)==SQLITE_OK){
@@ -283,12 +293,12 @@ static void sd_reader(const char *route,const char *host,const char *query){
   sqlite3_bind_text(s,1,src,-1,SQLITE_TRANSIENT);
   if(sqlite3_step(s)==SQLITE_ROW){char pub[160];snprintf(pub,sizeof pub,"%s",sd_col(s,0));long long n=sqlite3_column_int64(s,1);
    ui_open(stdout,"section","sx-panel"); ui_text(stdout,"p","sx-kicker","This source"); ui_open(stdout,"h2",NULL);sd_name(frontier,pub);ui_close(stdout,"h2"); ui_open(stdout,"p",NULL);sd_num(n);fputs(n==1?" piece kept":" pieces kept",stdout);fputs(" · ",stdout);sd_label(sd_col(s,2));
-   fputs("</p><a class=\"sx-btn\" href=\"/sources?source=",stdout);url_query_value(src);fputs("\">Open its reading room</a></section>",stdout);
+   ui_close(stdout,"p");ui_start(stdout,"a");ui_attr(stdout,"class","sx-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/sources?source=");url_query_value(src);fputs("\">Open its reading room",stdout);ui_close(stdout,"a");ui_close(stdout,"section");
    sqlite3_finalize(s);s=NULL;
    if(sqlite3_prepare_v2(items,"SELECT key,title,at,first_read FROM item WHERE source=?1 AND key<>?2 ORDER BY at DESC LIMIT 4",-1,&s,NULL)==SQLITE_OK){int k=0;
     sqlite3_bind_text(s,1,src,-1,SQLITE_TRANSIENT);sqlite3_bind_text(s,2,key,-1,SQLITE_TRANSIENT);
     while(sqlite3_step(s)==SQLITE_ROW){if(!k++)do{ ui_open(stdout,"section","sx-panel"); ui_text(stdout,"p","sx-kicker","Also from here"); ui_open(stdout,"ul","sx-also"); }while(0);
-     fputs("<li><a href=\"",stdout);html(route);fputs("?read=",stdout);url_query_value(src);fputs("%2F",stdout);url_query_value(sd_col(s,0));fputs("\">",stdout);html(sd_col(s,1));ui_close(stdout,"a"); ui_open(stdout,"time",NULL);sd_ago(sqlite3_column_int64(s,2),sd_col(s,3));ui_close(stdout,"time"); ui_close(stdout,"li");}
+     ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");html(route);fputs("?read=",stdout);url_query_value(src);fputs("%2F",stdout);url_query_value(sd_col(s,0));fputs("\">",stdout);html(sd_col(s,1));ui_close(stdout,"a");ui_open(stdout,"time",NULL);sd_ago(sqlite3_column_int64(s,2),sd_col(s,3));ui_close(stdout,"time");ui_close(stdout,"li");}
     if(k)do{ ui_close(stdout,"ul"); ui_close(stdout,"section"); }while(0);}
   }
   if(s)sqlite3_finalize(s);s=NULL;}
@@ -330,11 +340,18 @@ static const SdProvider sd_providers[]={
  {"mastodon","Mastodon / ActivityPub","fediverse","world","ActivityPub · declared","A fediverse actor you name as yours. Aurekai answers WebFinger and ActivityPub for your own address.","/connections?provider=mastodon","Link actor",1},
 };
 static void sd_link_form(const char *provider,const char *placeholder,const char *profile){
- fputs("<form class=\"sx-form\" method=\"post\" action=\"/account/connections\"><input type=\"hidden\" name=\"provider\" value=\"",stdout);html(provider);
- fputs("\"><label class=\"sx-field\"><span>Handle or account</span><input name=\"remote_account\" required maxlength=\"240\" placeholder=\"",stdout);html(placeholder);
- fputs("\"></label><label class=\"sx-field\"><span>Public profile address</span><input name=\"profile_url\" type=\"url\" required pattern=\"https://.*\" placeholder=\"",stdout);html(profile);
- fputs("\"></label><label class=\"sx-field\"><span>Name to show (optional)</span><input name=\"display_name\" maxlength=\"240\"></label><button class=\"sx-btn sx-primary\" type=\"submit\">Declare this link</button>"
-       "<p class=\"sx-quiet\">A declared link is a public pointer you state. It does not prove you control the account or import anything from it.</p></form>",stdout);
+ ui_open_a(stdout,"form","class","sx-form","method","post","action","/account/connections");
+ ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","provider");ui_attr_open(stdout,"value");html(provider);ui_attr_close(stdout);ui_gt(stdout);
+ ui_start(stdout,"label");ui_attr(stdout,"class","sx-field");ui_gt(stdout);ui_open(stdout,"span",NULL);ui_copy(stdout,"Handle or account");ui_close(stdout,"span");
+ ui_start(stdout,"input");ui_attr(stdout,"name","remote_account");ui_flag(stdout,"required");ui_attr(stdout,"maxlength","240");ui_attr_open(stdout,"placeholder");html(placeholder);ui_attr_close(stdout);ui_gt(stdout);
+ ui_close(stdout,"label");
+ ui_start(stdout,"label");ui_attr(stdout,"class","sx-field");ui_gt(stdout);ui_open(stdout,"span",NULL);ui_copy(stdout,"Public profile address");ui_close(stdout,"span");
+ ui_start(stdout,"input");ui_attr(stdout,"name","profile_url");ui_attr(stdout,"type","url");ui_flag(stdout,"required");ui_attr(stdout,"pattern","https://.*");ui_attr_open(stdout,"placeholder");html(profile);ui_attr_close(stdout);ui_gt(stdout);
+ ui_close(stdout,"label");
+ ui_start(stdout,"label");ui_attr(stdout,"class","sx-field");ui_gt(stdout);ui_open(stdout,"span",NULL);ui_copy(stdout,"Name to show (optional)");ui_close(stdout,"span");
+ ui_start(stdout,"input");ui_attr(stdout,"name","display_name");ui_attr(stdout,"maxlength","240");ui_gt(stdout);ui_close(stdout,"label");
+ ui_start(stdout,"button");ui_attr(stdout,"class","sx-btn sx-primary");ui_attr(stdout,"type","submit");ui_gt(stdout);ui_copy(stdout,"Declare this link");ui_close(stdout,"button");
+ ui_open(stdout,"p","sx-quiet");ui_copy(stdout,"A declared link is a public pointer you state. It does not prove you control the account or import anything from it.");ui_close(stdout,"p");ui_close(stdout,"form");
 }
 static void sd_revoke(const SdLink *l){
  const FtField hidden[]={{"link_id",l->id}};
@@ -358,23 +375,23 @@ static void sd_connections(const char *route,const char *host,const char *query,
   fputs("Link an identity</a><a class=\"sx-btn\" href=\"/sources\" >",stdout);sd_icon("rss");fputs("Sources</a><a class=\"sx-btn\" href=\"/connect\">",stdout);sd_icon("robot");fputs("Tools and agents</a></nav></header>",stdout);
   ui_open(stdout,"dl","sx-stats"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Kept in the last day"); ui_open(stdout,"dd",NULL);sd_num(day);ui_text(stdout,"small",NULL,"pieces"); ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Sources kept"); ui_open(stdout,"dd",NULL);sd_num(sources);
   ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Channels admitted"); ui_open(stdout,"dd",NULL);sd_num(admitted);ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Your linked identities"); ui_open(stdout,"dd",NULL);
-  if(signed_in)printf("%d",nl);else fputs("<a href=\"/login?next=%2Fconnections\">Sign in</a>",stdout);ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl");
+  if(signed_in)printf("%d",nl);else{ui_open_a(stdout,"a","href","/login?next=%2Fconnections");ui_copy(stdout,"Sign in");ui_close(stdout,"a");}ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl");
   ui_open_a(stdout,"section","aria-labelledby","sx-relays"); ui_open(stdout,"header","sx-section-head"); ui_open_a(stdout,"h2","id","sx-relays"); fputs("Identity relays",stdout); ui_close(stdout,"h2"); ui_close(stdout,"header"); ui_open(stdout,"div","sx-grid");
   for(size_t i=0;i<sizeof sd_providers/sizeof sd_providers[0];i++){const SdProvider *p=&sd_providers[i];int have=0;
    for(int k=0;k<nl;k++)if(!strcmp(links[k].provider,p->key))have++;
    ui_open(stdout,"article","sx-card sx-relay"); ui_open(stdout,"header",NULL); ui_open(stdout,"span","sx-mark");sd_icon(p->glyph);ui_close(stdout,"span"); ui_open(stdout,"h3",NULL); ui_open_a(stdout,"a",UI_DYN,"href","",(p->href));html(p->name);
-   ui_close(stdout,"a"); ui_close(stdout,"h3"); ui_open(stdout,"span","sx-host");html(p->host);fputs(" · ",stdout);html(p->plane);fputs("</span><span class=\"sx-badge",stdout);fputs(have?" is-on\">Declared":"\">Not linked",stdout);
+   ui_close(stdout,"a"); ui_close(stdout,"h3"); ui_open(stdout,"span","sx-host");html(p->host);fputs(" · ",stdout);html(p->plane);ui_close(stdout,"span");ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"sx-badge");fputs(have?" is-on\">Declared":"\">Not linked",stdout);
    ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"p",NULL);html(p->what);ui_close(stdout,"p");
    for(int k=0;k<nl;k++)if(!strcmp(links[k].provider,p->key)){ui_open(stdout,"p","sx-meta"); ui_open(stdout,"b",NULL);html(links[k].account);ui_close(stdout,"b"); fputs(" · ",stdout);html(links[k].state);ui_close(stdout,"p");}
    ui_open(stdout,"footer",NULL); ui_open(stdout,"span",NULL);html(p->declared?"Declared on your account":"Connected through its own owner");ui_close(stdout,"span"); ui_open_a(stdout,"a","class","sx-btn",UI_DYN,"href","",(p->href));html(p->action);ui_close(stdout,"a"); ui_close(stdout,"footer"); ui_close(stdout,"article");}
   for(int k=0;k<nl;k++){int known=0;for(size_t i=0;i<sizeof sd_providers/sizeof sd_providers[0];i++)if(!strcmp(links[k].provider,sd_providers[i].key))known=1;if(known)continue;
    ui_open(stdout,"article","sx-card sx-relay"); ui_open(stdout,"header",NULL); ui_open(stdout,"span","sx-mark");sd_icon("link");ui_close(stdout,"span"); ui_open(stdout,"h3",NULL);html(*links[k].label?links[k].label:links[k].provider);ui_close(stdout,"h3"); ui_open(stdout,"span","sx-host");html(links[k].provider);
-   ui_close(stdout,"span"); ui_open(stdout,"span","sx-badge is-on");html(links[k].state);ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"p","sx-meta"); ui_open(stdout,"b",NULL);html(links[k].account);fputs("</b></p><footer><a href=\"",stdout);if(public_http_url(links[k].url))html(links[k].url);fputs("\" rel=\"nofollow noopener\">Profile</a>",stdout);sd_revoke(&links[k]);ui_close(stdout,"footer"); ui_close(stdout,"article");}
+   ui_close(stdout,"span"); ui_open(stdout,"span","sx-badge is-on");html(links[k].state);ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"p","sx-meta"); ui_open(stdout,"b",NULL);html(links[k].account);ui_close(stdout,"b");ui_close(stdout,"p");ui_open(stdout,"footer",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");if(public_http_url(links[k].url))html(links[k].url);ui_attr_close(stdout);ui_attr(stdout,"rel","nofollow noopener");ui_gt(stdout);ui_copy(stdout,"Profile");ui_close(stdout,"a");sd_revoke(&links[k]);ui_close(stdout,"footer"); ui_close(stdout,"article");}
   ui_close(stdout,"div"); ui_close(stdout,"section");
   /* What actually came in most recently, across every kept source. */
   ui_open_a(stdout,"section","class","sx-log","aria-labelledby","sx-log-title"); ui_open(stdout,"header","sx-section-head"); ui_open(stdout,"div",NULL); ui_open_a(stdout,"h2","id","sx-log-title"); fputs("Recently kept",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("The last pieces the estate read, with the source each came from.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open_a(stdout,"a","class","sx-btn","href","/channels"); fputs("Open the reader",stdout); ui_close(stdout,"a"); ui_close(stdout,"header"); ui_open(stdout,"div","sx-table-wrap"); ui_open(stdout,"table","sx-table"); ui_open(stdout,"thead",NULL); ui_open(stdout,"tr",NULL); ui_open(stdout,"th",NULL); fputs("Piece",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Source",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Kind",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Kept",stdout); ui_close(stdout,"th"); ui_close(stdout,"tr"); ui_close(stdout,"thead"); ui_open(stdout,"tbody",NULL);
   {sqlite3_stmt *s=NULL;int k=0;if(items&&sqlite3_prepare_v2(items,"SELECT source,key,title,by,publisher,family,first_read FROM item ORDER BY first_read DESC LIMIT 8",-1,&s,NULL)==SQLITE_OK){
-   while(sqlite3_step(s)==SQLITE_ROW){k++;fputs("<tr><td><a href=\"/sources?source=",stdout);url_query_value(sd_col(s,0));fputs("&amp;item=",stdout);url_query_value(sd_col(s,1));fputs("\">",stdout);html(sd_col(s,2));ui_close(stdout,"a");
+   while(sqlite3_step(s)==SQLITE_ROW){k++;ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/sources?source=");url_query_value(sd_col(s,0));fputs("&amp;item=",stdout);url_query_value(sd_col(s,1));fputs("\">",stdout);html(sd_col(s,2));ui_close(stdout,"a");
     if(*sd_col(s,3)){ui_text(stdout, "small", NULL, sd_col(s,3));}ui_close(stdout,"td"); ui_open(stdout,"td",NULL);sd_name(frontier,sd_col(s,4));ui_close(stdout,"td"); ui_open(stdout,"td",NULL); ui_open(stdout,"span","sx-badge");sd_label(sd_col(s,5));ui_close(stdout,"span"); ui_close(stdout,"td"); ui_open(stdout,"td",NULL);html(sd_col(s,6));ui_close(stdout,"td"); ui_close(stdout,"tr");}
    sqlite3_finalize(s);}
    if(!k)do{ ui_open(stdout,"tr",NULL); ui_open_a(stdout,"td","colspan","4","class","sx-empty"); fputs("Nothing has been kept yet.",stdout); ui_close(stdout,"td"); ui_close(stdout,"tr"); }while(0);}
@@ -382,7 +399,9 @@ static void sd_connections(const char *route,const char *host,const char *query,
   ui_open(stdout,"aside","sx-panel sx-notice"); ui_open(stdout,"p","sx-kicker"); fputs("What a connection is",stdout); ui_close(stdout,"p"); ui_open(stdout,"blockquote",NULL); fputs("Mail connections run through their own studio and only read what its rules allow. Declared links are public pointers you state; removing one takes effect at once.",stdout); ui_close(stdout,"blockquote"); ui_open(stdout,"nav",NULL); ui_open_a(stdout,"a","class","sx-btn","href","/account"); fputs("Account settings",stdout); ui_close(stdout,"a"); ui_close(stdout,"nav"); ui_close(stdout,"aside");
   ui_close(stdout,"main"); ui_open_a(stdout,"dialog","class","sx-dialog","id","sx-link","aria-labelledby","sx-link-title"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"p","sx-kicker"); fputs("New identity",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"h2","id","sx-link-title"); fputs("Link an identity",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("Name an account elsewhere as yours. Mail and GitHub have their own connect steps above.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open_a(stdout,"button","type","button","class","sx-x","data-sx-close",(const char *)NULL,"aria-label","Close"); fputs("&times;",stdout); ui_close(stdout,"button"); ui_close(stdout,"header");
   if(signed_in){ui_open_a(stdout,"form","class","sx-form","method","post","action","/account/connections"); ui_open(stdout,"label","sx-field"); ui_open(stdout,"span",NULL); fputs("Service",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"select","name","provider"); ui_open_a(stdout,"option","value","bluesky"); fputs("Bluesky",stdout); ui_close(stdout,"option"); ui_open_a(stdout,"option","value","mastodon"); fputs("Mastodon / ActivityPub",stdout); ui_close(stdout,"option"); ui_open_a(stdout,"option","value","github"); fputs("GitHub profile",stdout); ui_close(stdout,"option"); ui_open_a(stdout,"option","value","website"); fputs("Website",stdout); ui_close(stdout,"option"); ui_close(stdout,"select"); ui_close(stdout,"label"); ui_open(stdout,"label","sx-field"); ui_open(stdout,"span",NULL); fputs("Handle or account",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"input","name","remote_account","required",(const char *)NULL,"maxlength","240"); ui_close(stdout,"label"); ui_open(stdout,"label","sx-field"); ui_open(stdout,"span",NULL); fputs("Public profile address",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"input","name","profile_url","type","url","required",(const char *)NULL,"pattern","https://.*","placeholder","https://"); ui_close(stdout,"label"); ui_open(stdout,"label","sx-field"); ui_open(stdout,"span",NULL); fputs("Name to show (optional)",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"input","name","display_name","maxlength","240"); ui_close(stdout,"label"); ui_open(stdout,"footer",NULL); ui_open_a(stdout,"button","type","button","class","sx-btn","data-sx-close",(const char *)NULL); fputs("Cancel",stdout); ui_close(stdout,"button"); ui_open_a(stdout,"button","class","sx-btn sx-primary","type","submit"); fputs("Declare this link",stdout); ui_close(stdout,"button"); ui_close(stdout,"footer"); ui_close(stdout,"form");}
-  else fputs("<p>Linking an identity belongs to a signed-in account.</p><footer><button type=\"button\" class=\"sx-btn\" data-sx-close>Cancel</button><a class=\"sx-btn sx-primary\" href=\"/login?next=%2Fconnections\">Sign in</a></footer>",stdout);
+  else{ui_open(stdout,"p",NULL);ui_copy(stdout,"Linking an identity belongs to a signed-in account.");ui_close(stdout,"p");ui_open(stdout,"footer",NULL);
+   ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","sx-btn");ui_flag(stdout,"data-sx-close");ui_gt(stdout);ui_copy(stdout,"Cancel");ui_close(stdout,"button");
+   ui_open_a(stdout,"a","class","sx-btn sx-primary","href","/login?next=%2Fconnections");ui_copy(stdout,"Sign in");ui_close(stdout,"a");ui_close(stdout,"footer");}
   ui_close(stdout,"dialog");
  } else {
   int mail=!strcmp(chosen->key,"gmail");
@@ -390,26 +409,47 @@ static void sd_connections(const char *route,const char *host,const char *query,
   ui_open(stdout,"aside","sx-panel sx-invariant"); ui_open(stdout,"p","sx-kicker");fputs(mail?"Your password never comes here":"A pointer, not a login",stdout);ui_close(stdout,"p"); ui_open(stdout,"p",NULL);
   fputs(mail?"Mail is read through a read-only grant held by the Connection Studio. Aurekai never sees or stores your Google password.":"Aurekai does not sign in to this service for you. You state the account, and your own pages can point to it.",stdout);ui_close(stdout,"p"); ui_close(stdout,"aside"); ui_close(stdout,"header");
   ui_open_a(stdout,"section","class","sx-panel sx-session","aria-labelledby","sx-sess"); ui_open(stdout,"header","sx-section-head"); ui_open_a(stdout,"h2","id","sx-sess");fputs(mail?"Session and scope":"Your declared accounts",stdout);ui_close(stdout,"h2");
-  if(mail){fputs("<a class=\"sx-btn sx-primary\" href=\"/apps/connections?context=self&amp;identity=gmail\">",stdout);sd_icon("activity");fputs("Open the Connection Studio</a>",stdout);}
+  if(mail){ui_elem(stdout,"a",(const UiAttr[]){{"class","sx-btn sx-primary"},{"href","/apps/connections?context=self&amp;identity=gmail"}},2,0);sd_icon("activity");fputs("Open the Connection Studio",stdout);ui_close(stdout,"a");}
   ui_close(stdout,"header"); ui_open(stdout,"dl","sx-stats");
   int have=0;for(int k=0;k<nl;k++)if(!strcmp(links[k].provider,chosen->key)){have++;ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Account"); ui_open(stdout,"dd",NULL);html(links[k].account);ui_open(stdout,"small",NULL);html(links[k].state);fputs(" · ",stdout);html(links[k].updated);ui_close(stdout,"small"); ui_close(stdout,"dd");sd_revoke(&links[k]);ui_close(stdout,"div");}
   if(mail)do{ ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Scope",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL); ui_open(stdout,"code",NULL); fputs("gmail.readonly",stdout); ui_close(stdout,"code"); ui_open(stdout,"small",NULL); fputs("Read only. Nothing is sent or deleted.",stdout); ui_close(stdout,"small"); ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("Where it lands",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL); fputs("Reading room",stdout); ui_open(stdout,"small",NULL); fputs("Clipped newsletters join your source library.",stdout); ui_close(stdout,"small"); ui_close(stdout,"dd"); ui_close(stdout,"div"); }while(0);
   if(!have&&!mail){ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Account"); ui_open(stdout,"dd",NULL);fputs(signed_in?"None declared yet":"<a href=\"/login?next=%2Fconnections\">Sign in</a> to declare one",stdout);ui_close(stdout,"dd"); ui_close(stdout,"div");}
-  if(mail&&!signed_in)fputs("<div><dt>Account</dt><dd><a href=\"/login?next=%2Fconnections%3Fprovider%3Dgmail\">Sign in</a><small>Mail connections belong to a signed-in account.</small></dd></div>",stdout);
+  if(mail&&!signed_in)do{ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Account");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);
+   ui_open_a(stdout,"a","href","/login?next=%2Fconnections%3Fprovider%3Dgmail");ui_copy(stdout,"Sign in");ui_close(stdout,"a");
+   ui_open(stdout,"small",NULL);ui_copy(stdout,"Mail connections belong to a signed-in account.");ui_close(stdout,"small");ui_close(stdout,"dd");ui_close(stdout,"div");}while(0);
   ui_close(stdout,"dl"); ui_close(stdout,"section");
   if(mail){
-   fputs("<div class=\"sx-split sx-settings\"><section class=\"sx-panel\" aria-labelledby=\"sx-strat\"><p class=\"sx-kicker\">What comes in</p><h2 id=\"sx-strat\">Choose what to clip</h2>"
-         "<ul class=\"sx-options\"><li><b>Newsletters and subscriptions</b><span>Messages that carry List-Unsubscribe or bulk headers. Personal threads are left alone.</span></li>"
-         "<li><b>A search you write</b><span>Your own Gmail search string, such as <code>label:Newsletters OR from:*.substack.com</code>.</span></li>"
-         "<li><b>Everything, filtered</b><span>Every inbound message, checked against the exclusions below before anything is kept.</span></li></ul>"
-         "<p>These rules are set and saved in the Connection Studio, which owns the grant.</p><a class=\"sx-btn\" href=\"/apps/connections?context=self&amp;identity=gmail\">Set rules in the studio</a></section>"
-         "<section class=\"sx-panel\" aria-labelledby=\"sx-excl\"><p class=\"sx-kicker\">Never kept</p><h2 id=\"sx-excl\">Exclusions</h2><ul class=\"sx-checks\"><li>Direct personal mail</li><li>Banking and statements</li><li>Receipts and invoices</li><li>Security codes and sign-in alerts</li></ul>"
-         "<p class=\"sx-kicker\">Where it goes</p><p>Clipped issues are kept as reading-room pieces with their sender as the source.</p><a class=\"sx-btn\" href=\"/sources\">Open sources</a></section></div>",stdout);
+   ui_open(stdout,"div","sx-split sx-settings");
+   ui_start(stdout,"section");ui_attr(stdout,"class","sx-panel");ui_attr(stdout,"aria-labelledby","sx-strat");ui_gt(stdout);
+   ui_open(stdout,"p","sx-kicker");ui_copy(stdout,"What comes in");ui_close(stdout,"p");
+   ui_start(stdout,"h2");ui_attr(stdout,"id","sx-strat");ui_gt(stdout);ui_copy(stdout,"Choose what to clip");ui_close(stdout,"h2");
+   ui_open(stdout,"ul","sx-options");
+   ui_open(stdout,"li",NULL);ui_open(stdout,"b",NULL);ui_copy(stdout,"Newsletters and subscriptions");ui_close(stdout,"b");
+   ui_open(stdout,"span",NULL);ui_copy(stdout,"Messages that carry List-Unsubscribe or bulk headers. Personal threads are left alone.");ui_close(stdout,"span");ui_close(stdout,"li");
+   ui_open(stdout,"li",NULL);ui_open(stdout,"b",NULL);ui_copy(stdout,"A search you write");ui_close(stdout,"b");
+   ui_open(stdout,"span",NULL);ui_copy(stdout,"Your own Gmail search string, such as ");ui_open(stdout,"code",NULL);ui_copy(stdout,"label:Newsletters OR from:*.substack.com");ui_close(stdout,"code");ui_copy(stdout,".");ui_close(stdout,"span");ui_close(stdout,"li");
+   ui_open(stdout,"li",NULL);ui_open(stdout,"b",NULL);ui_copy(stdout,"Everything, filtered");ui_close(stdout,"b");
+   ui_open(stdout,"span",NULL);ui_copy(stdout,"Every inbound message, checked against the exclusions below before anything is kept.");ui_close(stdout,"span");ui_close(stdout,"li");
+   ui_close(stdout,"ul");
+   ui_open(stdout,"p",NULL);ui_copy(stdout,"These rules are set and saved in the Connection Studio, which owns the grant.");ui_close(stdout,"p");
+   ui_elem(stdout,"a",(const UiAttr[]){{"class","sx-btn"},{"href","/apps/connections?context=self&amp;identity=gmail"}},2,0);
+   ui_copy(stdout,"Set rules in the studio");ui_close(stdout,"a");ui_close(stdout,"section");
+   ui_start(stdout,"section");ui_attr(stdout,"class","sx-panel");ui_attr(stdout,"aria-labelledby","sx-excl");ui_gt(stdout);
+   ui_open(stdout,"p","sx-kicker");ui_copy(stdout,"Never kept");ui_close(stdout,"p");
+   ui_start(stdout,"h2");ui_attr(stdout,"id","sx-excl");ui_gt(stdout);ui_copy(stdout,"Exclusions");ui_close(stdout,"h2");
+   ui_open(stdout,"ul","sx-checks");
+   ui_text(stdout,"li",NULL,"Direct personal mail");ui_text(stdout,"li",NULL,"Banking and statements");
+   ui_text(stdout,"li",NULL,"Receipts and invoices");ui_text(stdout,"li",NULL,"Security codes and sign-in alerts");
+   ui_close(stdout,"ul");
+   ui_open(stdout,"p","sx-kicker");ui_copy(stdout,"Where it goes");ui_close(stdout,"p");
+   ui_open(stdout,"p",NULL);ui_copy(stdout,"Clipped issues are kept as reading-room pieces with their sender as the source.");ui_close(stdout,"p");
+   ui_open_a(stdout,"a","class","sx-btn","href","/sources");ui_copy(stdout,"Open sources");ui_close(stdout,"a");
+   ui_close(stdout,"section");ui_close(stdout,"div");
   } else {
    ui_open_a(stdout,"section","class","sx-panel","aria-labelledby","sx-decl"); ui_open(stdout,"p","sx-kicker"); fputs("Declare",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"h2","id","sx-decl"); fputs("Name your ",stdout);html(chosen->name);fputs(" account</h2>",stdout);
    if(signed_in)sd_link_form(chosen->key,!strcmp(chosen->key,"bluesky")?"you.bsky.social":"@you@instance.social",!strcmp(chosen->key,"bluesky")?"https://bsky.app/profile/you.bsky.social":"https://instance.social/@you");
    if(!strcmp(chosen->key,"bluesky"))do{ ui_open(stdout,"p","sx-note"); ui_open_a(stdout,"a","href","/connections/bluesky/sync"); fputs("Ask for a sync of your Bluesky repository",stdout); ui_close(stdout,"a"); ui_close(stdout,"p"); }while(0);
-   else fputs("<p><a class=\"sx-btn sx-primary\" href=\"/login?next=%2Fconnections\">Sign in to declare an account</a></p>",stdout);
+   else{ui_open(stdout,"p",NULL);ui_open_a(stdout,"a","class","sx-btn sx-primary","href","/login?next=%2Fconnections");ui_copy(stdout,"Sign in to declare an account");ui_close(stdout,"a");ui_close(stdout,"p");}
    ui_close(stdout,"section");
   }
   ui_open(stdout,"p","sx-back"); ui_open_a(stdout,"a","href","/connections"); fputs("All connections",stdout); ui_close(stdout,"a"); ui_close(stdout,"p"); ui_close(stdout,"main");
@@ -424,9 +464,12 @@ static void sd_connect(const char *route,const char *host,const char *query,cons
  sd_page_open("Tools and agents",host,route,query,"connect");
  ui_open(stdout,"main","sx"); ui_open_a(stdout,"nav","class","sx-crumbs","aria-label","Breadcrumb"); ui_open_a(stdout,"a","href","/"); fputs("Aurekai",stdout); ui_close(stdout,"a"); ui_open(stdout,"span",NULL); fputs("/",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"a","href","/connections"); fputs("Connections",stdout); ui_close(stdout,"a"); ui_open(stdout,"span",NULL); fputs("/",stdout); ui_close(stdout,"span"); ui_open(stdout,"span",NULL); fputs("Tools and agents",stdout); ui_close(stdout,"span"); ui_close(stdout,"nav"); ui_open(stdout,"header","sx-hero"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","sx-kicker"); fputs("Carriers",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Tools, agents and push feeds",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p",NULL); fputs("How outside programs read what Aurekai keeps: an MCP server for your desktop tools, an A2A card for other agents, and WebSub so publishers can push new posts instead of being polled.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"nav","sx-actions"); ui_open_a(stdout,"a","class","sx-btn","href","/protocols");sd_icon("link");fputs("Every carrier</a><a class=\"sx-btn sx-primary\" href=\"/sources\" data-sx-open=\"sx-add\">",stdout);sd_icon("plus");fputs("Add a feed</a></nav></header>",stdout);
  ui_open(stdout,"dl","sx-stats"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Sources readable"); ui_open(stdout,"dd",NULL);sd_num(sources);ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("MCP",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL); fputs("/mcp",stdout); ui_open(stdout,"small",NULL); fputs("Model Context Protocol",stdout); ui_close(stdout,"small"); ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("A2A",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL); fputs("Agent card",stdout); ui_open(stdout,"small",NULL); fputs("/.well-known/agent-card.json",stdout); ui_close(stdout,"small"); ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL); fputs("WebSub",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL); fputs("Hub",stdout); ui_open(stdout,"small",NULL); fputs("push in, push out",stdout); ui_close(stdout,"small"); ui_close(stdout,"dd"); ui_close(stdout,"div"); ui_close(stdout,"dl");
- fputs("<div class=\"sx-split sx-settings\"><section class=\"sx-panel\" aria-labelledby=\"sx-mcp\"><p class=\"sx-kicker\">Your desktop tools</p><h2 id=\"sx-mcp\">MCP server</h2>"
-       "<p>Point Claude, Cursor or any MCP client at Aurekai. The tools read sources and kept passages with your account's own limits; nothing is granted that your account does not already have.</p>"
-       "<pre class=\"sx-code\">{\"mcpServers\":{\"aurekai\":{\"url\":\"" BF_ORIGIN_WORK "/mcp\"}}}</pre>",stdout);
+ ui_open(stdout,"div","sx-split sx-settings");
+ ui_start(stdout,"section");ui_attr(stdout,"class","sx-panel");ui_attr(stdout,"aria-labelledby","sx-mcp");ui_gt(stdout);
+ ui_open(stdout,"p","sx-kicker");ui_copy(stdout,"Your desktop tools");ui_close(stdout,"p");
+ ui_start(stdout,"h2");ui_attr(stdout,"id","sx-mcp");ui_gt(stdout);ui_copy(stdout,"MCP server");ui_close(stdout,"h2");
+ ui_open(stdout,"p",NULL);ui_copy(stdout,"Point Claude, Cursor or any MCP client at Aurekai. The tools read sources and kept passages with your account's own limits; nothing is granted that your account does not already have.");ui_close(stdout,"p");
+ ui_open(stdout,"pre","sx-code");ui_copy(stdout,"{\"mcpServers\":{\"aurekai\":{\"url\":\"");fputs(BF_ORIGIN_WORK,stdout);ui_copy(stdout,"/mcp\"}}}");ui_close(stdout,"pre");
  fputs(signed_in?"<a class=\"sx-btn\" href=\"/account\">Review your sessions</a>":"<a class=\"sx-btn sx-primary\" href=\"/login?next=%2Fconnect\">Sign in to authorize a tool</a>",stdout);
  ui_close(stdout,"section"); ui_open_a(stdout,"section","class","sx-panel","aria-labelledby","sx-a2a"); ui_open(stdout,"p","sx-kicker"); fputs("Other agents",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"h2","id","sx-a2a"); fputs("Agent-to-agent",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("Other agents discover what Aurekai offers from its agent card and call it over A2A. A call is an ask; nothing past a person's own submit is done for them.",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"a","class","sx-btn","href","/.well-known/agent-card.json"); fputs("Read the agent card",stdout); ui_close(stdout,"a"); ui_close(stdout,"section"); ui_close(stdout,"div");
  ui_open_a(stdout,"section","class","sx-panel","aria-labelledby","sx-push"); ui_open(stdout,"p","sx-kicker"); fputs("WebSub",stdout); ui_close(stdout,"p"); ui_open_a(stdout,"h2","id","sx-push"); fputs("Push delivery",stdout); ui_close(stdout,"h2"); ui_open(stdout,"p",NULL); fputs("When a publisher declares a hub, Aurekai can lease a subscription and receive each new post as it is published, checked with an HMAC signature before it is accepted. A delivery asks for a fresh observation; it does not publish anything by itself.",stdout); ui_close(stdout,"p");
@@ -439,17 +482,51 @@ static void sd_connect(const char *route,const char *host,const char *query,cons
  * browser module; it keeps its exact coordinate contract. */
 static void source_desk_research(const char *host,const char *route,const char *query){
  sd_page_open("Prepare research",host,route,query,"research");
- fputs("<main class=\"sx source-desk\" data-source-desk><nav class=\"sx-crumbs\" aria-label=\"Breadcrumb\"><a href=\"/\">Aurekai</a><span>/</span><a href=\"/sources\">Links and sources</a><span>/</span><span>Prepare research</span></nav>"
-       "<header class=\"sx-hero\"><div><h1>Prepare a research review</h1><p>Choose the workspace that will receive this exact kept passage. Nothing is saved until you confirm it there.</p></div><nav aria-label=\"Continue your work\"><a class=\"sx-btn\" href=\"/apps?context=self\">Your work</a></nav></header>"
-       /* source-desk.mjs mounts its tabs, address review, search and command
-        * palette on exactly these controls; without any one of them the module
-        * refuses to mount and the exact-coordinate handoff never opens. */
-       "<div class=\"sd-mode-tabs\" aria-label=\"How to start\"><button type=\"button\" data-mode=\"browse\">Browse known sources</button><button type=\"button\" data-mode=\"address\">Bring a web address</button></div>"
-       "<section data-mode-panel=\"address\"><form class=\"sd-address-form\" action=\"/studio/\" method=\"get\"><label for=\"sd-url\">Page or feed address</label><p id=\"sd-url-help\">Paste a complete public address. Reviewing it here does not fetch, connect, or publish anything.</p><div class=\"sd-input-action\"><input id=\"sd-url\" name=\"foreign_url\" type=\"url\" required autocomplete=\"url\" placeholder=\"https://publisher.example/article\" aria-describedby=\"sd-url-help\"><button type=\"submit\">Review this address</button></div><div data-address-preview aria-live=\"polite\"></div></form></section>"
-       "<section data-mode-panel=\"browse\"><form class=\"sd-search\" action=\"/sources\" method=\"get\"><label for=\"sd-query\">Search sources already known to Aurekai</label><div class=\"sd-input-action\"><input id=\"sd-query\" name=\"q\" type=\"search\" maxlength=\"240\" placeholder=\"Publisher, topic, source name, or hostname\"><button type=\"submit\">Find sources</button></div></form>"
-       "<div class=\"sd-catalogue-bar\"><p data-catalogue-status role=\"status\" aria-live=\"polite\">Opening the kept passage…</p><button type=\"button\" data-catalogue-retry hidden>Retry</button><button type=\"button\" data-source-commands>Commands</button></div><div data-source-collection></div><button type=\"button\" data-more-sources hidden>Load more</button></section>"
-       "<noscript><p>Research review needs JavaScript. <a href=\"/apps?context=self\">Your installed work</a> remains available.</p></noscript></main>"
-       "<script type=\"module\" src=\"/apps/source-desk.mjs\"></script>",stdout);
+ ui_start(stdout,"main");ui_attr(stdout,"class","sx source-desk");ui_flag(stdout,"data-source-desk");ui_gt(stdout);
+ ui_start(stdout,"nav");ui_attr(stdout,"class","sx-crumbs");ui_attr(stdout,"aria-label","Breadcrumb");ui_gt(stdout);
+ ui_open_a(stdout,"a","href","/");ui_copy(stdout,"Aurekai");ui_close(stdout,"a");
+ ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");
+ ui_open_a(stdout,"a","href","/sources");ui_copy(stdout,"Links and sources");ui_close(stdout,"a");
+ ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");
+ ui_open(stdout,"span",NULL);ui_copy(stdout,"Prepare research");ui_close(stdout,"span");ui_close(stdout,"nav");
+ ui_open(stdout,"header","sx-hero");ui_open(stdout,"div",NULL);ui_open(stdout,"h1",NULL);ui_copy(stdout,"Prepare a research review");ui_close(stdout,"h1");
+ ui_open(stdout,"p",NULL);ui_copy(stdout,"Choose the workspace that will receive this exact kept passage. Nothing is saved until you confirm it there.");ui_close(stdout,"p");ui_close(stdout,"div");
+ ui_start(stdout,"nav");ui_attr(stdout,"aria-label","Continue your work");ui_gt(stdout);
+ ui_open_a(stdout,"a","class","sx-btn","href","/apps?context=self");ui_copy(stdout,"Your work");ui_close(stdout,"a");ui_close(stdout,"nav");ui_close(stdout,"header");
+ /* source-desk.mjs mounts its tabs, address review, search and command
+  * palette on exactly these controls; without any one of them the module
+  * refuses to mount and the exact-coordinate handoff never opens. */
+ ui_start(stdout,"div");ui_attr(stdout,"class","sd-mode-tabs");ui_attr(stdout,"aria-label","How to start");ui_gt(stdout);
+ ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"data-mode","browse");ui_gt(stdout);ui_copy(stdout,"Browse known sources");ui_close(stdout,"button");
+ ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"data-mode","address");ui_gt(stdout);ui_copy(stdout,"Bring a web address");ui_close(stdout,"button");
+ ui_close(stdout,"div");
+ ui_start(stdout,"section");ui_attr(stdout,"data-mode-panel","address");ui_gt(stdout);
+ ui_start(stdout,"form");ui_attr(stdout,"class","sd-address-form");ui_attr(stdout,"action","/studio/");ui_attr(stdout,"method","get");ui_gt(stdout);
+ ui_start(stdout,"label");ui_attr(stdout,"for","sd-url");ui_gt(stdout);ui_copy(stdout,"Page or feed address");ui_close(stdout,"label");
+ ui_start(stdout,"p");ui_attr(stdout,"id","sd-url-help");ui_gt(stdout);ui_copy(stdout,"Paste a complete public address. Reviewing it here does not fetch, connect, or publish anything.");ui_close(stdout,"p");
+ ui_open(stdout,"div","sd-input-action");
+ ui_start(stdout,"input");ui_attr(stdout,"id","sd-url");ui_attr(stdout,"name","foreign_url");ui_attr(stdout,"type","url");ui_flag(stdout,"required");ui_attr(stdout,"autocomplete","url");ui_attr(stdout,"placeholder","https://publisher.example/article");ui_attr(stdout,"aria-describedby","sd-url-help");ui_gt(stdout);
+ ui_start(stdout,"button");ui_attr(stdout,"type","submit");ui_gt(stdout);ui_copy(stdout,"Review this address");ui_close(stdout,"button");ui_close(stdout,"div");
+ ui_start(stdout,"div");ui_flag(stdout,"data-address-preview");ui_attr(stdout,"aria-live","polite");ui_gt(stdout);ui_close(stdout,"div");
+ ui_close(stdout,"form");ui_close(stdout,"section");
+ ui_start(stdout,"section");ui_attr(stdout,"data-mode-panel","browse");ui_gt(stdout);
+ ui_start(stdout,"form");ui_attr(stdout,"class","sd-search");ui_attr(stdout,"action","/sources");ui_attr(stdout,"method","get");ui_gt(stdout);
+ ui_start(stdout,"label");ui_attr(stdout,"for","sd-query");ui_gt(stdout);ui_copy(stdout,"Search sources already known to Aurekai");ui_close(stdout,"label");
+ ui_open(stdout,"div","sd-input-action");
+ ui_start(stdout,"input");ui_attr(stdout,"id","sd-query");ui_attr(stdout,"name","q");ui_attr(stdout,"type","search");ui_attr(stdout,"maxlength","240");ui_attr(stdout,"placeholder","Publisher, topic, source name, or hostname");ui_gt(stdout);
+ ui_start(stdout,"button");ui_attr(stdout,"type","submit");ui_gt(stdout);ui_copy(stdout,"Find sources");ui_close(stdout,"button");ui_close(stdout,"div");ui_close(stdout,"form");
+ ui_open(stdout,"div","sd-catalogue-bar");
+ ui_start(stdout,"p");ui_flag(stdout,"data-catalogue-status");ui_attr(stdout,"role","status");ui_attr(stdout,"aria-live","polite");ui_gt(stdout);
+ ui_copy(stdout,"Opening the kept passage…");ui_close(stdout,"p");
+ ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_flag(stdout,"data-catalogue-retry");ui_flag(stdout,"hidden");ui_gt(stdout);ui_copy(stdout,"Retry");ui_close(stdout,"button");
+ ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_flag(stdout,"data-source-commands");ui_gt(stdout);ui_copy(stdout,"Commands");ui_close(stdout,"button");
+ ui_close(stdout,"div");ui_start(stdout,"div");ui_flag(stdout,"data-source-collection");ui_gt(stdout);ui_close(stdout,"div");
+ ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_flag(stdout,"data-more-sources");ui_flag(stdout,"hidden");ui_gt(stdout);ui_copy(stdout,"Load more");ui_close(stdout,"button");
+ ui_close(stdout,"section");
+ ui_open(stdout,"noscript",NULL);ui_open(stdout,"p",NULL);ui_copy(stdout,"Research review needs JavaScript. ");
+ ui_open_a(stdout,"a","href","/apps?context=self");ui_copy(stdout,"Your installed work");ui_close(stdout,"a");
+ ui_copy(stdout," remains available.");ui_close(stdout,"p");ui_close(stdout,"noscript");ui_close(stdout,"main");
+ ui_start(stdout,"script");ui_attr(stdout,"type","module");ui_attr(stdout,"src","/apps/source-desk.mjs");ui_gt(stdout);ui_close(stdout,"script");
  sd_page_close();
 }
 

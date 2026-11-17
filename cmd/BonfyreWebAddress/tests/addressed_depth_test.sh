@@ -90,7 +90,9 @@ checks = {
     'a named organization opens its estate address': 'href="https://partner-test.aurekai.life/"' in region('named') and 'Partner Org' in region('named'),
     'an organization the estate does not address keeps the publisher\'s link': 'https://unknown.example/thing' in region('named'),
     'a platform link is not an organization': 'youtube' not in region('named'),
-    'every channel of the publisher is listed': 'News RSS feed' in region('channels') and 'Website' in region('channels'),
+    # How a publisher puts things out is plumbing, not what a reader came for:
+    # its channels belong on its own page, not under every piece (44c1481e).
+    'the publisher\'s feeds are not listed under the piece': 'News RSS feed' not in region('channels'),
     'nothing unrelated fills the page': 'Also in' not in s,
     'an estate address opens in place': not re.search(r'target="_blank"[^>]*href="https://[a-z-]+\.aurekai\.', s) and not re.search(r'href="https://[a-z-]+\.aurekai\.[a-z]+/"[^>]*target="_blank"', s),
 }

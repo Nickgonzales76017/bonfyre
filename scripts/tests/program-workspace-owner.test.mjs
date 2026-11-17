@@ -53,6 +53,50 @@ test('catalog and review read canonical templates without writing private state'
   expect(db.query("SELECT COUNT(*) n FROM sqlite_master WHERE name='_program_workspace_preparation'").get().n).toBe(0);
 }));
 
+test('contextual programs share one site but retain independent native owner state',()=>fixture(({db,call,prepare})=>{
+  const legacy=prepare();
+  const start=(ref,extra={})=>{
+    const review=call('review',{template_id:'learning',context_ref:ref},extra);
+    return call('prepare',{template_id:'learning',context_ref:ref,review_digest:review.review_digest},extra);
+  };
+  const first=start('venue:oak-room'),second=start('venue:river-room');
+  expect(first.created).toBe(true);expect(second.created).toBe(true);
+  expect(new Set([legacy.instance.instance_id,first.instance.instance_id,second.instance.instance_id]).size).toBe(3);
+  expect(first.instance.site_id).toBe(derivedSite(binding));
+  expect(second.instance.site_id).toBe(derivedSite(binding));
+  expect(first.instance.instance_id).toMatch(/-ctx-[a-f0-9]{24}$/);
+  expect(first.instance.instance_id).not.toContain('oak-room');
+  expect(first.instance.context_ref).toBe('venue:oak-room');
+  expect(second.instance.context_ref).toBe('venue:river-room');
+  expect(first.instance.status).toBe('draft');
+  expect(db.query('SELECT COUNT(*) n FROM program_template').get().n).toBe(1);
+  expect(db.query('SELECT COUNT(DISTINCT site_id) n FROM program_instance').get().n).toBe(1);
+  expect(db.query('SELECT COUNT(*) n FROM program_instance').get().n).toBe(3);
+  expect(start('venue:oak-room').created).toBe(false);
+  expect(call('read').instances.map(row=>row.instance_id).sort()).toEqual([legacy.instance.instance_id,first.instance.instance_id,second.instance.instance_id].sort());
+  expect(()=>call('read',undefined,{subject:'user:20',actor:'user:20',instance:first.instance.instance_id})).toThrow('unavailable');
+  const org=start('venue:oak-room',{subject:'institution:studio',scope:'institution'});
+  const orgAgain=start('venue:oak-room',{actor:'user:20',subject:'institution:studio',scope:'institution'});
+  expect(orgAgain.created).toBe(false);
+  expect(org.instance.instance_id).toBe(orgAgain.instance.instance_id);
+  expect(org.instance.instance_id).not.toBe(first.instance.instance_id);
+}));
+
+test('contextual preparation fails closed on stale review, malformed context and template drift',()=>fixture(({db,call})=>{
+  const review=call('review',{template_id:'learning',context_ref:'community:reading'});
+  expect(()=>call('prepare',{template_id:'learning',context_ref:'community:other',review_digest:review.review_digest})).toThrow('template or destination changed');
+  expect(db.query('SELECT COUNT(*) n FROM program_instance').get().n).toBe(0);
+  for(const ref of ['venue:../secret','https://example.com','Venue:oak','venue:foo//bar','venue:','venue:ok space','x'.repeat(193)])
+    expect(()=>call('review',{template_id:'learning',context_ref:ref})).toThrow('context reference');
+  const defaultReview=call('review',{template_id:'learning'});
+  const contextual=call('review',{template_id:'learning',context_ref:'venue:oak'});
+  expect(defaultReview.instance_id).toBe(derivedSite(binding)+'-learning');
+  expect(contextual.instance_id).not.toBe(defaultReview.instance_id);
+  expect(()=>call('prepare',{template_id:'learning',context_ref:'venue:oak',review_digest:defaultReview.review_digest})).toThrow('template or destination changed');
+  db.query('UPDATE program_template SET description=?').run('Drifted context');
+  expect(()=>call('prepare',{template_id:'learning',context_ref:'venue:oak',review_digest:contextual.review_digest})).toThrow('template or destination changed');
+  expect(db.query('SELECT COUNT(*) n FROM program_instance').get().n).toBe(0);
+}));
 test('preparation uses the real compiler and leaves all derived rows private',()=>fixture(({db,prepare,call})=>{
   const result=prepare();expect(result.created).toBe(true);expect(result.instance.owner_subject).toBe(binding.subject);expect(result.instance.status).toBe('draft');
   expect(result.instance.bindings.map(row=>[row.program_role,row.lowered_by])).toEqual([['mentoring',''],['sources','PublicationFeed']]);

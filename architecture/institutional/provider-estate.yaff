@@ -63,7 +63,7 @@ architecture github-app-connection
   semantic_question Is the estate's GitHub app created, are its key and secrets sealed, and does GitHub accept a request signed with that key?
   purpose The first provider taken from sign-up page to working machine identity with one approval and nothing typed. The estate owner opens /connect/github-app; Aurekai posts an app manifest to github.com; the owner presses Create; GitHub returns a one-time code that BonfyreCredentials exchanges for the app id, key and secrets, seals under AES-256-GCM, and proves by calling GET /app with an RS256 app JWT signed by the sealed key.
   maturity implemented
-  consumes provider-estate
+  consumes ProviderEstate
   publishes GitHubAppConnection
   state_types started
   state_types sealed
@@ -91,7 +91,7 @@ architecture provider-customer-accounts
   semantic_question Can an Aurekai organization (a customer sub-account) get, see and close its own account inside a provider account Aurekai holds?
   purpose The operating half of the provider lifecycle for providers whose customer container lives under Aurekai's held account. bonfyre-provider-estate customer open|show|close names every container aurekai-c-<customer>, reads it back from the provider after open and confirms it is gone after close. The organization page (/organizations?organization=ID) shows administrators a Provider accounts section that runs these verbs for that organization and links GitHub's install page for providers the customer owns directly.
   maturity implemented
-  consumes provider-estate
+  consumes ProviderEstate
   publishes ProviderCustomerAccount
   state_types none
   state_types open

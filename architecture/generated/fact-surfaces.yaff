@@ -25,6 +25,24 @@ architecture fact-surface-registry
   consumes NeighbourhoodSnapshot
   consumes CommerceStage
   consumes ResourceGrant
+  consumes AvailabilityObservation
+  consumes CommonsReadingRow
+  consumes BroadcastProgramme
+  consumes BroadcastRender
+  consumes RoleAssignment
+  consumes SpatialObservation
+  consumes CoverageVolume
+  consumes UsageOccurrence
+  consumes EconomicMeasure
+  consumes DerivationEconomics
+  consumes RateAdmissionAttempt
+  consumes ProviderModelUsageObservation
+  consumes SourceAttentionPlan
+  consumes TypedAnchor
+  consumes StandingAddress
+  consumes InstitutionDelegation
+  consumes CanonicalHost
+  consumes WorldPolicy
   consumes DeviceKey
   consumes DevicePairing
   consumes FeedAgentPolicy
@@ -40,6 +58,16 @@ architecture fact-surface-registry
   consumes SearchIndex
   consumes SearchPassage
   consumes StaticEmbeddingModel
+  consumes ActionAperture
+  consumes AtomicForm
+  consumes SemanticOperation
+  consumes EventItem
+  consumes ComposedPublicPage
+  consumes IdentityPage
+  consumes PageHistory
+  consumes DetailContinuation
+  consumes EstateAddress
+  consumes CompiledCalendar
   invariant every page row reads one declared store read-only through its declared lease, with one SELECT bound to a row limit, a progress deadline and a per-cell byte cap
   invariant public rows are only facts already public; member rows need a signed-in session; admin rows need the bonfyre admin grant /studio/admin checks
   invariant no row submits, publishes, pays or changes a record
@@ -52,6 +80,7 @@ architecture fact-surface-registry
   source_path cmd/BonfyreWebAddress/src/fact_surface_web.h
   source_path schemas/storage/stores/cmd-BonfyreAdmission.cue
   witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh builds stores from nothing, shows a public row to anyone, sends a signed-out visitor to sign in for an admin row, refuses a signed-in non-admin, and lists only permitted rows on /x
+  source_lineage declared from atlas fact_orphan loss; registry authored in schemas/control/fact-surfaces.cue, rendered by fact_surface_web.h
 
 interaction commerce-observation-provider-fact-price-observation-reaches-people
   source commerce-observation-provider
@@ -216,6 +245,222 @@ interaction resource-admission-fact-resource-grant-reaches-people
   preserves the records the producer wrote to the admission store, read as written, newest first, at most 50 rows and a total count
   drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
   forbidden_inference ResourceGrant shown at /x/resource-grants -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction commerce-observation-provider-fact-availability-observation-reaches-people
+  source commerce-observation-provider
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference AvailabilityObservation shown at /x/availability -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction commons-knowledge-reading-fact-commons-reading-row-reaches-people
+  source commons-knowledge-reading
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference CommonsReadingRow shown at /x/commons-reading -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction broadcast-fact-broadcast-programme-reaches-people
+  source broadcast
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference BroadcastProgramme shown at /x/broadcast-programmes -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction broadcast-fact-broadcast-render-reaches-people
+  source broadcast
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference BroadcastRender shown at /x/broadcast-renders -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction role-program-compiler-fact-role-assignment-reaches-people
+  source role-program-compiler
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference RoleAssignment shown at /x/role-assignments -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction spatial-observation-fact-spatial-observation-reaches-people
+  source spatial-observation
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference SpatialObservation shown at /x/spatial-observations -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction coverage-volume-fact-coverage-volume-reaches-people
+  source coverage-volume
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the cms store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference CoverageVolume shown at /x/coverage -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction financial-metabolism-fact-usage-occurrence-reaches-people
+  source financial-metabolism
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the meter store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference UsageOccurrence shown at /x/metered-use -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction financial-metabolism-fact-economic-measure-reaches-people
+  source financial-metabolism
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the meter store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference EconomicMeasure shown at /x/priced-use -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction financial-metabolism-fact-derivation-economics-reaches-people
+  source financial-metabolism
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the meter store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference DerivationEconomics shown at /x/accrued-costs -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction rate-discovery-fact-rate-admission-attempt-reaches-people
+  source rate-discovery
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the records the producer wrote to the meter store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference RateAdmissionAttempt shown at /x/listed-prices -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction physical-derivation-fact-provider-model-usage-observation-reaches-people
+  source physical-derivation
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the meter store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference ProviderModelUsageObservation shown at /x/model-usage-receipts -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction source-frontier-fact-source-attention-plan-reaches-people
+  source source-frontier
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the source_frontier store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference SourceAttentionPlan shown at /x/source-attention -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction latent-coordinate-atlas-fact-typed-anchor-reaches-people
+  source latent-coordinate-atlas
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the latent_atlas store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference TypedAnchor shown at /x/typed-anchors -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction bonfyre-matrix-fact-standing-address-reaches-people
+  source bonfyre-matrix
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the matrix store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference StandingAddress shown at /x/standing-addresses -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction bonfyre-matrix-fact-institution-delegation-reaches-people
+  source bonfyre-matrix
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the matrix store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference InstitutionDelegation shown at /x/delegations -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction web-address-edge-fact-canonical-host-reaches-people
+  source web-address-edge
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the matrix store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference CanonicalHost shown at /x/canonical-hosts -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its table or columns, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction institutional-worlds-fact-world-policy-reaches-people
+  source institutional-worlds
+  destination fact-surface-registry
+  relation produced_fact_to_admin_surface
+  preserves the records the producer wrote to the matrix store, read as written, newest first, at most 50 rows and a total count
+  drops columns the row does not name, cells past 240 bytes, rows past the limit and every write path
+  forbidden_inference WorldPolicy shown at /x/worlds -> it is current, verified or the viewer may act on it
   invalidates_on the producer changing its table or columns, or the row's audience changing
   witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
   binding schemas/control/fact-surfaces.cue
@@ -396,6 +641,126 @@ interaction static-semantic-search-fact-static-embedding-model-reaches-people
   preserves the page the producer already serves at /_search/model.bfse (Model file), unchanged
   drops nothing the route shows; the row adds no read of its own
   forbidden_inference StaticEmbeddingModel shown at /_search/model.bfse -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction object-grammar-fact-action-aperture-reaches-people
+  source object-grammar
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at /_aperture (Aperture list), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference ActionAperture shown at /_aperture -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction object-grammar-fact-atomic-form-reaches-people
+  source object-grammar
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at /_aperture/form (Operation form), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference AtomicForm shown at /_aperture/form -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction object-grammar-fact-semantic-operation-reaches-people
+  source object-grammar
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at /_aperture (Operation names), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference SemanticOperation shown at /_aperture -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction event-material-fact-event-item-reaches-people
+  source event-material
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at / (What is on), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference EventItem shown at / -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction page-composition-fact-composed-public-page-reaches-people
+  source page-composition
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at / (Composed front page), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference ComposedPublicPage shown at / -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction identity-page-fact-identity-page-reaches-people
+  source identity-page
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at /about/ (Identity page), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference IdentityPage shown at /about/ -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction page-history-fact-page-history-reaches-people
+  source page-history
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at /o/ (How this page changed), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference PageHistory shown at /o/ -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction detail-depth-fact-detail-continuation-reaches-people
+  source detail-depth
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at /o/ (Where next), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference DetailContinuation shown at /o/ -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction estate-reference-fact-estate-address-reaches-people
+  source estate-reference
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at /o/ (Reference links), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference EstateAddress shown at /o/ -> it is current, verified or the viewer may act on it
+  invalidates_on the producer changing its route, or the row's audience changing
+  witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
+  binding schemas/control/fact-surfaces.cue
+  binding cmd/BonfyreWebAddress/src/fact_surface_web.h
+
+interaction event-material-fact-compiled-calendar-reaches-people
+  source event-material
+  destination fact-surface-registry
+  relation produced_fact_to_public_surface
+  preserves the page the producer already serves at /o/ (Calendar file), unchanged
+  drops nothing the route shows; the row adds no read of its own
+  forbidden_inference CompiledCalendar shown at /o/ -> it is current, verified or the viewer may act on it
   invalidates_on the producer changing its route, or the row's audience changing
   witness cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh
   binding schemas/control/fact-surfaces.cue

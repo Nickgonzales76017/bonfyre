@@ -480,13 +480,33 @@ nativePagePrograms: [...#PageProgram] & [
         // public walk; a source with no retained item remains absent rather
         // than being made to look like it published one.
         families: ["news", "attention", "wikimedia", "books", "space", "history", "institutions", "datasets", "live-music", "commerce", "gaming", "vulnerabilities", "food", "science", "sports"]
-        // A Discover length visibly carries at least eight sources across
-        // its reading rhythms.  Selecting ninety-six and then advancing the
-        // offset skipped the unseen majority, so its window is the page's
-        // actual public carrying capacity; the bounded route walk supplies
-        // the remaining admitted publishers as later lengths.
-        source_limit: 8, regions: ["lead", "wall", "watch", "listen", "topics", "latest", "table", "more", "feed"]
+        // A Discover length visibly carries thirty-two sources across its
+        // reading rhythms: the front's regions hold about twenty-five
+        // places, and eight sources a beat collapsed every one of them onto
+        // the same weakest publishers.  Selecting ninety-six and then
+        // advancing the offset skipped the unseen majority, so the window
+        // stays the page's actual public carrying capacity; the bounded
+        // route walk supplies the remaining admitted publishers as later
+        // lengths, liveliest first, and the archive proves liveliness.
+        source_limit: 32, regions: ["lead", "wall", "watch", "listen", "topics", "latest", "table", "more", "feed"]
+        // Discover is the whole estate in one stream, so it reads every
+        // territory's rhythms as its beats: each section brings its own
+        // publishers (eight apiece), and the front interleaves them by time
+        // with no single source allowed to fill a run.  Without these the
+        // route read eight sources, of which three had anything current.
+        sections: ["/today", "/local", "/whats-on", "/food", "/books", "/sports", "/music", "/film", "/ideas", "/watch", "/listen"]
         cannot_infer: "a story shown here is not endorsed, verified or ranked by importance; order is by time"
+    },
+    {
+        // Any subject as a page. Its material is not a set of sources but the
+        // archive itself -- every source this estate has read, quiet ones
+        // included -- ranked for the question by words and meaning, so a
+        // story, a dish, a game or a name gets its reading, its episodes to
+        // hear, its video, its pictures and its dates in one composition.
+        route: "/explore", title: "Explore", character: "scrapbook"
+        lede: "Everything this estate has read about it, from every source it has ever followed, to read, hear, watch and look at."
+        families: ["news"], source_limit: 1, regions: ["lead", "listen", "watch", "wall", "latest", "table", "more"]
+        cannot_infer: "pieces placed together here share words or meaning; that is not the same story, a shared source or an endorsement, and each is what its source published when it was read"
     },
     {
         route: "/watch", title: "Watch", character: "journal"
@@ -634,6 +654,12 @@ nativePageNav: [...#PageNavItem] & [
 
 // One export feeds the native generator, so the three tables cannot drift
 // between separate compile steps.
+// Families whose material does not date. A recipe, a poem, a museum's object
+// or a film old enough to belong to everyone is as good to the reader as the
+// day it was posted, so its page and every list it appears in leave out the
+// publication date; dated material (news, events, prices) keeps it.
+nativeTimelessFamilies: [...string & =~"^[a-z][a-z-]*$"] & ["food", "recipes", "literature", "books", "history", "commons", "museums", "art", "films", "images"]
+
 nativePageComposition: {
     regions: nativePageRegions
     subject_schemes: nativePageSubjectSchemes
@@ -650,4 +676,5 @@ nativePageComposition: {
     scene_grammars: nativeSceneGrammars
     nav: nativePageNav
     grammar_labels: nativePageGrammarLabels
+    timeless_families: nativeTimelessFamilies
 }

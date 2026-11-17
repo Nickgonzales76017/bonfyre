@@ -530,7 +530,17 @@ int main(int argc, char **argv) {
     }
     if (argc < 4) { print_usage(); return 1; }
 
+    /* Second verb vocabulary for the native discover path, in strcmp order
+     * for the shared bf_command_lookup; the exec-spawn verbs above are untouched. */
+    enum { CLD_ALL, CLD_DISCOVER, CLD_TIMESTAMPS };
+    static const BfCommandEntry clip_mode_commands[] = {
+        {"all", CLD_ALL, 0, NULL},
+        {"discover", CLD_DISCOVER, 0, NULL},
+        {"timestamps", CLD_TIMESTAMPS, 0, NULL},
+    };
     const char *mode = argv[1];
+    const int mode_id = bf_command_id(clip_mode_commands,
+        BF_COMMAND_COUNT(clip_mode_commands), mode, -1);
     const char *json_path = argv[2];
     const char *out_dir = argv[3];
     int top_n = 5;
@@ -571,13 +581,13 @@ int main(int argc, char **argv) {
     }
 
     int rc = 0;
-    if (strcmp(mode, "discover") == 0 || strcmp(mode, "all") == 0)
+    if (mode_id == CLD_DISCOVER || mode_id == CLD_ALL)
         rc |= emit_clips(doc, out_dir, top_n, min_dur, max_dur);
-    if (strcmp(mode, "timestamps") == 0 || strcmp(mode, "all") == 0)
+    if (mode_id == CLD_TIMESTAMPS || mode_id == CLD_ALL)
         rc |= emit_timestamps(doc, out_dir, top_n, min_dur, max_dur);
 
-    if (strcmp(mode, "discover") != 0 && strcmp(mode, "timestamps") != 0 &&
-        strcmp(mode, "all") != 0) {
+    if (mode_id != CLD_DISCOVER && mode_id != CLD_TIMESTAMPS &&
+        mode_id != CLD_ALL) {
         fprintf(stderr, "error: unknown mode '%s'\n", mode);
         print_usage();
         free(doc);

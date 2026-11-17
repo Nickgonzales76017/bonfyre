@@ -42,6 +42,7 @@ architecture member-training
   owns TrainingDisplayPreferences
   consumes CreatorProgramVersion
   publishes TrainingArchive
+  publishes CreatorProgramVersion
   publishes ProgramExport
   internal_calculus a validated command transforms a copy; the browser commits through the existing atomic revision-checked workbench store before replacing its current state
   internal_calculus canonical kilograms and explicit seconds/meters are independent of display units; paused duration and rest deadlines persist as timestamps

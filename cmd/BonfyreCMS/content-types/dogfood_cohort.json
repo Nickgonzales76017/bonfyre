@@ -1,0 +1,16 @@
+{
+  "name": "dogfood_cohort",
+  "displayName": "Dogfood Cohort",
+  "description": "Registry row for one anonymized cohort archetype a dogfood persona batch was sampled from. Carries the archetype version, contributor count, source mix and window; never contributor identities, hashes of identities, or row-level lineage. Re-seeding archives the old batch and records a new version here, never mutating a persona in place.",
+  "attributes": {
+    "cohort": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "version": {"type": "string", "required": true},
+    "pipeline_digest": {"type": "string", "required": true},
+    "window_start": {"type": "string", "required": true},
+    "window_end": {"type": "string", "required": true},
+    "contributor_count": {"type": "string", "required": true},
+    "source_mix": {"type": "json", "required": true},
+    "status": {"type": "string", "required": true},
+    "cannot_infer": {"type": "text", "required": true}
+  }
+}

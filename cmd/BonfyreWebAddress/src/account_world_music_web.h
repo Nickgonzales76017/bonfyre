@@ -83,7 +83,7 @@ static void wm_player(const PageItem *it){
 static int wm_credits(sqlite3 *db,const char *subject,const char *ns,sqlite3_int64 world,const char *space,const char *target,const char *id,const char *attr){
     char key[80];snprintf(key,sizeof(key),"%s:%s",target,id);sqlite3_stmt *s=NULL;int n=0;
     if(awm_rows(db,subject,ns,world,space,AWM_CREDITS,key,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
-        if(!n++){fputs("<dl class=\"aw-credits\" ",stdout);fputs(attr,stdout);fputs(">",stdout);}
+        if(!n++){ui_start(stdout,"dl");ui_attr(stdout,"class","aw-credits");ui_flag(stdout,attr);ui_gt(stdout);}
         const char *role=wm_col(s,3),*detail=wm_col(s,5),*href=wm_col(s,6);
         ui_open(stdout,"div",NULL); ui_open(stdout,"dt",NULL);if(!strcmp(role,"instrument")&&*detail)wm_words(detail);else{wm_words(role);if(*detail){fputs(" (",stdout);html(detail);fputs(")",stdout);}}
         ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL);wm_href_open(href);html(wm_col(s,4));if(*href)ui_close(stdout,"a");ui_close(stdout,"dd"); ui_close(stdout,"div");
@@ -224,18 +224,18 @@ static int world_music_api(const char *method,const char *query,const char *body
 
 /* -------------------------------------------------------------- studio */
 static void wm_form(const char *site,sqlite3_int64 world,const char *space,const char *op,long long revision,const char *name){
-    fputs("<form method=\"post\" action=\"/workspace/world-music\"",stdout);if(name){fputs(" data-music-form=\"",stdout);html(name);fputs("\"",stdout);}fputs(">",stdout);
+    ui_start(stdout,"form");ui_attr(stdout,"method","post");ui_attr(stdout,"action","/workspace/world-music");if(name){ui_attr_open(stdout,"data-music-form");html(name);ui_attr_close(stdout);}ui_gt(stdout);
     char n[24];ph_hidden("site",site);snprintf(n,sizeof(n),"%lld",(long long)world);ph_hidden("world",n);ph_hidden("space",space);
     ph_hidden("operation",op);snprintf(n,sizeof(n),"%lld",revision);ph_hidden("revision",n);ph_hidden("return","studio");
 }
 static void wm_input(const char *label,const char *hint,const char *name,const char *value,int max,int required,const char *pattern){
     ui_open(stdout,"label",NULL);fputs(label,stdout);if(hint){ui_open(stdout,"small",NULL);fputs(hint,stdout);ui_close(stdout,"small");}
-    printf("<input name=\"%s\" maxlength=\"%d\"",name,max);if(required)fputs(" required",stdout);if(pattern){fputs(" pattern=\"",stdout);fputs(pattern,stdout);fputs("\"",stdout);}
-    fputs(" value=\"",stdout);html(value?value:"");fputs("\"></label>",stdout);
+    ui_start(stdout,"input");printf(" name=\"%s\" maxlength=\"%d\"",name,max);if(required)ui_flag(stdout,"required");if(pattern){ui_copy(stdout," pattern=\"");fputs(pattern,stdout);ui_copy(stdout,"\"");}
+    ui_attr_open(stdout,"value");html(value?value:"");ui_attr_close(stdout);ui_gt(stdout);ui_close(stdout,"label");
 }
 static void wm_select(const char *label,const char *name,const char *const *values,const char *const *labels,const char *chosen){
-    ui_open(stdout,"label",NULL);fputs(label,stdout);printf("<select name=\"%s\">",name);
-    for(int i=0;values[i];i++){fputs("<option value=\"",stdout);html(values[i]);fputs("\"",stdout);if(chosen&&!strcmp(chosen,values[i]))fputs(" selected",stdout);fputs(">",stdout);fputs(labels[i],stdout);ui_close(stdout,"option");}
+    ui_open(stdout,"label",NULL);fputs(label,stdout);ui_start(stdout,"select");printf(" name=\"%s\">",name);
+    for(int i=0;values[i];i++){ui_start(stdout,"option");ui_attr_open(stdout,"value");html(values[i]);ui_attr_close(stdout);if(chosen&&!strcmp(chosen,values[i]))ui_flag(stdout,"selected");ui_gt(stdout);fputs(labels[i],stdout);ui_close(stdout,"option");}
     ui_close(stdout,"select"); ui_close(stdout,"label");
 }
 static void wm_remove_button(const char *site,sqlite3_int64 world,const char *space,long long revision,const char *op,const char *field,const char *value,const char *kind){
@@ -243,10 +243,10 @@ static void wm_remove_button(const char *site,sqlite3_int64 world,const char *sp
 }
 /* What a listener would get from this piece today, checked against its source. */
 static void wm_media_check(const PageItem *it,int cover){
-    fputs("<span class=\"aw-flag\"",stdout);
-    if(cover){int ok=wm_open_photo(it);if(ok)fputs(" data-ok",stdout);fputs(" data-media-check=\"",stdout);fputs(ok?"shown":it?"linked":"missing",stdout);fputs("\">",stdout);
+    ui_start(stdout,"span");ui_attr(stdout,"class","aw-flag");
+    if(cover){int ok=wm_open_photo(it);if(ok)ui_flag(stdout,"data-ok");ui_attr_open(stdout,"data-media-check");fputs(ok?"shown":it?"linked":"missing",stdout);ui_attr_close(stdout);ui_gt(stdout);
         fputs(ok?"Cover shown":!it?"Not found at its source":it->kind!=BF_PAGE_MATERIAL_PHOTO?"Not a picture":"Cover linked, terms not open",stdout);}
-    else{int ok=wa_open_audio(it);if(ok)fputs(" data-ok",stdout);fputs(" data-media-check=\"",stdout);fputs(ok?"plays":it?"linked":"missing",stdout);fputs("\">",stdout);
+    else{int ok=wa_open_audio(it);if(ok)ui_flag(stdout,"data-ok");ui_attr_open(stdout,"data-media-check");fputs(ok?"plays":it?"linked":"missing",stdout);ui_attr_close(stdout);ui_gt(stdout);
         fputs(ok?"Plays here":!it?"Not found at its source":it->kind!=BF_PAGE_MATERIAL_AUDIO?"Not a sound recording":!world_web_open_terms(it->rights)?"Linked, terms not open":"No file to play",stdout);}
     ui_close(stdout,"span");
     if(it&&it->rights[0]){fputs(" <small>",stdout);html(it->rights);ui_close(stdout,"small");}
@@ -320,7 +320,7 @@ static void world_music_studio(sqlite3 *db,const char *subject,const char *site_
         if(awm_rows(db,subject,site_id,world,space,AWM_TRACKS,rel->id,&t)==1)while(sqlite3_step(t)==SQLITE_ROW){
             if(!tracks++)do{ ui_open_a(stdout,"table","data-music-tracks",(const char *)NULL); ui_open(stdout,"thead",NULL); ui_open(stdout,"tr",NULL); ui_open(stdout,"th",NULL); fputs("#",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Recording",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); fputs("Listening",stdout); ui_close(stdout,"th"); ui_open(stdout,"th",NULL); ui_close(stdout,"th"); ui_close(stdout,"tr"); ui_close(stdout,"thead"); ui_open(stdout,"tbody",NULL); }while(0);
             int disc=sqlite3_column_int(t,1),pos=sqlite3_column_int(t,2);if(disc==1&&pos>maxpos)maxpos=pos;WmRecording rec;
-            printf("<tr><td>%d.%d</td><td>",disc,pos);int found=wm_recording(db,subject,site_id,world,space,wm_col(t,3),&rec);html(found?rec.title:wm_col(t,3));
+            ui_open(stdout,"tr",NULL);ui_open(stdout,"td",NULL);printf("%d.%d",disc,pos);ui_close(stdout,"td");ui_open(stdout,"td",NULL);int found=wm_recording(db,subject,site_id,world,space,wm_col(t,3),&rec);html(found?rec.title:wm_col(t,3));
             ui_close(stdout,"td"); ui_open(stdout,"td",NULL);const PageItem *it=found?wm_piece(db,&P,rec.ref):NULL;wm_media_check(it,0);if(wa_open_audio(it))playable++;if(!it)missing++;
             char key[80];snprintf(key,sizeof(key),"recording:%s",found?rec.id:"");sqlite3_stmt *cr=NULL;int hc=0;
             if(found&&awm_rows(db,subject,site_id,world,space,AWM_CREDITS,key,&cr)==1&&sqlite3_step(cr)==SQLITE_ROW)hc=1;sqlite3_finalize(cr);if(!hc)uncredited++;
@@ -331,21 +331,21 @@ static void world_music_studio(sqlite3 *db,const char *subject,const char *site_
         if(nrecs){wm_form(site_id,world,space,"track",revision,"track");ph_hidden("id",rel->id);
             ui_open(stdout,"div","aw-row"); ui_open(stdout,"label",NULL); fputs("Recording",stdout); ui_open_a(stdout,"select","name","recording");
             for(int k=0;k<nrecs;k++){ui_open_a(stdout,"option",UI_DYN,"value","",(recs[k]));html(recs[k]);ui_close(stdout,"option");}
-            printf("</select></label><label>Disc<input type=\"number\" name=\"disc\" min=\"1\" max=\"9\" value=\"1\"></label><label>Track<input type=\"number\" name=\"position\" min=\"1\" max=\"99\" value=\"%d\"></label></div>",maxpos+1);
+            ui_close(stdout,"select");ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Disc");ui_open_a(stdout,"input","type","number","name","disc","min","1","max","9","value","1");ui_close(stdout,"label");ui_open(stdout,"label",NULL);ui_copy(stdout,"Track");ui_start(stdout,"input");ui_attr(stdout,"type","number");ui_attr(stdout,"name","position");ui_attr(stdout,"min","1");ui_attr(stdout,"max","99");printf(" value=\"%d\">",maxpos+1);ui_close(stdout,"label");ui_close(stdout,"div");
             ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Add the track",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form");}
         /* release credits */
         ui_open(stdout,"p",NULL); ui_text(stdout,"strong",NULL,"Release credits"); ui_close(stdout,"p");if(!wm_credits(db,subject,site_id,world,space,"release",rel->id,"data-credits"))ui_text(stdout, "p", NULL, "None yet.");
         /* preparation checklist */
         int cover_ok=1;if(rel->cover[0]){const PageItem *ci=wm_piece(db,&P,rel->cover);cover_ok=wm_open_photo(ci);ui_open(stdout,"p",NULL); fputs("Cover ",stdout);wm_media_check(ci,1);ui_close(stdout,"p");}
         ui_open_a(stdout,"ul","class","aw-checks","data-release-checks",(const char *)NULL);
-        printf("<li%s>%d track%s</li>",tracks?" data-ok":"",tracks,tracks==1?"":"s");
-        printf("<li%s>%d of %d play here; the rest are linked with the reason</li>",playable==tracks&&tracks?" data-ok":"",playable,tracks);
-        if(missing)printf("<li>%d no longer found at their source</li>",missing);
-        printf("<li%s>%s</li>",uncredited?"":" data-ok",uncredited?"Some recordings have no performer credited":"Every recording has a performer credited");
-        printf("<li%s>%s</li>",rel->cover[0]&&cover_ok?" data-ok":"",!rel->cover[0]?"No cover chosen":cover_ok?"Cover can be shown":"Cover will be linked, not shown");
+        ui_start(stdout,"li");if(tracks)ui_flag(stdout,"data-ok");ui_gt(stdout);printf("%d track%s",tracks,tracks==1?"":"s");ui_close(stdout,"li");
+        ui_start(stdout,"li");if(playable==tracks&&tracks)ui_flag(stdout,"data-ok");ui_gt(stdout);printf("%d of %d play here; the rest are linked with the reason",playable,tracks);ui_close(stdout,"li");
+        if(missing){ui_open(stdout,"li",NULL);printf("%d no longer found at their source",missing);ui_close(stdout,"li");}
+        ui_start(stdout,"li");if(!uncredited)ui_flag(stdout,"data-ok");ui_gt(stdout);fputs(uncredited?"Some recordings have no performer credited":"Every recording has a performer credited",stdout);ui_close(stdout,"li");
+        ui_start(stdout,"li");if(rel->cover[0]&&cover_ok)ui_flag(stdout,"data-ok");ui_gt(stdout);fputs(!rel->cover[0]?"No cover chosen":cover_ok?"Cover can be shown":"Cover will be linked, not shown",stdout);ui_close(stdout,"li");
         ui_close(stdout,"ul"); ui_open(stdout,"div","aw-actions");
         wm_form(site_id,world,space,"ready",revision,"ready");ph_hidden("id",rel->id);ph_hidden("ready",rel->ready?"0":"1");
-        fputs(rel->ready?"<button type=\"submit\" class=\"aw-quiet\">Back to draft</button></form>":"<button type=\"submit\">Mark ready for listeners</button></form>",stdout);
+        if(rel->ready){ui_open_a(stdout,"button","type","submit","class","aw-quiet");ui_copy(stdout,"Back to draft");ui_close(stdout,"button");ui_close(stdout,"form");}else{ui_open_a(stdout,"button","type","submit");ui_copy(stdout,"Mark ready for listeners");ui_close(stdout,"button");ui_close(stdout,"form");}
         wm_remove_button(site_id,world,space,revision,"remove","id",rel->id,"release");ui_close(stdout,"div");
         /* edit */
         wm_form(site_id,world,space,"release",revision,"release-edit");ph_hidden("id",rel->id);ui_open(stdout,"div","aw-row");
@@ -355,7 +355,7 @@ static void world_music_studio(sqlite3 *db,const char *subject,const char *site_
         wm_input("Label","A name, or space:address for a label space here","label",rel->label,160,0,NULL);wm_input("Catalogue number",NULL,"catalog",rel->catalog,64,0,NULL);
         wm_input("Cover piece","Optional. A picture&rsquo;s address after /o/","cover",rel->cover,120,0,NULL);ui_close(stdout,"div"); ui_open(stdout,"div","aw-row");
         ui_open(stdout,"label",NULL); fputs("Edition of",stdout); ui_open_a(stdout,"select","name","edition"); ui_open_a(stdout,"option","value",""); fputs("The original release",stdout); ui_close(stdout,"option");
-        for(int k=0;k<nrels;k++)if(strcmp(rels[k],rel->id)){fputs("<option value=\"",stdout);html(rels[k]);fputs("\"",stdout);if(!strcmp(rels[k],rel->edition))fputs(" selected",stdout);fputs(">",stdout);html(rels[k]);ui_close(stdout,"option");}
+        for(int k=0;k<nrels;k++)if(strcmp(rels[k],rel->id)){ui_start(stdout,"option");ui_attr_open(stdout,"value");html(rels[k]);ui_attr_close(stdout);if(!strcmp(rels[k],rel->edition))ui_flag(stdout,"selected");ui_gt(stdout);html(rels[k]);ui_close(stdout,"option");}
         ui_close(stdout,"select"); ui_close(stdout,"label");wm_input("MusicBrainz release","Optional","mbid",rel->mbid,36,0,"[0-9a-f-]{36}");
         ui_close(stdout,"div"); ui_open(stdout,"label",NULL); fputs("Liner notes",stdout); ui_open_a(stdout,"textarea","name","notes","rows","5","maxlength","4000");html(rel->notes);ui_close(stdout,"textarea"); ui_close(stdout,"label"); ui_open(stdout,"div","aw-actions"); ui_open_a(stdout,"button","type","submit"); fputs("Save the release",stdout); ui_close(stdout,"button"); ui_close(stdout,"div"); ui_close(stdout,"form"); ui_close(stdout,"details");
     }
@@ -400,7 +400,7 @@ static void world_music_studio(sqlite3 *db,const char *subject,const char *site_
         ui_open_a(stdout,"tr",UI_DYN,"data-room","",(id),UI_DYN,"data-state","",(state)); ui_open(stdout,"td",NULL);cine_when(wm_col(s,1));fputs(" UTC</td><td>",stdout);html(wm_col(s,2));fputs(" ",stdout);html(wm_col(s,3));
         fputs(" <span class=\"aw-flag\">",stdout);html(state);ui_close(stdout,"span"); ui_close(stdout,"td"); ui_open(stdout,"td",NULL);
         if(!strcmp(state,"draft")||!strcmp(state,"announced")){wm_form(site_id,world,space,"room-state",revision,NULL);ph_hidden("id",id);ph_hidden("kind",!strcmp(state,"draft")?"announced":"cancelled");
-            fputs(!strcmp(state,"draft")?"<button type=\"submit\">Announce</button></form>":"<button type=\"submit\" class=\"aw-quiet\">Cancel</button></form>",stdout);}
+            if(!strcmp(state,"draft")){ui_open_a(stdout,"button","type","submit");ui_copy(stdout,"Announce");ui_close(stdout,"button");ui_close(stdout,"form");}else{ui_open_a(stdout,"button","type","submit","class","aw-quiet");ui_copy(stdout,"Cancel");ui_close(stdout,"button");ui_close(stdout,"form");}}
         wm_remove_button(site_id,world,space,revision,"remove","id",id,"room");ui_close(stdout,"td"); ui_close(stdout,"tr");}
     sqlite3_finalize(s);if(n)do{ ui_close(stdout,"tbody"); ui_close(stdout,"table"); }while(0);
     if(nrels||nrecs){wm_form(site_id,world,space,"room",revision,"room");ui_open(stdout,"div","aw-row");
@@ -420,8 +420,8 @@ static void wm_bar(const PhSite *site,const char *space,const char *space_title)
     ui_close(stdout,"a"); ui_open(stdout,"span","ch"); ui_open_a(stdout,"a",UI_DYN,"href","/worlds/",(space));html(space_title);ui_close(stdout,"a"); ui_close(stdout,"span"); ui_open(stdout,"span","gr"); ui_open_a(stdout,"a","href","/worlds"); fputs("All spaces",stdout); ui_close(stdout,"a"); ui_close(stdout,"span"); ui_close(stdout,"nav");
 }
 static void wm_collect_door(const PhSite *site,const char *space,const char *release){
-    fputs("<p class=\"aw-listen\"><a class=\"aw-door\" data-music-collect href=\"https://aurekai.",stdout);html(site->territory);fputs("/workspace/worlds/collection?site=",stdout);url_query_value(site->id);
-    fputs("&amp;space=",stdout);url_query_value(space);fputs("&amp;release=",stdout);url_query_value(release);fputs("\">Add to your collection</a></p>",stdout);
+    ui_open(stdout,"p","aw-listen");ui_start(stdout,"a");ui_attr(stdout,"class","aw-door");ui_flag(stdout,"data-music-collect");ui_attr_open(stdout,"href");ui_copy(stdout,"https://aurekai.");html(site->territory);ui_copy(stdout,"/workspace/worlds/collection?site=");url_query_value(site->id);
+    ui_copy(stdout,"&amp;space=");url_query_value(space);ui_copy(stdout,"&amp;release=");url_query_value(release);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Add to your collection");ui_close(stdout,"a");ui_close(stdout,"p");
 }
 /* On the space page: identity, discography, label roster, history, rooms. */
 static void world_music_public(sqlite3 *db,const PhSite *site,sqlite3_int64 world,const char *space){
@@ -435,7 +435,7 @@ static void world_music_public(sqlite3 *db,const PhSite *site,sqlite3_int64 worl
     if(awm_rows(db,NULL,site->id,world,space,AWM_RELEASES,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
         if(!n++)do{ ui_open(stdout,"h2","region-label"); fputs("Releases",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ol","class","aw-discography","data-music-releases",(const char *)NULL); }while(0);
         const char *id=wm_col(s,0),*cover=wm_col(s,6);
-        fputs("<li data-music-row><a href=\"/worlds/",stdout);html(space);fputs("/release/",stdout);html(id);fputs("\">",stdout);
+        ui_open_a(stdout,"li","data-music-row",(const char *)NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/release/");html(id);ui_attr_close(stdout);ui_gt(stdout);
         const PageItem *ci=*cover?wm_piece(db,&P,cover):NULL;
         if(wm_open_photo(ci)){ui_open_a(stdout,"img","loading","lazy","decoding","async","alt","",UI_DYN,"src","",(ci->image));}else do{ ui_open_a(stdout,"span","class","aw-sleeve","aria-hidden","true"); ui_close(stdout,"span"); }while(0);
         ui_open(stdout,"strong",NULL);html(wm_col(s,1));ui_close(stdout,"strong"); ui_close(stdout,"a"); ui_open(stdout,"span","aw-epmeta");fputs(wm_type(wm_col(s,2)),stdout);
@@ -445,12 +445,12 @@ static void world_music_public(sqlite3 *db,const PhSite *site,sqlite3_int64 worl
     if(!strcmp(party.kind,"label")){int m=0;
         if(awm_label_releases(db,site->id,world,space,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
             if(!m++)do{ ui_open(stdout,"h2","region-label"); fputs("On the label",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ol","class","aw-discography","data-music-roster",(const char *)NULL); }while(0);
-            fputs("<li data-music-row><a href=\"/worlds/",stdout);html(wm_col(s,0));fputs("/release/",stdout);html(wm_col(s,1));fputs("\"><span class=\"aw-sleeve\" aria-hidden=\"true\"></span><strong>",stdout);
+            ui_open_a(stdout,"li","data-music-row",(const char *)NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(wm_col(s,0));ui_copy(stdout,"/release/");html(wm_col(s,1));ui_attr_close(stdout);ui_gt(stdout);ui_open_a(stdout,"span","class","aw-sleeve","aria-hidden","true");ui_close(stdout,"span");ui_open(stdout,"strong",NULL);
             html(wm_col(s,2));ui_close(stdout,"strong"); ui_close(stdout,"a"); ui_open(stdout,"span","aw-epmeta");fputs(wm_type(wm_col(s,3)),stdout);if(*wm_col(s,4)){fputs(" &middot; ",stdout);html(wm_col(s,4));}ui_close(stdout,"span"); ui_close(stdout,"li");}
         sqlite3_finalize(s);if(m)ui_close(stdout,"ol");}
     n=0;if(awm_rows(db,NULL,site->id,world,space,AWM_WORKS,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
         if(!n++)do{ ui_open(stdout,"h2","region-label"); fputs("Songs",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ul","class","aw-marks","data-music-works",(const char *)NULL); }while(0);
-        fputs("<li data-music-row><a href=\"/worlds/",stdout);html(space);fputs("/work/",stdout);html(wm_col(s,0));fputs("\">",stdout);html(wm_col(s,1));ui_close(stdout,"a"); ui_close(stdout,"li");}
+        ui_open_a(stdout,"li","data-music-row",(const char *)NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/work/");html(wm_col(s,0));ui_attr_close(stdout);ui_gt(stdout);html(wm_col(s,1));ui_close(stdout,"a"); ui_close(stdout,"li");}
     sqlite3_finalize(s);if(n)ui_close(stdout,"ul");
     n=0;if(awm_rows(db,NULL,site->id,world,space,AWM_RELATIONS,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
         if(!n++)do{ ui_open(stdout,"h2","region-label"); fputs("History",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ul","class","aw-marks","data-music-history",(const char *)NULL); }while(0);
@@ -462,14 +462,14 @@ static void world_music_public(sqlite3 *db,const PhSite *site,sqlite3_int64 worl
         ui_open_a(stdout,"li",UI_DYN,"data-state","",(wm_col(s,6))); ui_open(stdout,"span","aw-at");cine_when(wm_col(s,1));fputs(" UTC</span> <a href=\"/worlds/",stdout);html(space);fputs("/listen/",stdout);html(wm_col(s,0));fputs("\">",stdout);
         fputs(!strcmp(wm_col(s,6),"cancelled")?"Cancelled":"Open the room",stdout);ui_close(stdout,"a");if(*wm_col(s,4)){fputs(" <span class=\"aw-credit\">",stdout);html(wm_col(s,4));ui_close(stdout,"span");}ui_close(stdout,"li");}
     sqlite3_finalize(s);if(n)ui_close(stdout,"ul");
-    fputs("<p class=\"aw-listen\"><a href=\"/worlds/",stdout);html(space);fputs("/releases.xml\" data-music-feed>Follow new releases</a></p></section>",stdout);
+    ui_open(stdout,"p","aw-listen");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/releases.xml");ui_attr_close(stdout);ui_flag(stdout,"data-music-feed");ui_gt(stdout);ui_copy(stdout,"Follow new releases");ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"section");
     ui_open(stdout,"script",NULL); fputs("(()=>{const i=document.querySelector('[data-music-search]');if(!i)return;const rows=[...document.querySelectorAll('[data-music-row]')];i.addEventListener('input',()=>{const q=i.value.trim().toLowerCase();rows.forEach(r=>{r.hidden=!!q&&!r.textContent.toLowerCase().includes(q)})})})()",stdout); ui_close(stdout,"script");
     wm_close(&P);
 }
 static void wm_track_row(sqlite3 *db,WmPieces *P,const PhSite *site,sqlite3_int64 world,const char *space,const char *recording_id,int disc,int pos,int show_disc){
     WmRecording rec;int found=wm_recording(db,NULL,site->id,world,space,recording_id,&rec);
     PageItem copy;const PageItem *it=found?wm_piece(db,P,rec.ref):NULL;if(it){copy=*it;it=&copy;}
-    printf("<li class=\"aw-track\" data-track=\"%d.%d\" itemprop=\"track\" itemscope itemtype=\"https://schema.org/MusicRecording\"><span class=\"aw-at\">",disc,pos);
+    ui_start(stdout,"li");ui_attr(stdout,"class","aw-track");printf(" data-track=\"%d.%d\"",disc,pos);ui_attr(stdout,"itemprop","track");ui_flag(stdout,"itemscope");ui_attr(stdout,"itemtype","https://schema.org/MusicRecording");ui_gt(stdout);ui_open(stdout,"span","aw-at");
     if(show_disc)printf("%d.",disc);printf("%d</span><div class=\"aw-words\"><h3 itemprop=\"name\"><a href=\"/worlds/",pos);html(space);fputs("/recording/",stdout);html(recording_id);fputs("\">",stdout);html(found?rec.title:recording_id);ui_close(stdout,"a");
     if(it&&it->duration_ms>0){fputs(" <span class=\"aw-at\">",stdout);wm_ms(it->duration_ms);ui_close(stdout,"span");}ui_close(stdout,"h3");
     if(found)wm_credits(db,NULL,site->id,world,space,"recording",rec.id,"data-track-credits");
@@ -481,8 +481,8 @@ static void wm_release_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,c
     if(!rel||!wm_release(db,NULL,site->id,world,space,id,rel)){free(rel);wm_close(&P);protocol_reply(404,"text/plain; charset=utf-8","There is no release at this address.\n");return;}
     char title[400];snprintf(title,sizeof(title),"%s%s%s",rel->title,party.name[0]?" by ":"",party.name);
     world_web_public_head(200,title,site->name,rel->notes);
-    fputs("<body class=\"",stdout);html(character);fputs(" aw-space aw-release\" data-world-look=\"",stdout);html(character);fputs("\"><main class=\"wrap\" data-music-release=\"",stdout);html(rel->id);
-    fputs("\" itemscope itemtype=\"https://schema.org/MusicAlbum\">",stdout);wm_bar(site,space,space_title);
+    ui_start(stdout,"body");ui_attr_open(stdout,"class");html(character);ui_copy(stdout," aw-space aw-release");ui_attr_close(stdout);ui_attr_open(stdout,"data-world-look");html(character);ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"main");ui_attr(stdout,"class","wrap");ui_attr_open(stdout,"data-music-release");html(rel->id);
+    ui_attr_close(stdout);ui_flag(stdout,"itemscope");ui_attr(stdout,"itemtype","https://schema.org/MusicAlbum");ui_gt(stdout);wm_bar(site,space,space_title);
     ui_open(stdout,"header","hero aw-release-head");
     const PageItem *ci=rel->cover[0]?wm_piece(db,&P,rel->cover):NULL;
     if(wm_open_photo(ci)){ui_open(stdout,"figure","aw-cover"); ui_open_a(stdout,"img","itemprop","image",UI_DYN,"src","",(ci->image),UI_DYN,"alt","Cover of ",(rel->title)); ui_open(stdout,"figcaption","aw-terms");html(ci->rights);ui_close(stdout,"figcaption"); ui_close(stdout,"figure");}
@@ -493,7 +493,7 @@ static void wm_release_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,c
     if(rel->label[0]){if(dot)fputs(" &middot; ",stdout);wm_label(rel->label);dot=1;}if(rel->catalog[0]){if(dot)fputs(" &middot; ",stdout);html(rel->catalog);dot=1;}
     wm_mb("release",rel->mbid);ui_close(stdout,"p"); ui_close(stdout,"div"); ui_close(stdout,"header");
     /* editions */
-    if(rel->edition[0]){WmRelease *o=calloc(1,sizeof(*o));if(o&&wm_release(db,NULL,site->id,world,space,rel->edition,o)){fputs("<p class=\"aw-note\" data-music-edition>Another edition of <a href=\"/worlds/",stdout);html(space);fputs("/release/",stdout);html(o->id);fputs("\">",stdout);html(o->title);ui_close(stdout,"a"); fputs(".",stdout); ui_close(stdout,"p");}free(o);}
+    if(rel->edition[0]){WmRelease *o=calloc(1,sizeof(*o));if(o&&wm_release(db,NULL,site->id,world,space,rel->edition,o)){ui_open_a(stdout,"p","class","aw-note","data-music-edition",(const char *)NULL);ui_copy(stdout,"Another edition of ");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/release/");html(o->id);ui_attr_close(stdout);ui_gt(stdout);html(o->title);ui_close(stdout,"a");fputs(".",stdout);ui_close(stdout,"p");}free(o);}
     sqlite3_stmt *s=NULL;int ed=0;
     if(awm_rows(db,NULL,site->id,world,space,AWM_RELEASES,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW)if(!strcmp(wm_col(s,8),rel->id)){
         if(!ed++)do{ ui_open_a(stdout,"p","class","aw-note","data-music-editions",(const char *)NULL); fputs("Also issued as ",stdout); }while(0);else fputs(", ",stdout);
@@ -506,7 +506,7 @@ static void wm_release_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,c
     ui_open_a(stdout,"section","class","aw-tracklist","aria-label","Tracklist"); ui_open(stdout,"h2","region-label"); fputs("Tracklist",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ol","class","aw-tracks","data-music-tracklist",(const char *)NULL);
     if(awm_rows(db,NULL,site->id,world,space,AWM_TRACKS,rel->id,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){n++;
         char recid[65];snprintf(recid,sizeof(recid),"%s",wm_col(s,3));wm_track_row(db,&P,site,world,space,recid,sqlite3_column_int(s,1),sqlite3_column_int(s,2),discs>1);}
-    sqlite3_finalize(s);printf("</ol><meta itemprop=\"numTracks\" content=\"%d\"></section>",n);
+    sqlite3_finalize(s);ui_close(stdout,"ol");ui_start(stdout,"meta");ui_attr(stdout,"itemprop","numTracks");printf(" content=\"%d\">",n);ui_close(stdout,"section");
     if(rel->notes[0]){ui_open_a(stdout,"section","class","aw-liner","aria-label","Liner notes"); ui_open(stdout,"h2","region-label"); fputs("Liner notes",stdout); ui_close(stdout,"h2");
         char *copy=strdup(rel->notes);for(char *line=copy?strtok(copy,"\n"):NULL;line;line=strtok(NULL,"\n")){size_t l=strlen(line);if(l&&line[l-1]=='\r')line[l-1]=0;if(*line){ui_text(stdout, "p", NULL, line);}}free(copy);ui_close(stdout,"section");}
     ui_open_a(stdout,"section","class","aw-liner","aria-label","Credits");
@@ -527,7 +527,7 @@ static void wm_recording_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world
     if(!wm_recording(db,NULL,site->id,world,space,id,&rec)){protocol_reply(404,"text/plain; charset=utf-8","There is no recording at this address.\n");return;}
     WmPieces P;wm_open(&P);const PageItem *found=wm_piece(db,&P,rec.ref);PageItem it;if(found)it=*found;
     world_web_public_head(200,rec.title,site->name,"");
-    fputs("<body class=\"",stdout);html(character);fputs(" aw-space aw-release\" data-world-look=\"",stdout);html(character);fputs("\"><main class=\"wrap\" data-music-recording=\"",stdout);html(rec.id);fputs("\">",stdout);
+    ui_start(stdout,"body");ui_attr_open(stdout,"class");html(character);ui_copy(stdout," aw-space aw-release");ui_attr_close(stdout);ui_attr_open(stdout,"data-world-look");html(character);ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"main");ui_attr(stdout,"class","wrap");ui_attr_open(stdout,"data-music-recording");html(rec.id);ui_attr_close(stdout);ui_gt(stdout);
     wm_bar(site,space,space_title);
     ui_open(stdout,"header","hero"); ui_text(stdout,"p","aw-role","Recording"); ui_open(stdout,"h1",NULL);html(rec.title);ui_close(stdout,"h1");if(party.name[0]){ui_text(stdout, "p", "lede", party.name);}
     ui_open(stdout,"p","aw-epmeta");if(found&&it.duration_ms>0){wm_ms(it.duration_ms);}if(rec.isrc[0]){fputs(found&&it.duration_ms>0?" &middot; ISRC ":"ISRC ",stdout);html(rec.isrc);}wm_mb("recording",rec.mbid);ui_close(stdout,"p"); ui_close(stdout,"header");
@@ -538,14 +538,14 @@ static void wm_recording_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world
     if(found)world_audio_episode(db,site,world,space,1,rec.ref,&it);
     if(rec.work[0]){sqlite3_stmt *w=NULL;
         if(awm_rows(db,NULL,site->id,world,space,AWM_WORKS,rec.work,&w)==1&&sqlite3_step(w)==SQLITE_ROW){
-            fputs("<section class=\"aw-liner\" data-music-work><h2 class=\"region-label\">The song</h2><p><a href=\"/worlds/",stdout);html(space);fputs("/work/",stdout);html(rec.work);fputs("\">",stdout);html(wm_col(w,1));ui_close(stdout,"a");
+            ui_open_a(stdout,"section","class","aw-liner","data-music-work",(const char *)NULL);ui_open(stdout,"h2","region-label");ui_copy(stdout,"The song");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/work/");html(rec.work);ui_attr_close(stdout);ui_gt(stdout);html(wm_col(w,1));ui_close(stdout,"a");
             if(*wm_col(w,2)){fputs(" <span class=\"aw-at\">ISWC ",stdout);html(wm_col(w,2));ui_close(stdout,"span");}ui_close(stdout,"p");wm_credits(db,NULL,site->id,world,space,"work",rec.work,"data-work-credits");ui_close(stdout,"section");}
         sqlite3_finalize(w);}
     sqlite3_stmt *s=NULL;int n=0;
     if(awm_rows(db,NULL,site->id,world,space,AWM_TRACKS,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW)if(!strcmp(wm_col(s,3),rec.id)){
         if(!n++)do{ ui_open(stdout,"section","aw-liner"); ui_open(stdout,"h2","region-label"); fputs("Appears on",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ul","class","aw-marks","data-music-appears",(const char *)NULL); }while(0);
-        WmRelease *r=calloc(1,sizeof(*r));if(r&&wm_release(db,NULL,site->id,world,space,wm_col(s,0),r)){fputs("<li><a href=\"/worlds/",stdout);html(space);fputs("/release/",stdout);html(r->id);fputs("\">",stdout);html(r->title);
-            printf("</a> <span class=\"aw-at\">track %d</span></li>",sqlite3_column_int(s,2));}free(r);}
+        WmRelease *r=calloc(1,sizeof(*r));if(r&&wm_release(db,NULL,site->id,world,space,wm_col(s,0),r)){ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/release/");html(r->id);ui_attr_close(stdout);ui_gt(stdout);html(r->title);
+            ui_close(stdout,"a");ui_copy(stdout," ");ui_open(stdout,"span","aw-at");printf("track %d",sqlite3_column_int(s,2));ui_close(stdout,"span");ui_close(stdout,"li");}free(r);}
     sqlite3_finalize(s);if(n)do{ ui_close(stdout,"ul"); ui_close(stdout,"section"); }while(0);
     /* where this exact piece is heard: a show's tracklist or another space */
     n=0;if(awm_heard_on(db,site->id,world,rec.ref,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
@@ -569,14 +569,14 @@ static void wm_work_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,cons
     if(awm_rows(db,NULL,site->id,world,space,AWM_WORKS,id,&w)!=1||sqlite3_step(w)!=SQLITE_ROW){sqlite3_finalize(w);protocol_reply(404,"text/plain; charset=utf-8","There is no song at this address.\n");return;}
     char title[260],iswc[20],mbid[40];snprintf(title,sizeof(title),"%s",wm_col(w,1));snprintf(iswc,sizeof(iswc),"%s",wm_col(w,2));snprintf(mbid,sizeof(mbid),"%s",wm_col(w,3));sqlite3_finalize(w);
     world_web_public_head(200,title,site->name,"");
-    fputs("<body class=\"",stdout);html(character);fputs(" aw-space aw-release\" data-world-look=\"",stdout);html(character);fputs("\"><main class=\"wrap\" data-music-work=\"",stdout);html(id);fputs("\">",stdout);
+    ui_start(stdout,"body");ui_attr_open(stdout,"class");html(character);ui_copy(stdout," aw-space aw-release");ui_attr_close(stdout);ui_attr_open(stdout,"data-world-look");html(character);ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"main");ui_attr(stdout,"class","wrap");ui_attr_open(stdout,"data-music-work");html(id);ui_attr_close(stdout);ui_gt(stdout);
     wm_bar(site,space,space_title);ui_open(stdout,"header","hero"); ui_text(stdout,"p","aw-role","Song"); ui_open(stdout,"h1",NULL);html(title);ui_close(stdout,"h1"); ui_open(stdout,"p","aw-epmeta");
     if(*iswc){fputs("ISWC ",stdout);html(iswc);}wm_mb("work",mbid);ui_close(stdout,"p"); ui_close(stdout,"header");
     ui_open(stdout,"section","aw-liner"); ui_text(stdout,"h2","region-label","Written by");if(!wm_credits(db,NULL,site->id,world,space,"work",id,"data-work-credits"))ui_text(stdout, "p", "aw-body", "No writers are credited.");ui_close(stdout,"section");
     sqlite3_stmt *s=NULL;int n=0;
     if(awm_rows(db,NULL,site->id,world,space,AWM_RECORDINGS,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW)if(!strcmp(wm_col(s,1),id)){
         if(!n++)do{ ui_open(stdout,"section","aw-liner"); ui_open(stdout,"h2","region-label"); fputs("Recordings",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ul","class","aw-marks","data-music-work-recordings",(const char *)NULL); }while(0);
-        fputs("<li><a href=\"/worlds/",stdout);html(space);fputs("/recording/",stdout);html(wm_col(s,0));fputs("\">",stdout);html(wm_col(s,2));ui_close(stdout,"a"); ui_close(stdout,"li");}
+        ui_open(stdout,"li",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);ui_copy(stdout,"/recording/");html(wm_col(s,0));ui_attr_close(stdout);ui_gt(stdout);html(wm_col(s,2));ui_close(stdout,"a"); ui_close(stdout,"li");}
     sqlite3_finalize(s);if(n)do{ ui_close(stdout,"ul"); ui_close(stdout,"section"); }while(0);
     ui_close(stdout,"main"); ui_close(stdout,"body"); ui_close(stdout,"html");
 }
@@ -592,10 +592,10 @@ static void wm_room_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,cons
     else{WmRecording rec;if(wm_recording(db,NULL,site->id,world,space,target_id,&rec)){snprintf(what,sizeof(what),"%s",rec.title);snprintf(recs[nr++],65,"%s",rec.id);}}
     char title[300];snprintf(title,sizeof(title),"Listening room: %s",what);
     world_web_public_head(200,title,site->name,note);
-    fputs("<body class=\"",stdout);html(character);fputs(" aw-space aw-room\" data-world-look=\"",stdout);html(character);fputs("\"><main class=\"wrap\" data-music-room=\"",stdout);html(id);
-    fputs("\" data-state=\"",stdout);html(state);fputs("\" data-starts=\"",stdout);html(starts);fputs("\">",stdout);wm_bar(site,space,space_title);
-    fputs("<header class=\"hero\"><p class=\"aw-role\">Listening room</p><h1><a href=\"/worlds/",stdout);html(space);fputs(!strcmp(target,"release")?"/release/":"/recording/",stdout);html(target_id);fputs("\">",stdout);html(what);
-    fputs("</a></h1><p class=\"lede\"><time datetime=\"",stdout);html(starts);fputs("Z\">",stdout);cine_when(starts);fputs(" UTC</time></p>",stdout);if(note[0]){ui_text(stdout, "p", "aw-note", note);}
+    ui_start(stdout,"body");ui_attr_open(stdout,"class");html(character);ui_copy(stdout," aw-space aw-room");ui_attr_close(stdout);ui_attr_open(stdout,"data-world-look");html(character);ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"main");ui_attr(stdout,"class","wrap");ui_attr_open(stdout,"data-music-room");html(id);
+    ui_attr_close(stdout);ui_attr_open(stdout,"data-state");html(state);ui_attr_close(stdout);ui_attr_open(stdout,"data-starts");html(starts);ui_attr_close(stdout);ui_gt(stdout);wm_bar(site,space,space_title);
+    ui_open(stdout,"header","hero");ui_open(stdout,"p","aw-role");ui_copy(stdout,"Listening room");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/worlds/");html(space);fputs(!strcmp(target,"release")?"/release/":"/recording/",stdout);html(target_id);ui_attr_close(stdout);ui_gt(stdout);html(what);
+    ui_close(stdout,"a");ui_close(stdout,"h1");ui_open(stdout,"p","lede");ui_start(stdout,"time");ui_attr_open(stdout,"datetime");html(starts);ui_copy(stdout,"Z");ui_attr_close(stdout);ui_gt(stdout);cine_when(starts);ui_copy(stdout," UTC");ui_close(stdout,"time");ui_close(stdout,"p");if(note[0]){ui_text(stdout, "p", "aw-note", note);}
     if(ticket[0]&&strcmp(state,"cancelled")){ui_open(stdout,"p","aw-listen"); ui_open_a(stdout,"a","rel","noopener",UI_DYN,"href","",(ticket)); fputs("Tickets",stdout); ui_close(stdout,"a"); ui_close(stdout,"p");}ui_close(stdout,"header");
     if(!strcmp(state,"cancelled")){ui_open_a(stdout,"p","class","aw-note","data-room-cancelled",(const char *)NULL); fputs("This listening room has been cancelled.",stdout); ui_close(stdout,"p"); ui_close(stdout,"main"); ui_close(stdout,"body"); ui_close(stdout,"html");return;}
     WmPieces P;wm_open(&P);int playable=0;
@@ -603,19 +603,19 @@ static void wm_room_page(sqlite3 *db,const PhSite *site,sqlite3_int64 world,cons
     ui_open(stdout,"section","aw-tracklist"); ui_open(stdout,"h2","region-label"); fputs("In the room",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ol","class","aw-tracks","data-room-tracks",(const char *)NULL);
     for(int i=0;i<nr;i++){WmRecording rec;if(!wm_recording(db,NULL,site->id,world,space,recs[i],&rec))continue;const PageItem *it=wm_piece(db,&P,rec.ref);
         int plays=wa_open_audio(it);if(plays)playable++;
-        printf("<li class=\"aw-track\"%s",plays?" data-room-plays":"");if(plays){fputs(" data-src=\"",stdout);html(it->asset);printf("\" data-ms=\"%ld\"",it->duration_ms>0?it->duration_ms:0L);}
+        ui_start(stdout,"li");ui_attr(stdout,"class","aw-track");if(plays)ui_flag(stdout,"data-room-plays");if(plays){ui_attr_open(stdout,"data-src");html(it->asset);ui_attr_close(stdout);printf(" data-ms=\"%ld\"",it->duration_ms>0?it->duration_ms:0L);}
         fputs("><div class=\"aw-words\"><h3><a href=\"/worlds/",stdout);html(space);fputs("/recording/",stdout);html(rec.id);fputs("\">",stdout);html(rec.title);ui_close(stdout,"a"); ui_close(stdout,"h3");
         if(plays){ui_text(stdout, "p", "aw-terms", it->rights);}else wm_refusal(it);ui_close(stdout,"div"); ui_close(stdout,"li");}
     ui_close(stdout,"ol"); ui_close(stdout,"section");
     if(!playable)do{ ui_open_a(stdout,"p","class","aw-note","data-room-silent",(const char *)NULL); fputs("None of these recordings can be played here, so the room is a list to follow where each is published.",stdout); ui_close(stdout,"p"); }while(0);
-    fputs("<script>(()=>{const main=document.querySelector('[data-music-room]'),btn=document.querySelector('[data-room-join]'),player=document.querySelector('[data-room-player]'),"
+    ui_script(stdout,"(()=>{const main=document.querySelector('[data-music-room]'),btn=document.querySelector('[data-room-join]'),player=document.querySelector('[data-room-player]'),"
           "status=document.querySelector('[data-room-status]'),list=[...document.querySelectorAll('[data-room-plays]')];if(!list.length){btn.hidden=true;player.hidden=true;return}"
           "const start=Date.parse(main.dataset.starts+':00Z');let at=0;const mark=i=>list.forEach((l,k)=>l.toggleAttribute('aria-current',k===i));"
           "const play=(i,offset)=>{at=i;mark(i);player.src=list[i].dataset.src;player.currentTime=0;player.addEventListener('loadedmetadata',()=>{player.currentTime=offset},{once:true});player.play()};"
           "player.addEventListener('ended',()=>{if(at+1<list.length)play(at+1,0);else status.textContent='The room has finished.'});"
           "btn.addEventListener('click',()=>{const gone=(Date.now()-start)/1000;if(gone<0){status.textContent='The room opens at '+new Date(start).toLocaleString()+'. Stay here and it will start for you.';"
           "setTimeout(()=>play(0,0),-gone*1000);return}let left=gone;for(let i=0;i<list.length;i++){const d=(+list[i].dataset.ms||0)/1000;if(!d||left<d){status.textContent='You joined the room.';play(i,d?left:0);return}left-=d}"
-          "status.textContent='The room has finished. Playing from the start.';play(0,0)})})()</script>",stdout);
+          "status.textContent='The room has finished. Playing from the start.';play(0,0)})})());
     ui_close(stdout,"main"); ui_close(stdout,"body"); ui_close(stdout,"html");wm_close(&P);
 }
 static void wm_rss_date(const char *on,char out[40]){
@@ -625,13 +625,13 @@ static void wm_rss_date(const char *on,char out[40]){
 static void wm_feed(sqlite3 *db,const PhSite *site,sqlite3_int64 world,const char *space,const char *space_title,const char *lede){
     WmParty party;wm_party(db,NULL,site->id,world,space,&party);char base[400];snprintf(base,sizeof(base),"https://%s/worlds/%s",site->host,space);
     printf("HTTP/1.1 200 OK\r\nContent-Type: application/rss+xml; charset=utf-8\r\nCache-Control: public, no-cache\r\nVary: Host\r\nX-Content-Type-Options: nosniff\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n");
-    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n<channel>\n<title>",stdout);wa_xml(space_title);fputs(": releases</title>\n<link>",stdout);wa_xml(base);
-    fputs("</link>\n<atom:link rel=\"self\" type=\"application/rss+xml\" href=\"",stdout);wa_xml(base);fputs("/releases.xml\"/>\n<description>",stdout);wa_xml(*lede?lede:space_title);ui_close(stdout,"description"); fputs("\n",stdout); ui_open(stdout,"generator",NULL); fputs("Aurekai Worlds",stdout); ui_close(stdout,"generator"); fputs("\n",stdout);
+    ui_copy(stdout,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");ui_start(stdout,"rss");ui_attr(stdout,"version","2.0");ui_attr(stdout,"xmlns:atom","http://www.w3.org/2005/Atom");ui_gt(stdout);ui_copy(stdout,"\n");ui_open(stdout,"channel",NULL);ui_copy(stdout,"\n");ui_open(stdout,"title",NULL);wa_xml(space_title);ui_copy(stdout,": releases");ui_close(stdout,"title");ui_copy(stdout,"\n");ui_open(stdout,"link",NULL);wa_xml(base);
+    ui_close(stdout,"link");ui_copy(stdout,"\n");ui_start(stdout,"atom:link");ui_attr(stdout,"rel","self");ui_attr(stdout,"type","application/rss+xml");ui_attr_open(stdout,"href");wa_xml(base);fputs("/releases.xml\"/>\n<description>",stdout);wa_xml(*lede?lede:space_title);ui_close(stdout,"description"); fputs("\n",stdout); ui_open(stdout,"generator",NULL); fputs("Aurekai Worlds",stdout); ui_close(stdout,"generator"); fputs("\n",stdout);
     sqlite3_stmt *s=NULL;
     if(awm_rows(db,NULL,site->id,world,space,AWM_RELEASES,NULL,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
         const char *id=wm_col(s,0),*on=wm_col(s,3);
-        ui_open(stdout,"item",NULL); fputs("\n",stdout); ui_open(stdout,"title",NULL);wa_xml(wm_col(s,1));ui_close(stdout,"title"); fputs("\n",stdout); ui_open(stdout,"link",NULL);wa_xml(base);fputs("/release/",stdout);wa_xml(id);fputs("</link>\n<guid isPermaLink=\"true\">",stdout);wa_xml(base);fputs("/release/",stdout);wa_xml(id);ui_close(stdout,"guid"); fputs("\n",stdout);
-        if(*on){char date[40];wm_rss_date(on,date);printf("<pubDate>%s</pubDate>\n",date);}
+        ui_open(stdout,"item",NULL); fputs("\n",stdout); ui_open(stdout,"title",NULL);wa_xml(wm_col(s,1));ui_close(stdout,"title"); fputs("\n",stdout); ui_open(stdout,"link",NULL);wa_xml(base);fputs("/release/",stdout);wa_xml(id);ui_close(stdout,"link");ui_copy(stdout,"\n");ui_start(stdout,"guid");ui_attr(stdout,"isPermaLink","true");ui_gt(stdout);wa_xml(base);fputs("/release/",stdout);wa_xml(id);ui_close(stdout,"guid"); fputs("\n",stdout);
+        if(*on){char date[40];wm_rss_date(on,date);ui_open(stdout,"pubDate",NULL);printf("%s",date);ui_close(stdout,"pubDate");ui_copy(stdout,"\n");}
         char desc[600];snprintf(desc,sizeof(desc),"%s%s%s%s%s",wm_type(wm_col(s,2)),party.name[0]?" by ":"",party.name,*wm_col(s,4)&&strncmp(wm_col(s,4),"space:",6)?", ":"",*wm_col(s,4)&&strncmp(wm_col(s,4),"space:",6)?wm_col(s,4):"");
         ui_open(stdout,"description",NULL);wa_xml(desc);ui_close(stdout,"description"); fputs("\n",stdout); ui_open(stdout,"category",NULL);wa_xml(wm_type(wm_col(s,2)));ui_close(stdout,"category"); fputs("\n",stdout); ui_close(stdout,"item"); fputs("\n",stdout);
     }
@@ -681,11 +681,10 @@ static int serve_world_collection(const char *method,const char *query,const cha
         if(rel&&ph_site(db,NULL,site_id,&site)&&aw_public_space(db,site_id,space,&row)==1&&!strcmp(wm_col(row,5),"public")){
             sqlite3_int64 world=sqlite3_column_int64(row,6);
             if(wm_release(db,NULL,site_id,world,space,release,rel)){shown=1;int have=awm_collected(db,member,site_id,space,release)==1;
-                ui_open_a(stdout,"section","class","aw-join",UI_DYN,"data-collect-release","",(release)); ui_open(stdout,"h2","region-label");fputs(wm_type(rel->type),stdout);fputs("</h2><h3><a href=\"https://",stdout);
+                ui_open_a(stdout,"section","class","aw-join",UI_DYN,"data-collect-release","",(release)); ui_open(stdout,"h2","region-label");fputs(wm_type(rel->type),stdout);ui_close(stdout,"h2");ui_open(stdout,"h3",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");
                 html(site.host);fputs("/worlds/",stdout);html(space);fputs("/release/",stdout);html(release);fputs("\">",stdout);html(rel->title);ui_close(stdout,"a"); ui_close(stdout,"h3");
                 ui_open_a(stdout,"form","method","post","action","/workspace/world-music");ph_hidden("site",site_id);ph_hidden("space",space);ph_hidden("id",release);ph_hidden("operation",have?"uncollect":"collect");ph_hidden("return","collection");
-                fputs(have?"<p class=\"aw-note\" data-collected>It is in your collection.</p><button type=\"submit\" class=\"aw-quiet\">Remove from your collection</button></form>":
-                           "<button type=\"submit\">Add to your collection</button></form>",stdout);ui_close(stdout,"section");}
+                if(have){ui_open_a(stdout,"p","class","aw-note","data-collected",(const char *)NULL);ui_copy(stdout,"It is in your collection.");ui_close(stdout,"p");ui_open_a(stdout,"button","type","submit","class","aw-quiet");ui_copy(stdout,"Remove from your collection");ui_close(stdout,"button");ui_close(stdout,"form");}else{ui_open_a(stdout,"button","type","submit");ui_copy(stdout,"Add to your collection");ui_close(stdout,"button");ui_close(stdout,"form");}ui_close(stdout,"section");}
         }
         sqlite3_finalize(row);free(rel);if(!shown)ui_text(stdout, "p", "aw-note", "That release is not published right now.");
     }
@@ -693,8 +692,8 @@ static int serve_world_collection(const char *method,const char *query,const cha
     if(awm_collection(db,member,&s)==1)while(sqlite3_step(s)==SQLITE_ROW){
         if(!n++)do{ ui_open(stdout,"section","aw-talk"); ui_open(stdout,"h2","region-label"); fputs("Kept",stdout); ui_close(stdout,"h2"); ui_open_a(stdout,"ol","data-collection",(const char *)NULL); }while(0);
         PhSite site;int live=sqlite3_column_int(s,7)&&ph_site(db,NULL,wm_col(s,0),&site);
-        fputs("<li",stdout);if(!live)fputs(" data-state=\"gone\"",stdout);fputs("><h3>",stdout);
-        if(live){fputs("<a href=\"https://",stdout);html(site.host);fputs("/worlds/",stdout);html(wm_col(s,1));fputs("/release/",stdout);html(wm_col(s,2));fputs("\">",stdout);}
+        ui_start(stdout,"li");if(!live)ui_attr(stdout,"data-state","gone");ui_gt(stdout);ui_open(stdout,"h3",NULL);
+        if(live){ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");html(site.host);ui_copy(stdout,"/worlds/");html(wm_col(s,1));ui_copy(stdout,"/release/");html(wm_col(s,2));ui_attr_close(stdout);ui_gt(stdout);}
         html(*wm_col(s,3)?wm_col(s,3):wm_col(s,2));if(live)ui_close(stdout,"a");ui_close(stdout,"h3"); ui_open(stdout,"p","by");
         if(live){fputs(wm_type(wm_col(s,4)),stdout);if(*wm_col(s,5)){fputs(" &middot; ",stdout);html(wm_col(s,5));}}else fputs("No longer published by its owner",stdout);
         fputs(" &middot; kept ",stdout);html(wm_col(s,6));ui_close(stdout,"p"); ui_close(stdout,"li");}

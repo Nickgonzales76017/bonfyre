@@ -13,6 +13,7 @@ architecture foundry-behavior-compiler
   publishes ExactObjectContractCatalog
   consumes ObjectContract
   consumes NativeOwner
+  publishes NativeOwner
   node_types FoundryBehaviorSpec
   node_types BehaviorFamily
   node_types OwnerBinding

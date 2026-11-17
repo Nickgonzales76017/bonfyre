@@ -118,9 +118,9 @@ static int wo_types(sqlite3 *db){
 }
 static void wo_signer_strip(sqlite3 *db,const char *wo,const char *milestone,long long m){
     long long n=wo_approvals(db,wo,milestone);
-    printf("<span class=\"wo-sig\" role=\"img\" aria-label=\"Approved by %lld of %lld\">",n,m);
+    ui_start(stdout,"span");ui_attr(stdout,"class","wo-sig");ui_attr(stdout,"role","img");ui_attr_open(stdout,"aria-label");printf("Approved by %lld of %lld",n,m);ui_attr_close(stdout);ui_gt(stdout);
     for(long long i=0;i<m&&i<12;i++)fputs(i<n?"<i class=\"is-on\"></i>":"<i></i>",stdout);
-    printf("</span><b class=\"wo-count\">Approved by %lld of %lld</b>",n,m);
+    ui_close(stdout,"span");ui_open(stdout,"b","wo-count");printf("Approved by %lld of %lld",n,m);ui_close(stdout,"b");
 }
 /* Each party's own decision on one stage, as they recorded it. */
 static void wo_decisions(sqlite3 *db,const char *auth_db,const char *wo,const char *milestone){
@@ -134,7 +134,7 @@ static void wo_decisions(sqlite3 *db,const char *auth_db,const char *wo,const ch
     while(sqlite3_step(s)==SQLITE_ROW){
         const char *d=wo_col(s,2);
         ui_open(stdout,"li",NULL); ui_open(stdout,"span",NULL); ui_open(stdout,"strong",NULL);wo_name(auth_db,wo_col(s,0));ui_close(stdout,"strong"); ui_open(stdout,"small",NULL);html(wo_col(s,1));
-        fputs("</small></span><span class=\"",stdout);fputs(!strcmp(d,"approve")?"is-on":!strcmp(d,"withhold")?"is-held":"is-wait",stdout);fputs("\">",stdout);
+        ui_close(stdout,"small");ui_close(stdout,"span");ui_start(stdout,"span");ui_attr_open(stdout,"class");fputs(!strcmp(d,"approve")?"is-on":!strcmp(d,"withhold")?"is-held":"is-wait",stdout);ui_attr_close(stdout);ui_gt(stdout);
         fputs(!strcmp(d,"approve")?"Approved":!strcmp(d,"withhold")?"Withheld":"Waiting",stdout);
         if(*d){ui_open(stdout,"small",NULL);wo_day(wo_col(s,3));ui_close(stdout,"small");}
         ui_close(stdout,"span");
@@ -201,11 +201,10 @@ static int wo_index(const char *host,const char *bearer,const char *auth_db){
     psetup_open(200,"Work orders","ak-wb work-orders");
     wo_strip(NULL);
     ui_open(stdout,"header","ak-wb-hero"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Work between people",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Work orders, sign-offs and disputes",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede"); fputs("Open a piece of work, name the people doing it, stage it into milestones and state the terms. Each party records their own acceptance and their own approval of each milestone. A disagreement goes to an arbiter the parties can see.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"aside","ak-panel is-raised"); ui_open(stdout,"p","ak-kicker"); fputs("What is recorded here",stdout); ui_close(stdout,"p"); ui_open(stdout,"p",NULL); fputs("Decisions, in the words and names of the people who made them. A milestone shown as approved by 3 of 3 means three people said yes. It is not a payment, no funds are held for it, and nobody is told anything on your behalf.",stdout); ui_close(stdout,"p"); ui_close(stdout,"aside"); ui_close(stdout,"header");
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Open work orders</dt><dd class=\"%s\">%lld</dd><small>you are a party to</small></div>"
-           "<div><dt>Waiting on you</dt><dd class=\"%s\">%lld</dd><small>milestones you have not decided</small></div>"
-           "<div><dt>Open disputes</dt><dd>%lld</dd><small>as a party or arbiter</small></div>"
-           "<div><dt>Stated compensation</dt><dd>%lld</dd><small>terms recorded, none paid here</small></div></dl>",
-           open?"is-on":"",open,waiting?"is-on":"",waiting,disputes,terms);
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Open work orders");ui_close(stdout,"dt");ui_start(stdout,"dd");printf(" class=\"%s\">%lld",open?"is-on":"",open);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"you are a party to");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Waiting on you");ui_close(stdout,"dt");ui_start(stdout,"dd");printf(" class=\"%s\">%lld",waiting?"is-on":"",waiting);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"milestones you have not decided");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Open disputes");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);printf("%lld",disputes);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"as a party or arbiter");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Stated compensation");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);printf("%lld",terms);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"terms recorded, none paid here");ui_close(stdout,"small");ui_close(stdout,"div");ui_close(stdout,"dl");
     /* The ledger: every work order this person is part of, newest first. */
     ui_open_a(stdout,"section","class","ak-sec","data-work-order-ledger",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Release ledger",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Your work orders",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("Each row shows the next milestone still waiting and how many of its parties have approved it.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","wo-ledger");
     sqlite3_stmt *s=NULL;int found=0;
@@ -236,8 +235,7 @@ static int wo_index(const char *host,const char *bearer,const char *auth_db){
                 if(tab2[1]){ui_open(stdout,"br",NULL); ui_open(stdout,"small",NULL);html(tab2+1);fputs(" ",stdout);html(wo_col(s,3));fputs(" stated</small>",stdout);}
                 ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL);wo_signer_strip(db,id,next,m);ui_close(stdout,"div");
             }else{
-                printf("<div><span class=\"ak-kicker\">Milestones</span><p>%s</p></div><div><b class=\"wo-count\">%lld %s</b></div>",
-                    sqlite3_column_int64(s,7)?"Every milestone approved by all parties":"No milestones staged yet",m,m==1?"party":"parties");
+                ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");ui_copy(stdout,"Milestones");ui_close(stdout,"span");ui_open(stdout,"p",NULL);fputs(sqlite3_column_int64(s,7)?"Every milestone approved by all parties":"No milestones staged yet",stdout);ui_close(stdout,"p");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"b","wo-count");printf("%lld %s",m,m==1?"party":"parties");ui_close(stdout,"b");ui_close(stdout,"div");
             }
             ui_open_a(stdout,"a","class","ak-btn",UI_DYN,"href","/work-orders/",(id)); fputs("Open",stdout); ui_close(stdout,"a"); ui_close(stdout,"article");
         }
@@ -353,10 +351,10 @@ static int wo_detail(const char *id,const char *bearer,const char *auth_db){
     ui_close(stdout,"p"); ui_open(stdout,"h1",NULL);html(o.title);ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede");html(o.scope);ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open_a(stdout,"aside","class","ak-panel is-raised wo-vault","data-release-summary",(const char *)NULL); ui_open(stdout,"p","ak-kicker"); fputs("Stated across milestones",stdout); ui_close(stdout,"p"); ui_open(stdout,"p","wo-sum");
     printf("%.2f <small>",total);html(o.currency);ui_close(stdout,"small"); ui_close(stdout,"p"); ui_open(stdout,"dl","ak-spec"); ui_open(stdout,"dt",NULL); fputs("Opened by",stdout); ui_close(stdout,"dt"); ui_open(stdout,"dd",NULL);wo_name(auth_db,o.opened_by);
     ui_close(stdout,"dd"); ui_text(stdout,"dt",NULL,"On behalf of"); ui_open(stdout,"dd",NULL);if(!strcmp(o.on_behalf,"self"))fputs("Themselves",stdout);else html(o.on_behalf);
-    printf("</dd><dt>Milestones</dt><dd>%lld</dd><dt>Terms accepted</dt><dd class=\"is-on\">%lld of %lld</dd><dt>Opened</dt><dd>",stages,accepted,m);wo_day(o.opened_at);
+    ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Milestones");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);printf("%lld",stages);ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Terms accepted");ui_close(stdout,"dt");ui_open_a(stdout,"dd","class","is-on");printf("%lld of %lld",accepted,m);ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Opened");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);wo_day(o.opened_at);
     ui_close(stdout,"dd"); ui_close(stdout,"dl"); ui_text(stdout,"p","wo-note","A stated amount is a written term. No funds are held for this work order and none move when a milestone is approved."); ui_close(stdout,"aside"); ui_close(stdout,"header");
     ui_open(stdout,"div","wo-split"); ui_open_a(stdout,"section","class","wo-stages","data-milestones",(const char *)NULL); ui_open(stdout,"header","wo-head"); ui_open(stdout,"span","ak-kicker"); fputs("Staged milestones",stdout); ui_close(stdout,"span");
-    printf("<span class=\"ak-tag\">%lld staged</span></header>",stages);
+    ui_open(stdout,"span","ak-tag");printf("%lld staged",stages);ui_close(stdout,"span");ui_close(stdout,"header");
     int found=0;
     if(sqlite3_prepare_v2(db,"SELECT milestone_id,sequence,title,scope,COALESCE(amount_stated,''),COALESCE(due_on,'') FROM work_order_milestone "
         "WHERE namespace='root' AND status='published' AND work_order_id=?1 ORDER BY CAST(sequence AS INTEGER),id LIMIT 30",-1,&s,NULL)==SQLITE_OK){
@@ -444,7 +442,7 @@ static int wo_dispute_page(const char *id,const char *bearer,const char *auth_db
     ui_open(stdout,"header","ak-panel wo-docket"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Dispute ",stdout);html(code);fputs(" \xc2\xb7 <a href=\"/work-orders/",stdout);html(wo);fputs("\">",stdout);html(o.title);
     ui_close(stdout,"a"); fputs(" \xc2\xb7 ",stdout); ui_open(stdout,"span","ak-live");fputs(open?"Awaiting the arbiter":"Decided",stdout);ui_close(stdout,"span"); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL);html(about);ui_close(stdout,"h1"); ui_open(stdout,"p",NULL); fputs("Raised by ",stdout);
     wo_name(auth_db,raised);fputs(" on ",stdout);wo_day(opened);fputs(".</p></div><dl class=\"ak-stats\"><div><dt>Arbiter</dt><dd class=\"is-on\">",stdout);wo_name(auth_db,arbiter);
-    printf("</dd><small>named by the party who raised it</small></div><div><dt>Responses</dt><dd>%lld</dd><small>written into this hearing</small></div></dl></header>",responses);
+    ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"named by the party who raised it");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Responses");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);printf("%lld",responses);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"written into this hearing");ui_close(stdout,"small");ui_close(stdout,"div");ui_close(stdout,"dl");ui_close(stdout,"header");
     ui_open(stdout,"div","wo-split"); ui_open_a(stdout,"section","class","ak-panel wo-feed","data-hearing-feed",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"h2",NULL); fputs("Claim and responses",stdout); ui_close(stdout,"h2"); ui_close(stdout,"header"); ui_open(stdout,"ol","wo-statements"); ui_open(stdout,"li","is-claim"); ui_open(stdout,"p","ak-kicker"); fputs("Claim \xc2\xb7 ",stdout);
     wo_name(auth_db,raised);fputs(" \xc2\xb7 ",stdout);wo_day(opened);ui_close(stdout,"p"); ui_open(stdout,"blockquote",NULL);html(claim);ui_close(stdout,"blockquote"); ui_close(stdout,"li");
     if(sqlite3_prepare_v2(db,"SELECT author,body,stated_at FROM dispute_statement WHERE namespace='root' AND status='published' AND dispute_id=?1 ORDER BY stated_at,id LIMIT 200",-1,&s,NULL)==SQLITE_OK){
@@ -525,9 +523,10 @@ static int wo_vouches(const char *query,const char *bearer,const char *auth_db){
     psetup_open(200,"Vouches","ak-wb work-orders vouches");
     wo_strip("Vouches");
     ui_open(stdout,"header","ak-wb-hero"); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker"); fputs("Peer vouching",stdout); ui_close(stdout,"p"); ui_open(stdout,"h1",NULL); fputs("Vouch for someone in a role",stdout); ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede"); fputs("Say, in your own name, that you know someone's work in one of the published operating roles. You can take a vouch back at any time.",stdout); ui_close(stdout,"p"); ui_close(stdout,"div"); ui_open(stdout,"aside","ak-panel is-raised"); ui_open(stdout,"p","ak-kicker"); fputs("What a vouch is",stdout); ui_close(stdout,"p"); ui_open(stdout,"p",NULL); fputs("A personal statement. It appoints nobody, grants nothing and certifies nothing. A number of vouches is not an election, and every operation still checks its own authority.",stdout); ui_close(stdout,"p"); ui_close(stdout,"aside"); ui_close(stdout,"header");
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Standing vouches</dt><dd>%lld</dd><small>across all members</small></div><div><dt>You have given</dt><dd class=\"%s\">%lld</dd><small>still standing</small></div>"
-           "<div><dt>You have received</dt><dd class=\"%s\">%lld</dd><small>still standing</small></div><div><dt>Taken back</dt><dd>%lld</dd><small>revoked by their voucher</small></div></dl>",
-           standing,given?"is-on":"",given,received?"is-on":"",received,revoked);
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Standing vouches");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);printf("%lld",standing);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"across all members");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"You have given");ui_close(stdout,"dt");ui_start(stdout,"dd");printf(" class=\"%s\">%lld",given?"is-on":"",given);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"still standing");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"You have received");ui_close(stdout,"dt");ui_start(stdout,"dd");printf(" class=\"%s\">%lld",received?"is-on":"",received);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"still standing");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Taken back");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);printf("%lld",revoked);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"revoked by their voucher");ui_close(stdout,"small");ui_close(stdout,"div");ui_close(stdout,"dl");
     ui_open_a(stdout,"section","class","ak-sec","data-vouch-nominations",(const char *)NULL); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"span","ak-kicker"); fputs("Who is vouched for",stdout); ui_close(stdout,"span"); ui_open(stdout,"h2",NULL); fputs("Standing vouches by person and role",stdout); ui_close(stdout,"h2"); ui_close(stdout,"div"); ui_open(stdout,"p",NULL); fputs("Grouped by the person vouched for and the role. Add your own if you know their work.",stdout); ui_close(stdout,"p"); ui_close(stdout,"header"); ui_open(stdout,"div","wo-ledger");
     int found=0;
     if(sqlite3_prepare_v2(db,"SELECT v.vouched_subject,v.role_program,COALESCE(r.label,v.role_program),v.context_scope,count(*),max(v.vouched_at),"
@@ -538,9 +537,9 @@ static int wo_vouches(const char *query,const char *bearer,const char *auth_db){
             const char *who=wo_col(s,0);long long n=sqlite3_column_int64(s,4);
             ui_open_a(stdout,"article","class","wo-row","data-vouch-group",(const char *)NULL); ui_open(stdout,"div",NULL); ui_open(stdout,"p","ak-kicker");html(wo_col(s,3));ui_close(stdout,"p"); ui_open(stdout,"h3",NULL);wo_name(auth_db,who);
             ui_close(stdout,"h3"); ui_open(stdout,"small",NULL);html(wo_col(s,2));ui_close(stdout,"small"); ui_close(stdout,"div");
-            printf("<div><b class=\"wo-count\">%lld %s</b><small>latest ",n,n==1?"vouch":"vouches");wo_day(wo_col(s,5));ui_close(stdout,"small"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_close(stdout,"div");
+            ui_open(stdout,"div",NULL);ui_open(stdout,"b","wo-count");printf("%lld %s",n,n==1?"vouch":"vouches");ui_close(stdout,"b");ui_open(stdout,"small",NULL);ui_copy(stdout,"latest ");wo_day(wo_col(s,5));ui_close(stdout,"small"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_close(stdout,"div");
             if(sqlite3_column_int(s,6))ui_text(stdout, "span", "ak-tag is-on", "You vouched");
-            else if(strcmp(who,actor)){fputs("<a class=\"ak-btn\" href=\"/vouches?for=",stdout);url_query_value(who);fputs("#vouch\">Vouch</a>",stdout);}
+            else if(strcmp(who,actor)){ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");ui_copy(stdout,"/vouches?for=");url_query_value(who);ui_copy(stdout,"#vouch");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Vouch");ui_close(stdout,"a");}
             else ui_text(stdout, "span", "ak-tag", "You");
             ui_close(stdout,"article");
         }

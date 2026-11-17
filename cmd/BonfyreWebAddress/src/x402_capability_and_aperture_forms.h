@@ -416,19 +416,13 @@ static void capability_catalogue_page(const char *inquiry) {
         fputs("\">Discuss your workflow</a><p class=\"cap-note\">Describe the result you need. Scope and pricing are agreed after review.</p>", stdout);
     }
     ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"href","/a2a");ui_gt(stdout);ui_copy(stdout,"Agent-to-agent carrier");ui_close(stdout,"a");ui_close(stdout,"div");ui_close(stdout,"header");
-    printf("<dl class=\"ak-stats is-row\"><div><dt>Capabilities</dt><dd>%d</dd></div><div><dt>Priced to call</dt><dd class=\"is-on\">%d</dd>"
-           "<small>%s</small></div>"
-           "<div><dt>Payment carrier</dt><dd>x402 v1</dd></div><div><dt>Settlement</dt><dd%s>%s</dd><small>%s</small></div></dl>",
-           (int)X402_CATALOG_N, priced_n, priced_n < X402_CATALOG_N ? "The rest are not for sale, which is not the same as free" : "Every capability here has a price",
-           x402_facilitator()[0] ? " class=\"is-on\"" : "",
-           x402_facilitator()[0] ? "Facilitator set" : "Refused",
-           x402_facilitator()[0] ? "Payments are verified before a result is returned" : "No facilitator is configured, so an unverified payment is never treated as settled");
+    ui_open(stdout,"dl","ak-stats is-row");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Capabilities");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);printf("%d",(int)X402_CATALOG_N);ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Priced to call");ui_close(stdout,"dt");ui_open(stdout,"dd","is-on");printf("%d",priced_n);ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,priced_n < X402_CATALOG_N ? "The rest are not for sale, which is not the same as free" : "Every capability here has a price");ui_close(stdout,"small");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Payment carrier");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);ui_copy(stdout,"x402 v1");ui_close(stdout,"dd");ui_close(stdout,"div");ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Settlement");ui_close(stdout,"dt");ui_start(stdout,"dd");fputs(x402_facilitator()[0] ? " class=\"is-on\"" : "",stdout);ui_gt(stdout);ui_copy(stdout,x402_facilitator()[0] ? "Facilitator set" : "Refused");ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,x402_facilitator()[0] ? "Payments are verified before a result is returned" : "No facilitator is configured, so an unverified payment is never treated as settled");ui_close(stdout,"small");ui_close(stdout,"div");ui_close(stdout,"dl");
     ui_open(stdout,"div","ak-grid is-2 cap-studio");ui_start(stdout,"section");ui_attr(stdout,"class","ak-panel");ui_attr(stdout,"aria-labelledby","cap-defs-h");ui_gt(stdout);ui_open(stdout,"header",NULL);ui_start(stdout,"h2");ui_attr(stdout,"id","cap-defs-h");ui_gt(stdout);ui_copy(stdout,"Capability definitions");ui_close(stdout,"h2");ui_open(stdout,"span","ak-tag");ui_copy(stdout,"01 / catalogue");ui_close(stdout,"span");ui_close(stdout,"header");ui_open(stdout,"ol","cap-defs");
     for (int i = 0; i < X402_CATALOG_N; i++) {
         double usd = 0.0; int priced = x402_price_usd(X402_CATALOG[i].name, &usd) && usd > 0.0;
         ui_start(stdout,"li");ui_attr_open(stdout,"data-capability"); html(X402_CATALOG[i].name); fputs("\"><div class=\"cap-id\"><h3><code>", stdout); html(X402_CATALOG[i].name);
         ui_close(stdout,"code");ui_close(stdout,"h3");ui_open(stdout,"span","ak-tag"); html(X402_CATALOG[i].binary); ui_close(stdout,"span");ui_close(stdout,"div");ui_open(stdout,"p",NULL); html(X402_CATALOG[i].summary);
-        if (priced) printf("</p><p class=\"cap-price\">$%.*f <small>USD / call</small></p>", usd < 0.01 ? 4 : 2, usd);
+        if (priced) {ui_close(stdout,"p");ui_open(stdout,"p","cap-price");printf("$%.*f ",usd < 0.01 ? 4 : 2,usd);ui_open(stdout,"small",NULL);ui_copy(stdout,"USD / call");ui_close(stdout,"small");ui_close(stdout,"p");}
         else {ui_close(stdout,"p");ui_open(stdout,"p","cap-price is-unpriced");ui_copy(stdout,"Unpriced ");ui_open(stdout,"small",NULL);ui_copy(stdout,"not for sale");ui_close(stdout,"small");ui_close(stdout,"p");}
         ui_open(stdout,"nav","cap-ways");ui_start(stdout,"a");ui_attr(stdout,"class","ak-chip");ui_attr_open(stdout,"href");ui_copy(stdout,"/capability/"); html(X402_CATALOG[i].name);
         fputs("\">x402 resource</a><a class=\"ak-chip\" href=\"/a2a\">Over A2A</a></nav></li>", stdout);
@@ -964,11 +958,8 @@ static void form_field_list(const char *csv, int as_input) {
                 int secret = !strcmp(field, "password");
                 ui_open(stdout,"label","atomic-field");ui_open(stdout,"span",NULL);
                 html(field);
-                printf("</span><input name=\"");
-                html(field);
-                printf("\" type=\"%s\" autocomplete=\"%s\"></label>",
-                       secret ? "password" : "text",
-                       secret ? "current-password" : "off");
+                ui_close(stdout,"span");ui_start(stdout,"input");ui_attr_open(stdout,"name");html(field);ui_attr_close(stdout);
+                printf(" type=\"%s\" autocomplete=\"%s\">",secret ? "password" : "text",secret ? "current-password" : "off");ui_close(stdout,"label");
             }
         } else {
             ui_open(stdout,"li",NULL);ui_open(stdout,"code",NULL);
@@ -1774,29 +1765,20 @@ static int serve_aperture_form(const BfRequest *r) {
             char auth_next[BF_AUTH_NEXT_MAX] = {0};
             int auth_form = !strcmp(submit, "/login") || !strcmp(submit, "/signup");
             if (auth_form) auth_form_next("", query, host, auth_next, sizeof(auth_next));
-            printf("<form class=\"atomic-form\" method=\"%s\" action=\"%s\" data-operation=\"",
-                   method[0] ? method : "POST",
-                   submit[0] ? submit : "/_aperture/submit");
-            html(operation);
-            printf("\"><input type=\"hidden\" name=\"subject\" value=\"");
-            html(subject);
-            printf("\"><input type=\"hidden\" name=\"operation\" value=\"");
-            html(operation);
-            printf("\">");
+            ui_start(stdout,"form");ui_attr(stdout,"class","atomic-form");ui_attr_open(stdout,"method");fputs(method[0]?method:"POST",stdout);ui_attr_close(stdout);ui_attr_open(stdout,"action");fputs(submit[0]?submit:"/_aperture/submit",stdout);ui_attr_close(stdout);ui_attr_open(stdout,"data-operation");html(operation);ui_attr_close(stdout);ui_gt(stdout);
+            ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","subject");ui_attr_open(stdout,"value");html(subject);ui_attr_close(stdout);ui_gt(stdout);
+            ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","operation");ui_attr_open(stdout,"value");html(operation);ui_attr_close(stdout);ui_gt(stdout);
             if (auth_form) {
-                fputs("<input type=\"hidden\" name=\"next\" value=\"", stdout);
-                bf_auth_html(stdout, auth_next); fputs("\">", stdout);
+                ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","next");ui_attr_open(stdout,"value");bf_auth_html(stdout,auth_next);ui_attr_close(stdout);ui_gt(stdout);
             }
             if (owner_param && *owner_param && owner_value && *owner_value &&
                 studio_safe_ident(owner_param)) {
                 char owner_id[256], return_to[512];
                 if (contract_owner_subject_value(subject, owner_value, owner_id, sizeof(owner_id))) {
-                    printf("<input type=\"hidden\" name=\""); html(owner_param);
-                    printf("\" value=\""); html(owner_id); printf("\">");
+                    ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr_open(stdout,"name");html(owner_param);ui_attr_close(stdout);ui_attr_open(stdout,"value");html(owner_id);ui_attr_close(stdout);ui_gt(stdout);
                     if (return_template && *return_template &&
                         contract_owner_return_value(return_template, owner_id, return_to, sizeof(return_to))) {
-                        printf("<input type=\"hidden\" name=\"return\" value=\"");
-                        html(return_to); printf("\">");
+                        ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","return");ui_attr_open(stdout,"value");html(return_to);ui_attr_close(stdout);ui_gt(stdout);
                     }
                 }
             }
@@ -1815,20 +1797,19 @@ static int serve_aperture_form(const BfRequest *r) {
                 ui_open(stdout,"p",NULL);ui_copy(stdout,"Nothing is asked of a person: this operation is fully closed by its context.");ui_close(stdout,"p");
             }
             if (*closed) {
-                printf("<details class=\"atomic-closed\"><summary>Already resolved by this "
-                       "context</summary><ul>");
+                ui_start(stdout,"details");ui_attr(stdout,"class","atomic-closed");ui_gt(stdout);ui_open(stdout,"summary",NULL);ui_copy(stdout,"Already resolved by this context");ui_close(stdout,"summary");ui_open(stdout,"ul",NULL);
                 form_field_list(closed, 0);
-                printf("</ul></details>");
+                ui_close(stdout,"ul");ui_close(stdout,"details");
             }
             /* The contract names the words on its button. Deriving them from
              * the operation put "open" on a sign-in form: correct as an
              * identifier and wrong as a thing a person reads. */
-            printf("<button class=\"button primary\" type=\"submit\">");
+            ui_open_a(stdout,"button","class","button primary","type","submit");
             page_glyph(page_operation_glyph(operation));
             html(label[0] ? label : object_name_of(operation));
-            printf("</button>");
+            ui_close(stdout,"button");
             if (*note) { ui_open(stdout,"p","owner-note"); html(note); ui_close(stdout,"p"); }
-            printf("</form>");
+            ui_close(stdout,"form");
             if (auth_form) {
                 fputs(!strcmp(submit, "/login") ? "<p><a href=\"/signup?next=" : "<p><a href=\"/login?next=", stdout);
                 bf_auth_query(stdout, auth_next);

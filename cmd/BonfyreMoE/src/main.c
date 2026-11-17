@@ -29,6 +29,7 @@
 
 #include "colibri_bonfyre.h"
 #include "residency.h"
+#include "../../../lib/libbonfyre/include/bf_command_lookup.h"
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
@@ -618,6 +619,30 @@ done:
     return rc;
 }
 
+/* Verb vocabulary, declared once in strcmp order for the shared
+ * bf_command_lookup; alias spellings share one id. Handlers keep their own
+ * arguments and exit codes. */
+enum {
+    MOE_CHAT, MOE_DOCTOR, MOE_EMBED, MOE_HELP, MOE_LIST_ARCHS, MOE_PEER,
+    MOE_PLAN, MOE_REBALANCE, MOE_SERVE, MOE_STATUS, MOE_VERSION
+};
+static const BfCommandEntry moe_commands[] = {
+    {"--help", MOE_HELP, 0, NULL},
+    {"--version", MOE_VERSION, 0, NULL},
+    {"-h", MOE_HELP, 0, NULL},
+    {"chat", MOE_CHAT, 0, NULL},
+    {"doctor", MOE_DOCTOR, 0, NULL},
+    {"embed", MOE_EMBED, 0, NULL},
+    {"help", MOE_HELP, 0, NULL},
+    {"list-archs", MOE_LIST_ARCHS, 0, NULL},
+    {"peer", MOE_PEER, 0, NULL},
+    {"plan", MOE_PLAN, 0, NULL},
+    {"rebalance", MOE_REBALANCE, 0, NULL},
+    {"serve", MOE_SERVE, 0, NULL},
+    {"status", MOE_STATUS, 0, NULL},
+    {"version", MOE_VERSION, 0, NULL},
+};
+
 /* ═══════════════════════════════════════════════════════════════════
  * Main entry point
  * ═══════════════════════════════════════════════════════════════════ */
@@ -629,23 +654,24 @@ int main(int argc, char **argv) {
     }
 
     const char *mode = argv[1];
+    const int mode_id = bf_command_id(moe_commands,
+        BF_COMMAND_COUNT(moe_commands), mode, -1);
 
     /* Model-free modes are stable fleet/MCP probe surfaces. */
-    if (strcmp(mode, "--help") == 0 || strcmp(mode, "-h") == 0 ||
-        strcmp(mode, "help") == 0) {
+    if (mode_id == MOE_HELP) {
         usage(argv[0]);
         return 0;
     }
-    if (strcmp(mode, "--version") == 0 || strcmp(mode, "version") == 0) {
+    if (mode_id == MOE_VERSION) {
         puts("bonfyre-moe 0.1.0");
         return 0;
     }
-    if (strcmp(mode, "status") == 0) {
+    if (mode_id == MOE_STATUS) {
         return mode_status();
     }
 
     /* Special mode: list architectures (no other args needed) */
-    if (strcmp(mode, "list-archs") == 0) {
+    if (mode_id == MOE_LIST_ARCHS) {
         cbf_arch_list_all();
         return 0;
     }
@@ -735,7 +761,7 @@ int main(int argc, char **argv) {
     /* serve with no --model runs every chat model on this machine: the same
      * set `bonfyre model local` lists, from BONFYRE_MODEL_ROOT or ~/BonfyreModels. */
     bool discovered = false;
-    if (!model_path && strcmp(mode, "serve") == 0) {
+    if (!model_path && mode_id == MOE_SERVE) {
         static char root_buffer[PATH_MAX];
         if (!model_root) model_root = getenv("BONFYRE_MODEL_ROOT");
         if (!model_root) {
@@ -757,14 +783,14 @@ int main(int argc, char **argv) {
     }
 
     if (is_gguf_model(model_path)) {
-        if (strcmp(mode, "doctor") == 0) {
+        if (mode_id == MOE_DOCTOR) {
             return mode_gguf_doctor(model_path);
         }
-        if (strcmp(mode, "chat") == 0) {
+        if (mode_id == MOE_CHAT) {
             return exec_llama_cpp(getenv("BONFYRE_LLAMA_CLI_BIN") ? getenv("BONFYRE_LLAMA_CLI_BIN") : "llama-cli",
                                   model_path, port, gpu_layers, context_size, false);
         }
-        if (strcmp(mode, "serve") == 0 && !resident) {
+        if (mode_id == MOE_SERVE && !resident) {
             static char ledger[PATH_MAX], plane[64];
             const char *home = getenv("HOME");
             MoeResidency residency = {0};
@@ -792,11 +818,11 @@ int main(int argc, char **argv) {
             residency.memory_available_file = memory_file;
             return moe_residency_serve(&residency);
         }
-        if (strcmp(mode, "serve") == 0) {
+        if (mode_id == MOE_SERVE) {
             return exec_llama_cpp(getenv("BONFYRE_LLAMA_SERVER_BIN") ? getenv("BONFYRE_LLAMA_SERVER_BIN") : "llama-server",
                                   model_path, port, gpu_layers, context_size, true);
         }
-        if (strcmp(mode, "peer") == 0) {
+        if (mode_id == MOE_PEER) {
             fprintf(stderr, "BonfyreMoE: peer mode requires the native Colibri expert format; GGUF MoE supports chat and serve.\n");
             return 78;
         }
@@ -848,23 +874,23 @@ int main(int argc, char **argv) {
     };
 
     /* Dispatch to mode handlers */
-    if (strcmp(mode, "plan") == 0) {
+    if (mode_id == MOE_PLAN) {
         return mode_plan(model_path, &shape, &memory);
-    } else if (strcmp(mode, "doctor") == 0) {
+    } else if (mode_id == MOE_DOCTOR) {
         return mode_doctor(model_path, &shape, &memory);
-    } else if (strcmp(mode, "chat") == 0) {
+    } else if (mode_id == MOE_CHAT) {
         return mode_chat(model_path, &shape, &memory, workload);
-    } else if (strcmp(mode, "embed") == 0) {
+    } else if (mode_id == MOE_EMBED) {
         if (!text_path || !out_path) {
             fprintf(stderr, "Error: embed requires --text and --out\n");
             return 2;
         }
         return mode_embed(model_path, &shape, text_path, out_path);
-    } else if (strcmp(mode, "serve") == 0) {
+    } else if (mode_id == MOE_SERVE) {
         return mode_reserved_service(mode);
-    } else if (strcmp(mode, "peer") == 0) {
+    } else if (mode_id == MOE_PEER) {
         return mode_reserved_service(mode);
-    } else if (strcmp(mode, "rebalance") == 0) {
+    } else if (mode_id == MOE_REBALANCE) {
         cbf_peer_t *peers = NULL;
         uint32_t n_peers = 0;
         if (peer_str && parse_peers(peer_str, &peers, &n_peers) == 0) {

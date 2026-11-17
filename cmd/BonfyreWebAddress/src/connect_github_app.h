@@ -50,13 +50,13 @@ static void cga_page(int code, const char *title, const char *lead) {
     html(title); ui_close(stdout,"h1");ui_open(stdout,"p",NULL); html(lead); ui_close(stdout,"p");
 }
 static void cga_tenancy_script(void) {
-    fputs(
-      "<section class=\"cga-tenancy\" data-provider-tenancy><h2>Use this installation for an Aurekai account</h2>"
-      "<p>Choose the Aurekai account this verified GitHub installation belongs with. This is an internal operator binding, not GitHub attesting customer identity. "
-      "The app key stays in BonfyreCredentials; every later operation must re-check both the destination and GitHub access.</p>"
-      "<label>Aurekai account <select data-tenancy-destination><option>Reading current accounts…</option></select></label>"
-      "<p data-tenancy-status role=\"status\"></p></section>"
-      "<script type=\"module\">"
+    ui_open_a(stdout,"section","class","cga-tenancy","data-provider-tenancy",(const char *)NULL);
+    ui_open(stdout,"h2",NULL);ui_copy(stdout,"Use this installation for an Aurekai account");ui_close(stdout,"h2");
+    ui_open(stdout,"p",NULL);ui_copy(stdout,"Choose the Aurekai account this verified GitHub installation belongs with. This is an internal operator binding, not GitHub attesting customer identity. The app key stays in BonfyreCredentials; every later operation must re-check both the destination and GitHub access.");ui_close(stdout,"p");
+    ui_open(stdout,"label",NULL);ui_copy(stdout,"Aurekai account ");ui_open_a(stdout,"select","data-tenancy-destination",(const char *)NULL);ui_open(stdout,"option",NULL);ui_copy(stdout,"Reading current accounts…");ui_close(stdout,"option");ui_close(stdout,"select");ui_close(stdout,"label");
+    ui_open_a(stdout,"p","data-tenancy-status",(const char *)NULL,"role","status");ui_close(stdout,"p");ui_close(stdout,"section");
+    ui_start(stdout,"script");ui_attr(stdout,"type","module");ui_gt(stdout);
+    ui_copy(stdout,
       "import{readWorkspaceDestinations,readWorkspacePacket}from'/apps/workspace-destinations.mjs';"
       "import{openDestinationStore}from'/apps/workspace-store.mjs';"
       "const root=document.querySelector('[data-provider-tenancy]'),pick=root.querySelector('[data-tenancy-destination]'),status=root.querySelector('[data-tenancy-status]'),pack='experience.connection-studio.workspace';"
@@ -80,8 +80,8 @@ static void cga_tenancy_script(void) {
       "cannotInfer:'This is an Aurekai operator assignment after an exact GitHub installation access check; GitHub did not attest Aurekai customer identity. Every effect must revalidate current destination write access and the installation before acting.'};"
       "if(!Number.isSafeInteger(value.reachableRepositoryCount)||value.reachableRepositoryCount<0)throw Error('The provider readback changed.');"
       "await store.saveLocal(key,value,prior?.revision||0);b.textContent='Bound to '+context;say('Bound the verified GitHub installation to '+context+'. Later operations still re-check the destination and GitHub before acting.');"
-      "}catch(e){say(e.message);}finally{b.disabled=false;}});"
-      "</script>", stdout);
+      "}catch(e){say(e.message);}finally{b.disabled=false;}});");
+    ui_close(stdout,"script");
 }
 static int connect_github_app(const char *method, const char *target, const char *query, const char *host, const char *bearer, const char *auth_db) {
     int start = !strcmp(target, "/connect/github-app"), done = !strcmp(target, "/connect/github-app/done"), customers = !strcmp(target, "/connect/github-app/customers");
@@ -140,10 +140,7 @@ static int connect_github_app(const char *method, const char *target, const char
             else { fputs("Not checked this visit. <a data-check-installation href=\"/connect/github-app/customers?check=", stdout); html(id); fputs("\">Check access</a>", stdout); }
             ui_close(stdout,"td");ui_close(stdout,"tr");
             if (ok) {
-                fputs("<tr class=\"cga-bind\"><td colspan=\"3\"><button type=\"button\" data-bind-installation data-installation=\"", stdout); html(id);
-                fputs("\" data-account=\"", stdout); html(account); fputs("\" data-account-type=\"", stdout); html(type);
-                fputs("\" data-repository-selection=\"", stdout); html(sel);
-                printf("\" data-repository-count=\"%d\">Use for selected Aurekai account</button></td></tr>", count);
+                ui_open_a(stdout,"tr","class","cga-bind");ui_start(stdout,"td");ui_attr(stdout,"colspan","3");ui_gt(stdout);ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_flag(stdout,"data-bind-installation");ui_attr_open(stdout,"data-installation");html(id);ui_attr_close(stdout);ui_attr_open(stdout,"data-account");html(account);ui_attr_close(stdout);ui_attr_open(stdout,"data-account-type");html(type);ui_attr_close(stdout);ui_attr_open(stdout,"data-repository-selection");html(sel);ui_attr_close(stdout);printf(" data-repository-count=\"%d\">",count);ui_copy(stdout,"Use for selected Aurekai account");ui_close(stdout,"button");ui_close(stdout,"td");ui_close(stdout,"tr");
             }
             free(r); n++;
         }
@@ -164,7 +161,7 @@ static int connect_github_app(const char *method, const char *target, const char
         snprintf(redirect, sizeof(redirect), "https://%s/connect/github-app/done", host && *host && !strchr(host, '"') ? host : "aurekai.work");
         const char *web = getenv("BONFYRE_GITHUB_WEB"); if (!web || strncmp(web, "http", 4)) web = "https://github.com";
         cga_page(200, "Connect GitHub", "GitHub will show the Aurekai app it is about to create: its name, what it may read and change, and where it returns. Other accounts will be able to install this new app, with their own approval and repository selection. Press Create there. Aurekai then keeps the app's key sealed and checks it works. Nothing is typed.");
-        fputs("<form method=\"post\" data-cga action=\"", stdout); html(web); fputs("/settings/apps/new?state=", stdout); html(state); fputs("\"><input type=\"hidden\" name=\"manifest\" value=\"", stdout);
+        ui_start(stdout,"form");ui_attr(stdout,"method","post");ui_flag(stdout,"data-cga");ui_attr_open(stdout,"action");html(web);ui_copy(stdout,"/settings/apps/new?state=");html(state);ui_attr_close(stdout);ui_gt(stdout);ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","manifest");ui_attr_open(stdout,"value");
         char manifest[1400];
         snprintf(manifest, sizeof(manifest),
             "{\"name\":\"%s\",\"url\":\"" BF_ORIGIN_WORK "\",\"redirect_url\":\"%s\",\"public\":true,"
@@ -173,8 +170,7 @@ static int connect_github_app(const char *method, const char *target, const char
             "\"description\":\"Aurekai operates repositories it is installed on: reads code and opens issues and pull requests.\"}", name, redirect);
         html(manifest);
         fputs("\"><dl><dt>App</dt><dd>", stdout); html(name);
-        fputs("</dd><dt>May read</dt><dd>repository contents and metadata</dd><dt>May change</dt><dd>issues and pull requests</dd><dt>Installed on</dt><dd>only the repositories you choose next</dd></dl>"
-              "<p><button class=\"cga-go\" type=\"submit\"><span>Continue to GitHub</span></button></p></form></section>", stdout);
+        ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"May read");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);ui_copy(stdout,"repository contents and metadata");ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"May change");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);ui_copy(stdout,"issues and pull requests");ui_close(stdout,"dd");ui_open(stdout,"dt",NULL);ui_copy(stdout,"Installed on");ui_close(stdout,"dt");ui_open(stdout,"dd",NULL);ui_copy(stdout,"only the repositories you choose next");ui_close(stdout,"dd");ui_close(stdout,"dl");ui_open(stdout,"p",NULL);ui_open_a(stdout,"button","class","cga-go","type","submit");ui_open(stdout,"span",NULL);ui_copy(stdout,"Continue to GitHub");ui_close(stdout,"span");ui_close(stdout,"button");ui_close(stdout,"p");ui_close(stdout,"form");ui_close(stdout,"section");
         psetup_end(); return 1;
     }
     {

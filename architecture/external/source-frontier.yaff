@@ -55,12 +55,14 @@ architecture source-frontier
   purpose The accounting plane between every inventory the estate holds and the small number of channels a page carries. It holds four levels -- SourceRoot (one publisher origin), ChannelFamily (one machine protocol at that root), Channel (one exact endpoint) and SourceGap (something unknown about that root) -- and keeps each inventory's provenance label on every root and channel it listed, so overlap is reported instead of totals being added. Channels are admitted only by the census (what the pages actually read), made active only by a page contribution receipt, and lowered into the estate's own HOT/WARM/COOL/COLD attention language. Its starvation report turns the estate against itself: which admitted channels never reach a person, which publisher or protocol dominates a surface, which discovery nobody examined.
   maturity implemented
   consumes InternetSource
-  consumes ExternalEstateDensity
+  consumes EstateDensityLedger
   consumes PublicEstatePassport
   publishes SourceChannel
   publishes SourceGap
   publishes SourceContributionReceipt
   publishes SourceAttentionPlan
+  publishes SourceFrontier
+  publishes AdmittedSourceDescriptor
   node_types SourceRoot
   node_types ChannelFamily
   node_types Channel

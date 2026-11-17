@@ -103,6 +103,7 @@ witness="cmd/BonfyreWebAddress/tests/fact_surfaces_test.sh"
   echo "  source_path cmd/BonfyreWebAddress/src/fact_surface_web.h"
   echo "  source_path schemas/storage/stores/cmd-BonfyreAdmission.cue"
   echo "  witness $witness builds stores from nothing, shows a public row to anyone, sends a signed-out visitor to sign in for an admin row, refuses a signed-in non-admin, and lists only permitted rows on /x"
+  echo "  source_lineage declared from atlas fact_orphan loss; registry authored in schemas/control/fact-surfaces.cue, rendered by fact_surface_web.h"
   echo
   printf '%s\n' "$rows" | jq -r '.[] |
     def id: ascii_downcase | gsub("[^a-z0-9]+"; "-");

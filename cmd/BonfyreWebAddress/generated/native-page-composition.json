@@ -1099,7 +1099,7 @@
                 "science",
                 "sports"
             ],
-            "source_limit": 8,
+            "source_limit": 32,
             "regions": [
                 "lead",
                 "wall",
@@ -1111,8 +1111,42 @@
                 "more",
                 "feed"
             ],
-            "sections": [],
+            "sections": [
+                "/today",
+                "/local",
+                "/whats-on",
+                "/food",
+                "/books",
+                "/sports",
+                "/music",
+                "/film",
+                "/ideas",
+                "/watch",
+                "/listen"
+            ],
             "cannot_infer": "a story shown here is not endorsed, verified or ranked by importance; order is by time"
+        },
+        {
+            "route": "/explore",
+            "territory": "any",
+            "title": "Explore",
+            "lede": "Everything this estate has read about it, from every source it has ever followed, to read, hear, watch and look at.",
+            "character": "scrapbook",
+            "families": [
+                "news"
+            ],
+            "source_limit": 1,
+            "regions": [
+                "lead",
+                "listen",
+                "watch",
+                "wall",
+                "latest",
+                "table",
+                "more"
+            ],
+            "sections": [],
+            "cannot_infer": "pieces placed together here share words or meaning; that is not the same story, a shared source or an endorsement, and each is what its source published when it was read"
         },
         {
             "route": "/watch",
@@ -1809,5 +1843,17 @@
             "grammar": "console",
             "label": "Console"
         }
+    ],
+    "timeless_families": [
+        "food",
+        "recipes",
+        "literature",
+        "books",
+        "history",
+        "commons",
+        "museums",
+        "art",
+        "films",
+        "images"
     ]
 }

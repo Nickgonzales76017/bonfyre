@@ -346,6 +346,7 @@ ATOM_FEED_TEST := tests/atom-feed-test
 SUBJECT_ADDRESS_TEST := tests/subject-address-test
 BOUNDED_OUTPUT_TEST := tests/bounded-output-test
 AFFINITY_PROJECTION_TEST := tests/affinity-projection-test
+PARTICIPANT_JOURNEY_TEST := tests/participant-journey-test
 DATEPLAN_PROJECTION_TEST := tests/dateplan-projection-test
 CLUB_PROJECTION_TEST := tests/club-projection-test
 PEOPLE_STATIC_MANIFEST := tools/people-static-manifest
@@ -605,6 +606,14 @@ $(AFFINITY_PROJECTION_TEST): tests/affinity_projection_test.c src/affinity_proje
 affinity-projection-witness: $(AFFINITY_PROJECTION_TEST)
 	./$(AFFINITY_PROJECTION_TEST)
 all: affinity-projection-witness
+$(PARTICIPANT_JOURNEY_TEST): tests/participant_journey_test.c src/participant_journey.h $(AUTHORING_SOURCES)
+	$(CC) $(CFLAGS) -Isrc -I../BonfyreLex/src -I../BonfyreSurfaceScene/src -I$(ROOT)/lib/libbonfyre/include -o $@ tests/participant_journey_test.c $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_json.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
+.PHONY: participant-journey-witness
+participant-journey-witness: $(PARTICIPANT_JOURNEY_TEST)
+	./$(PARTICIPANT_JOURNEY_TEST) --headers
+	for t in overview posts saved about sites edit compose communities activity gallery artwork organizations dating connections; do ./$(PARTICIPANT_JOURNEY_TEST) GET /profile "tab=$$t" "" aurekai.work "" "" | grep -q "303 See Other" || (echo "redirect lost for tab=$$t"; exit 1); done
+	./$(PARTICIPANT_JOURNEY_TEST) GET /profile "tab=bogus" "" aurekai.work "" "" | grep -q "400 Fixture" || (echo "bogus tab accepted"; exit 1)
+all: participant-journey-witness
 $(DATEPLAN_PROJECTION_TEST): tests/dateplan_projection_test.c src/dateplan_projection.c src/dateplan_projection.h $(AUTHORING_SOURCES)
 	$(CC) $(CFLAGS) -Isrc -I../BonfyreLex/src -I../BonfyreSurfaceScene/src -I$(ROOT)/lib/libbonfyre/include -o $@ tests/dateplan_projection_test.c src/dateplan_projection.c $(AUTHORING_SOURCES) $(ROOT)/lib/libbonfyre/bf_json.c $(ROOT)/lib/libbonfyre/bf_jsonw.c $(ROOT)/lib/libbonfyre/src/bf_sha256.c -lsqlite3
 .PHONY: dateplan-projection-witness

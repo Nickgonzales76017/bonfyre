@@ -25,13 +25,14 @@ sleep 1
 base="http://127.0.0.1:$port"
 password='correct-horse-battery-staple'
 # The visible forms are genuine progressively enhanced forms: with no script,
-# signup deliberately leads to login (no session is minted by registration),
-# and login sets the HttpOnly territory cookie before returning to the account.
+# signup mints the first session and lands signed in at the account, setting
+# the HttpOnly territory cookie; login does the same for returning accounts.
 signup_form=$(curl -fsS -i -X POST -H "$host" -H 'Accept: text/html' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'name=Form+Person&email=form-person%40example.test&password=correct-horse-battery-staple' \
   "$base/signup")
-printf '%s' "$signup_form" | grep -q '^Location: /login?created=1'
+printf '%s' "$signup_form" | grep -q '^Location: /account'
+printf '%s' "$signup_form" | grep -qi '^Set-Cookie: bonfyre_session=bfy_.*HttpOnly; SameSite=Lax'
 login_form=$(curl -fsS -i -X POST -H "$host" -H 'Accept: text/html' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'email=form-person%40example.test&password=correct-horse-battery-staple' "$base/login")

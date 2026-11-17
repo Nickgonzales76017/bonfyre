@@ -31,23 +31,23 @@ static void bf_credit_publications(sqlite3 *db,const char *by,const char *source
     if(image&&page_image_url_safe(image)&&!page_picture_withheld(image))page_emit_picture(image,"ph-credit-media");
     /* Absolute: the profile also answers at its own credited host, where the
      * item does not; the publication opens on the territory that admitted it. */
-    fputs("<h3><a href=\"" BF_ORIGIN_WORK "/o/",stdout);
-   url_query_value(source);fputc('/',stdout);url_query_value(key);fputs("\">",stdout);html(title);
+    ui_open(stdout,"h3",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,BF_ORIGIN_WORK "/o/");
+   url_query_value(source);ui_copy(stdout,"/");url_query_value(key);ui_attr_close(stdout);ui_gt(stdout);html(title);
    ui_close(stdout,"a");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);
    const char *publisher=(const char*)sqlite3_column_text(s,2),*kind=(const char*)sqlite3_column_text(s,3),*date=(const char*)sqlite3_column_text(s,4);
-   if(publisher&&*publisher){html(publisher);fputs(" · ",stdout);}
-   if(kind&&*kind){html(kind);fputs(" · ",stdout);}
-   if(date&&*date){ui_start(stdout,"time");ui_attr_open(stdout,"datetime");html(date);fputs("\">",stdout);html(date);ui_close(stdout,"time");}
+   if(publisher&&*publisher){html(publisher);ui_copy(stdout," · ");}
+   if(kind&&*kind){html(kind);ui_copy(stdout," · ");}
+   if(date&&*date){ui_start(stdout,"time");ui_attr_open(stdout,"datetime");html(date);ui_attr_close(stdout);ui_gt(stdout);html(date);ui_close(stdout,"time");}
     ui_close(stdout,"p");
     /* A credited publication is not a post. Reuse the same exact-item app intake
      * as Discover and A2A, and preserve the source-qualified relationship. */
     if(strlen(source)<128 && strlen(key)==24 && strspn(key,"0123456789abcdef")==24){
       ui_start(stdout,"nav");ui_attr(stdout,"class","ph-source-continuations");ui_flag(stdout,"data-publication-continuation");ui_attr(stdout,"aria-label","Use this retained publication");ui_gt(stdout);
-      fputs("<a href=\"" BF_ORIGIN_SIGNIN "/feed-use?context=self&amp;item=",stdout);url_query_value(source);fputs("%2F",stdout);url_query_value(key);
-      fputs("\">" BF_ICON_SPARKLES " Use in installed apps</a>",stdout);
-      fputs("<a href=\"" BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=",stdout);url_query_value(by);
-      fputs("&amp;source=",stdout);url_query_value(source);
-      fputs("\">" BF_ICON_BOOKMARK " Keep track of this source credit</a></nav>",stdout);
+      ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,BF_ORIGIN_SIGNIN "/feed-use?context=self&amp;item=");url_query_value(source);ui_copy(stdout,"%2F");url_query_value(key);
+      ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,BF_ICON_SPARKLES " Use in installed apps");ui_close(stdout,"a");
+      ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,BF_ORIGIN_SIGNIN "/relationships?context=self&amp;who=");url_query_value(by);
+      ui_copy(stdout,"&amp;source=");url_query_value(source);
+      ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,BF_ICON_BOOKMARK " Keep track of this source credit");ui_close(stdout,"a");ui_close(stdout,"nav");
     }
     ui_close(stdout,"article");shown++;
   }
@@ -131,19 +131,19 @@ static int serve_credit_profile(const BfRequest *r) {
     ph_begin(NULL,&profile,by,0,tab,NULL);
     ph_nav(&profile,1,&profile,tab,0);
     ui_start(stdout,"nav");ui_attr(stdout,"class","ph-parent");ui_attr_open(stdout,"data-subprofile-parent-subject");html(parent.subject);
-    fputs("\" data-subprofile-parent-account=\"",stdout);html(parent.account_id);
-    fputs("\" data-subprofile-account=\"",stdout);html(parent.subaccount_id);
-    fputs("\" data-subprofile-account-subject=\"",stdout);html(parent.subaccount_subject);
-    fputs("\" data-subprofile-parent-host=\"",stdout);html(parent.host);
-    fputs("\" aria-label=\"Profile hierarchy\"><a href=\"https://",stdout);html(parent.host);
-    fputs("/\">",stdout);html(parent.label);
+    ui_attr_close(stdout);ui_attr_open(stdout,"data-subprofile-parent-account");html(parent.account_id);
+    ui_attr_close(stdout);ui_attr_open(stdout,"data-subprofile-account");html(parent.subaccount_id);
+    ui_attr_close(stdout);ui_attr_open(stdout,"data-subprofile-account-subject");html(parent.subaccount_subject);
+    ui_attr_close(stdout);ui_attr_open(stdout,"data-subprofile-parent-host");html(parent.host);
+    ui_attr_close(stdout);ui_attr(stdout,"aria-label","Profile hierarchy");ui_gt(stdout);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"https://");html(parent.host);
+    ui_copy(stdout,"/");ui_attr_close(stdout);ui_gt(stdout);html(parent.label);
     ui_close(stdout,"a");ui_start(stdout,"span");ui_attr(stdout,"aria-hidden","true");ui_gt(stdout);ui_copy(stdout," / ");ui_close(stdout,"span");ui_open(stdout,"span",NULL);ui_copy(stdout,"Contributor subaccount");ui_close(stdout,"span");ui_close(stdout,"nav");
     ui_start(stdout,"p");ui_attr(stdout,"class","ph-privacy");ui_flag(stdout,"data-credit-observation");ui_gt(stdout);ui_copy(stdout,"Publisher account contributor profile. Publications remain attached to the exact source organization. This subordinate public account is not a verified person, employment record, login, consent or editorial permission.");ui_close(stdout,"p");
     /* One real profile document, seven anchored sections. The original
      * /o source detail pages own the article/media bodies and their rights. */
-    fputs("<section id='overview' data-profile-overview><h2>Publisher contributor account</h2><p>",stdout);
-    html(by);fputs(" appears in the source-backed publication collection of ",stdout);html(parent.label);
-    fputs(". This subordinate profile preserves the original source and does not assert a personal or organizational grant.</p></section>",stdout);
+    ui_start(stdout,"section");ui_attr_sq(stdout,"id","overview");ui_flag(stdout,"data-profile-overview");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Publisher contributor account");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);
+    html(by);ui_copy(stdout," appears in the source-backed publication collection of ");html(parent.label);
+    ui_copy(stdout,". This subordinate profile preserves the original source and does not assert a personal or organizational grant.");ui_close(stdout,"p");ui_close(stdout,"section");
     ui_start(stdout,"section");ui_attr_sq(stdout,"id","posts");ui_flag(stdout,"data-credit-posts");ui_flag(stdout,"data-observed-publications");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Publications");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Original source publications under this publisher account; not invented first-person posts.");ui_close(stdout,"p");
     bf_credit_publications(db,by,source,0);
     ui_close(stdout,"section");
@@ -151,11 +151,11 @@ static int serve_credit_profile(const BfRequest *r) {
     bf_credit_publications(db,by,source,1);
     sqlite3_close(db);
     ui_close(stdout,"section");ui_start(stdout,"section");ui_attr_sq(stdout,"id","about");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"About this public credit");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"Printed as ");
-    html(by);fputs(" by ",stdout);html(source);
-    fputs(". This is not a claimed biography or identity verification.</p></section>",stdout);
+    html(by);ui_copy(stdout," by ");html(source);
+    ui_copy(stdout,". This is not a claimed biography or identity verification.");ui_close(stdout,"p");ui_close(stdout,"section");
     ui_start(stdout,"section");ui_attr_sq(stdout,"id","communities");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Communities");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"No public community ownership is established by a publisher byline.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr_sq(stdout,"href","/community");ui_gt(stdout);ui_copy(stdout,"Explore published communities");ui_close(stdout,"a");ui_close(stdout,"section");
     ui_start(stdout,"section");ui_attr_sq(stdout,"id","organizations");ui_gt(stdout);ui_open(stdout,"h2",NULL);ui_copy(stdout,"Organizations");ui_close(stdout,"h2");ui_open(stdout,"p",NULL);ui_copy(stdout,"A publishing source is not evidence of organizational membership.");ui_close(stdout,"p");ui_start(stdout,"a");ui_attr_sq(stdout,"href","/organisations");ui_gt(stdout);ui_copy(stdout,"Explore source-backed organizations");ui_close(stdout,"a");ui_close(stdout,"section");
-    fputs("</section></div></main>" BF_ESTATE_FOOT "</body></html>",stdout); /* credited pages carry no member posts, so no post filter script */
+    ui_close(stdout,"section");ui_close(stdout,"div");ui_close(stdout,"main");ui_copy(stdout,BF_ESTATE_FOOT "</body></html>"); /* credited pages carry no member posts, so no post filter script */
     return 1;
 }
 #endif

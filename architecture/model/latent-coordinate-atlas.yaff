@@ -8,7 +8,7 @@ architecture latent-coordinate-atlas
   semantic_question Which typed coordinate charts carry an exact address, which comparisons between them are lawful, what does a group of addresses become when lifted, and which branch of the hierarchy must change when one occurrence changes?
   purpose The native polytypic extension of LatentCoordinateFabric. An exact address may carry projections in charts whose mathematics match what each preserves -- dense direction (cosine), role-bound hypervector (Hamming), Poincare point (geodesic), place (great circle), phase (wrapped), distribution (Hellinger), subspace (principal angles), acoustic fingerprint (aligned bit error) and trajectory (DTW) -- with typed relations between exact addresses. Groups are addressed twice (a logical address and a snapshot digest over universe, lens, chart version, exact member closure and child snapshots), lift to a different representation type than their members, and lift again into hierarchy nodes with hyperbolic child coordinates and a topology signature. A lens is a typed query program over an exact eligible set with fusion, attempt slice and widening. Exact joins emit typed training anchors and hard negatives. The organ also encodes hashed text, role bindings and an acoustic fingerprint, spectrum and loudness trajectory from PCM.
   maturity implemented
-  consumes LatentCoordinateFabric
+  consumes LatentProfile
   consumes AddressPlane
   publishes LatentChart
   publishes NeighbourhoodSnapshot

@@ -10,6 +10,7 @@
 #include <strings.h>
 #include "bf_sqlite_path.h"
 #include "estate_reference.h"
+#include "ui_tree.h"
 
 static void h(FILE *out, const char *s) {
     const unsigned char *p = (const unsigned char *)(s ? s : "");
@@ -99,13 +100,16 @@ static int source_edge_readers(FILE *out,sqlite3_stmt *census,const char *channe
         const char *source=(const char *)sqlite3_column_text(census,0);
         const char *material=(const char *)sqlite3_column_text(census,1);
         if(!reader_selected(readers,reader_count,source))continue;
-        if(!matched)fputs("<span class='source-edge-readers'><span class='source-edge-label'>Used here by</span> ",out);
+        if(!matched)do{ui_start(out,"span");ui_attr_sq(out,"class","source-edge-readers");ui_gt(out);
+            ui_start(out,"span");ui_attr_sq(out,"class","source-edge-label");ui_gt(out);
+            ui_copy(out,"Used here by");ui_close(out,"span");ui_copy(out," ");}while(0);
         else fputs(", ",out);
-        fputs("<a data-source-reader href='/sources?q=",out);url_component(out,source);fputs("'>",out);h(out,source);fputs("</a>",out);
-        if(material&&*material){fputs(" <small>",out);h(out,material);fputs("</small>",out);}
+        ui_start(out,"a");ui_flag(out,"data-source-reader");ui_attr_open_sq(out,"href");ui_copy(out,"/sources?q=");
+        url_component(out,source);fputs("'>",out);h(out,source);ui_close(out,"a");
+        if(material&&*material){ui_copy(out," ");ui_open(out,"small",NULL);h(out,material);ui_close(out,"small");}
         matched++;
     }
-    if(matched)fputs("</span>",out);
+    if(matched)ui_close(out,"span");
     return matched;
 }
 
@@ -178,10 +182,12 @@ int bf_source_hierarchy_emit(FILE *out, const char *db_path,
         "ORDER BY used_here DESC,c.state='active' DESC,c.state='admitted' DESC,c.contributions DESC,c.virtual ASC,c.first_seen ASC LIMIT ?%zu",
         predicate,have_temp ? "temp.hierarchy_channel" : "main.channel",reader_count+2) >= (int)sizeof(channel_sql)) goto done;
 
-    fprintf(out,
-        "<section class='source-depth' aria-labelledby='source-depth-title'>"
-        "<header><h2 id='source-depth-title'>Where this comes from</h2>"
-        "<p>Solid branches are exact SourceFrontier census edges used by this page. Folded branches share the publisher but did not supply these items.</p></header>");
+    ui_start(out,"section");ui_attr_sq(out,"class","source-depth");ui_attr_sq(out,"aria-labelledby","source-depth-title");ui_gt(out);
+    ui_open(out,"header",NULL);ui_start(out,"h2");ui_attr_sq(out,"id","source-depth-title");ui_gt(out);
+    ui_copy(out,"Where this comes from");ui_close(out,"h2");
+    ui_open(out,"p",NULL);
+    ui_copy(out,"Solid branches are exact SourceFrontier census edges used by this page. Folded branches share the publisher but did not supply these items.");
+    ui_close(out,"p");ui_close(out,"header");
 
     if (sqlite3_prepare_v2(db,
         "SELECT host,COALESCE(NULLIF(name,''),(SELECT title FROM channel WHERE root_id=r.root_id AND COALESCE(title,'')<>'' "
@@ -200,7 +206,7 @@ int bf_source_hierarchy_emit(FILE *out, const char *db_path,
         "SELECT census_source,COALESCE(material,'') FROM channel_census WHERE channel_id=?1 ORDER BY census_source",
         -1,&census,NULL) != SQLITE_OK) goto close_section;
 
-    fputs("<div class='source-depth-roots'>", out);
+    ui_start(out,"div");ui_attr_sq(out,"class","source-depth-roots");ui_gt(out);
     for (i = 0; i < roots_n; i++) {
         const char *name, *host, *identity;
         int chans, readable;
@@ -213,10 +219,12 @@ int bf_source_hierarchy_emit(FILE *out, const char *db_path,
         chans = sqlite3_column_int(root, 3);
         readable = sqlite3_column_int(root, 4);
 
-        fputs("<article class='source-root'><h3><a href='", out);
+        ui_start(out,"article");ui_attr_sq(out,"class","source-root");ui_gt(out);
+        ui_open(out,"h3",NULL);ui_start(out,"a");ui_attr_open_sq(out,"href");
         h(out, route && *route ? route : "/channels");
         fputs("?s=", out); url_component(out, name); fputs("'>", out);
-        h(out, name); fputs("</a></h3><p class='source-root-meta'>", out);
+        h(out, name); ui_close(out,"a");ui_close(out,"h3");
+        ui_start(out,"p");ui_attr_sq(out,"class","source-root-meta");ui_gt(out);
         fprintf(out, "%d feed%s", chans, chans == 1 ? "" : "s");
         if (readable) fprintf(out, " &middot; %d available", readable);
         if (host && *host && strcmp(host, name)) { fputs(" &middot; ", out); h(out, host); }
@@ -226,7 +234,7 @@ int bf_source_hierarchy_emit(FILE *out, const char *db_path,
                 fputs(" &middot; <a href='", out); h(out, own); fputs("'>Its page</a>", out);
             }
         }
-        fputs("</p><div class='source-families'>", out);
+        ui_close(out,"p");ui_start(out,"div");ui_attr_sq(out,"class","source-families");ui_gt(out);
 
         sqlite3_reset(family); sqlite3_clear_bindings(family);
         sqlite3_bind_text(family, 1, roots[i], -1, SQLITE_TRANSIENT);
@@ -235,10 +243,12 @@ int bf_source_hierarchy_emit(FILE *out, const char *db_path,
             const char *proto = (const char *)sqlite3_column_text(family, 1);
             int count = sqlite3_column_int(family, 2), admitted = sqlite3_column_int(family, 3);
             int shown=0,used=0,related_open=0;
-            fputs("<details class='source-family' open><summary><b>", out); h(out, protocol_words(proto));
-            fprintf(out, "</b><span>%d channel%s", count, count==1?"":"s");
+            ui_start(out,"details");ui_attr_sq(out,"class","source-family");ui_flag(out,"open");ui_gt(out);
+            ui_open(out,"summary",NULL);ui_open(out,"b",NULL); h(out, protocol_words(proto));
+            ui_close(out,"b");ui_open(out,"span",NULL);fprintf(out, "%d channel%s", count, count==1?"":"s");
             if (admitted) fprintf(out, " &middot; %d available", admitted);
-            fputs("</span></summary><ol class='source-used' aria-label='Channels used on this page'>", out);
+            ui_close(out,"span");ui_close(out,"summary");
+            ui_start(out,"ol");ui_attr_sq(out,"class","source-used");ui_attr_sq(out,"aria-label","Channels used on this page");ui_gt(out);
 
             sqlite3_reset(channel); sqlite3_clear_bindings(channel);
             sqlite3_bind_text(channel,1,fid,-1,SQLITE_TRANSIENT);
@@ -254,41 +264,56 @@ int bf_source_hierarchy_emit(FILE *out, const char *db_path,
                 const char *channel_id=(const char *)sqlite3_column_text(channel,6);
                 int used_here=sqlite3_column_int(channel,7);
                 if(!used_here&&!related_open){
-                    if(!used)fputs("<li class='source-none'>No channel in this family supplied the current page.</li>",out);
-                    fputs("</ol><details class='source-related'><summary>Other related channels from this publisher — not used on this page</summary><ol>",out);
+                    if(!used)do{ui_start(out,"li");ui_attr_sq(out,"class","source-none");ui_gt(out);
+                        ui_copy(out,"No channel in this family supplied the current page.");ui_close(out,"li");}while(0);
+                    ui_close(out,"ol");ui_start(out,"details");ui_attr_sq(out,"class","source-related");ui_gt(out);
+                    ui_open(out,"summary",NULL);ui_copy(out,"Other related channels from this publisher — not used on this page");ui_close(out,"summary");
+                    ui_open(out,"ol",NULL);
                     related_open=1;
                 }
                 if(used_here){
-                    fputs("<li class='source-edge' data-source-edge><div class='source-edge-path'>",out);
+                    ui_start(out,"li");ui_attr_sq(out,"class","source-edge");ui_flag(out,"data-source-edge");ui_gt(out);
+                    ui_start(out,"div");ui_attr_sq(out,"class","source-edge-path");ui_gt(out);
                     source_edge_readers(out,census,channel_id,readers,reader_count);
-                    fputs(" <span class='source-edge-arrow' aria-hidden='true'>&rarr;</span> <a rel='nofollow' href='",out);h(out,address);fputs("'>",out);h(out,title);fputs("</a></div>",out);
-                    fputs("<span class='channel-state'>used on this page</span>",out);
-                    if(material&&*material){fputs("<small>",out);h(out,material);if(contributions)fprintf(out," &middot; %d shown",contributions);fputs("</small>",out);}
-                    fputs("</li>",out);used++;
+                    ui_copy(out," ");ui_start(out,"span");ui_attr_sq(out,"class","source-edge-arrow");ui_attr_sq(out,"aria-hidden","true");ui_gt(out);
+                    ui_copy(out,"&rarr;");ui_close(out,"span");ui_copy(out," ");
+                    ui_start(out,"a");ui_attr_sq(out,"rel","nofollow");ui_attr_open_sq(out,"href");
+                    h(out,address);fputs("'>",out);h(out,title);ui_close(out,"a");ui_close(out,"div");
+                    ui_start(out,"span");ui_attr_sq(out,"class","channel-state");ui_gt(out);ui_copy(out,"used on this page");ui_close(out,"span");
+                    if(material&&*material){ui_open(out,"small",NULL);h(out,material);if(contributions)fprintf(out," &middot; %d shown",contributions);ui_close(out,"small");}
+                    ui_close(out,"li");used++;
                 }else{
-                    fputs("<li class='source-related-channel'><div><a rel='nofollow' href='",out);h(out,address);fputs("'>",out);h(out,title);fputs("</a>",out);
-                    fputs("<span class='channel-state'>related</span><small>same publisher &middot; not used on this page",out);
+                    ui_start(out,"li");ui_attr_sq(out,"class","source-related-channel");ui_gt(out);
+                    ui_open(out,"div",NULL);ui_start(out,"a");ui_attr_sq(out,"rel","nofollow");ui_attr_open_sq(out,"href");
+                    h(out,address);fputs("'>",out);h(out,title);ui_close(out,"a");
+                    ui_start(out,"span");ui_attr_sq(out,"class","channel-state");ui_gt(out);ui_copy(out,"related");ui_close(out,"span");
+                    ui_open(out,"small",NULL);ui_copy(out,"same publisher &middot; not used on this page");
                     if(state&&(!strcmp(state,"active")||!strcmp(state,"admitted")))fputs(" &middot; available",out);else if(virtual)fputs(" &middot; listed",out);
-                    fputs("</small></div></li>",out);
+                    ui_close(out,"small");ui_close(out,"div");ui_close(out,"li");
                 }
                 shown++;
             }
             if(related_open){
-                if(count>shown)fprintf(out,"<li class='source-tail'>and %d more channels at this publisher</li>",count-shown);
-                fputs("</ol></details>",out);
+                if(count>shown)do{ui_start(out,"li");ui_attr_sq(out,"class","source-tail");ui_gt(out);
+                    fprintf(out,"and %d more channels at this publisher",count-shown);ui_close(out,"li");}while(0);
+                ui_close(out,"ol");ui_close(out,"details");
             }else{
-                fputs("</ol>",out);
-                if(count>shown)fprintf(out,"<details class='source-related'><summary>Other related channels from this publisher — not used on this page</summary><ol><li class='source-tail'>and %d more channels at this publisher</li></ol></details>",count-shown);
+                ui_close(out,"ol");
+                if(count>shown)do{ui_start(out,"details");ui_attr_sq(out,"class","source-related");ui_gt(out);
+                    ui_open(out,"summary",NULL);ui_copy(out,"Other related channels from this publisher — not used on this page");ui_close(out,"summary");
+                    ui_open(out,"ol",NULL);ui_start(out,"li");ui_attr_sq(out,"class","source-tail");ui_gt(out);
+                    fprintf(out,"and %d more channels at this publisher",count-shown);
+                    ui_close(out,"li");ui_close(out,"ol");ui_close(out,"details");}while(0);
             }
-            fputs("</details>",out);
+            ui_close(out,"details");
         }
-        fputs("</div></article>", out);
+        ui_close(out,"div");ui_close(out,"article");
         rendered++;
     }
-    fputs("</div>", out);
+    ui_close(out,"div");
 
 close_section:
-    fputs("</section>", out);
+    ui_close(out,"section");
 done:
     sqlite3_finalize(root);
     sqlite3_finalize(family);

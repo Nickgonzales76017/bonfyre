@@ -8,8 +8,8 @@ architecture identity-page
   semantic_question What does the estate keep about one thing, gathered by its identity rather than by who published it?
   purpose /about/<identity> composes every retained report whose identity is that one (a Wikidata place, an anniversary's article, a film) with the pictures whose depicted identity is that one, leads with the thing as its sources describe it, shows the pictures of it and where it is, and lists the other reports -- each still carrying its own source. Item pages link "Everything about this" and, for a picture, "Shows <name>"; a place's page shows "Pictures of it".
   maturity implemented
-  consumes PageComposition
-  consumes CommonsKnowledgeReading
+  consumes ComposedPublicPage
+  consumes CommonsReadingRow
   publishes IdentityPage
   node_types IdentityPage
   edge_types depicts

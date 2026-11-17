@@ -257,10 +257,21 @@ static void auth_login_redirect(int code, const char *body, const char *host, co
     fputs("&failed=1\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", stdout);
 }
 
-/* Registration preserves the chosen work but still requires sign-in. */
-static void auth_signup_redirect(int code, const char *next) {
-    printf("HTTP/1.1 303 See Other\r\nLocation: %s&next=",
-           code == 200 ? "/login?created=1" : "/signup?failed=1");
+/* Registration authenticates: Auth mints the first session, so a successful
+ * signup lands signed in at the chosen destination instead of at login. */
+static void auth_signup_redirect(int code, const char *body, const char *host, const char *next) {
+    const char *b = (body && *body) ? body : "{}\n";
+    char token[128] = {0}, cookie_domain[64] = {0};
+    if (code == 200 && auth_response_token(b, token, sizeof(token))) {
+        /* next is already a validated same-site address (auth_form_next);
+         * it is the Location itself, never query-encoded. */
+        printf("HTTP/1.1 303 See Other\r\nLocation: %s\r\nCache-Control: no-store\r\nContent-Length: 0\r\n", next);
+        if (auth_cookie_domain(host, cookie_domain, sizeof(cookie_domain)))
+            printf("Set-Cookie: bonfyre_session=%s; Domain=%s; Path=/; Max-Age=86400; Secure; HttpOnly; SameSite=Lax\r\n", token, cookie_domain);
+        fputs("Connection: close\r\n\r\n", stdout);
+        return;
+    }
+    printf("HTTP/1.1 303 See Other\r\nLocation: /signup?failed=1&next=");
     bf_auth_query(stdout, next);
     fputs("\r\nCache-Control: no-store\r\nContent-Length: 0\r\n"
           "Connection: close\r\n\r\n", stdout);
@@ -416,14 +427,14 @@ static int serve_arrival(const char *method, const char *target, const char *acc
         else ui_text(stdout, "p", "mf-empty", "No member pages are published yet. Yours could be the first.");
     }
     if (db) sqlite3_close(db);
-    fputs("<form class=\"mf-ratify\" action=\"/signup\" method=\"post\"><input type=\"hidden\" name=\"next\" value=\"/account\">"
-          "<div class=\"mf-ratify-head\"><div><h3>Add your name</h3><p>Creating an account publishes nothing. You choose your interests next, then open your page and tools.</p></div>"
-          "<span class=\"mf-chip\">Step 1 of 3</span></div><div class=\"mf-ratify-fields\">"
-          "<label>Name<input type=\"text\" name=\"name\" autocomplete=\"name\" required maxlength=\"255\"></label>"
-          "<label>Email<input type=\"email\" name=\"email\" autocomplete=\"email\" required></label>"
-          "<label>Password, 12 or more characters<input type=\"password\" name=\"password\" autocomplete=\"new-password\" minlength=\"12\" required></label></div>"
-          "<div class=\"mf-ratify-foot\"><p>Already a member? <a href=\"/login\">Sign in</a></p><button type=\"submit\">Create account</button></div></form>"
-          "</section></div></div></main>" BF_ESTATE_FOOT "</body></html>", stdout);
+    ui_open_a(stdout,"form","class","mf-ratify","action","/signup","method","post");ui_open_a(stdout,"input","type","hidden","name","next","value","/account");
+    ui_open(stdout,"div","mf-ratify-head");ui_open(stdout,"div",NULL);ui_open(stdout,"h3",NULL);ui_copy(stdout,"Add your name");ui_close(stdout,"h3");ui_open(stdout,"p",NULL);ui_copy(stdout,"Creating an account publishes nothing. You choose your interests next, then open your page and tools.");ui_close(stdout,"p");ui_close(stdout,"div");
+    ui_open(stdout,"span","mf-chip");ui_copy(stdout,"Step 1 of 3");ui_close(stdout,"span");ui_close(stdout,"div");ui_open(stdout,"div","mf-ratify-fields");
+    ui_open(stdout,"label",NULL);ui_copy(stdout,"Name");ui_open_a(stdout,"input","type","text","name","name","autocomplete","name","required",(const char *)NULL,"maxlength","255");ui_close(stdout,"label");
+    ui_open(stdout,"label",NULL);ui_copy(stdout,"Email");ui_open_a(stdout,"input","type","email","name","email","autocomplete","email","required",(const char *)NULL);ui_close(stdout,"label");
+    ui_open(stdout,"label",NULL);ui_copy(stdout,"Password, 12 or more characters");ui_open_a(stdout,"input","type","password","name","password","autocomplete","new-password","minlength","12","required",(const char *)NULL);ui_close(stdout,"label");ui_close(stdout,"div");
+    ui_open(stdout,"div","mf-ratify-foot");ui_open(stdout,"p",NULL);ui_copy(stdout,"Already a member? ");ui_open_a(stdout,"a","href","/login");ui_copy(stdout,"Sign in");ui_close(stdout,"a");ui_close(stdout,"p");ui_open_a(stdout,"button","type","submit");ui_copy(stdout,"Create account");ui_close(stdout,"button");ui_close(stdout,"div");ui_close(stdout,"form");
+    ui_close(stdout,"section");ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"main");fputs(BF_ESTATE_FOOT,stdout);ui_close(stdout,"body");ui_close(stdout,"html");
     return 1;
 }
 static int serve_auth(const BfRequest *r) {
@@ -535,7 +546,7 @@ static int serve_auth(const BfRequest *r) {
         if (body && *body && *body != '{' && wants_html(accept)) {
             char next[BF_AUTH_NEXT_MAX];
             auth_form_next(body, query, host, next, sizeof(next));
-            if (!strcmp(target, "/signup")) auth_signup_redirect(rc == 0 ? 200 : 400, next);
+            if (!strcmp(target, "/signup")) auth_signup_redirect(rc == 0 ? 200 : 400, out, host, next);
             else auth_login_redirect(rc == 0 ? 200 : 400, out, host, next);
             return 1;
         }
@@ -647,7 +658,7 @@ static int serve_auth(const BfRequest *r) {
                             fputs(" class=\"ak-app ak-trust ak-account\">", stdout);
                         } else { fwrite(page,1,(size_t)(body_end-page),stdout); fputs(" class=\"ak-app ak-trust ak-account\">", stdout); }
                         /* Step two of the arrival path, on the shared shell; its layout lives in aurekai-trust.css. */
-                        fputs("<link rel=\"stylesheet\" href=\"/assets/aurekai-trust.css?v=1\">",stdout);
+                        ui_open_a(stdout,"link","rel","stylesheet","href","/assets/aurekai-trust.css?v=1");
                         fputs(BF_ESTATE_BAR,stdout);
                         fputs(BF_ACCOUNT_CONNECTION_STYLE,stdout);
                         fwrite(body_end+1,1,(size_t)(main_end-(body_end+1)),stdout);

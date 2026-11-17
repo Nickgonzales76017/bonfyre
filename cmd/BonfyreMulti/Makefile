@@ -959,6 +959,9 @@ build/decide__plane.o: ../BonfyreDecide/src/plane.c ../BonfyreDecide/src/dp.h
 build/surfacescene_markdown.o: ../BonfyreSurfaceScene/src/authoring_markdown.c ../BonfyreSurfaceScene/src/authoring_markdown.h
 	@mkdir -p build
 	$(CC) $(CFLAGS) -I../BonfyreSurfaceScene/vendor/md4c -c $< -o $@
+build/surfacescene_numeric_presentation.o: ../BonfyreSurfaceScene/src/numeric_presentation.c ../BonfyreSurfaceScene/src/numeric_presentation.h
+	@mkdir -p build
+	$(CC) $(CFLAGS) $(INC) -c $< -o $@
 
 build/surfacescene_md4c.o: ../BonfyreSurfaceScene/vendor/md4c/md4c.c
 	@mkdir -p build
@@ -998,6 +1001,7 @@ OBJS_2 = \
 	build/provider__main.o \
 	build/surfacescene_organ.o \
 	build/surfacescene_markdown.o \
+	build/surfacescene_numeric_presentation.o \
 	build/surfacescene_md4c.o \
 	build/surfacescene_md4c_html.o \
 	build/surfacescene_md4c_entity.o \

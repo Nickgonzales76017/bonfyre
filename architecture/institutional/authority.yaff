@@ -55,7 +55,7 @@ architecture external-account-link
   semantic_question Which public remote accounts has an authenticated Bonfyre person declared as related to them, and what has actually been proven about that relationship?
   purpose A private, account-owned register of public remote profile locators. A person may add, read, and revoke only their own relationship rows through BonfyreAuth. The initial proof state is deliberately declared: it makes a useful social/profile connection without pretending a locator has established remote identity, OAuth consent, provider data access, or external effect authority.
   maturity implemented
-  consumes BonfyreAuth
+  consumes Authority
   publishes ExternalAccountLink
   node_types ExternalAccountLink
   state_types declared

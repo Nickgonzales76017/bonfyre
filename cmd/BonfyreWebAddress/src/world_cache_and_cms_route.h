@@ -182,7 +182,7 @@ static int serve_listen_program(const BfRequest *r) {
         /* an artist reference that is still an identifier is not a name to show */
         const char *by = strchr(artist, ':') ? "" : artist;
         ui_close(stdout,"h1");if(*by){ui_text(stdout, "p", "ak-lede", by);}ui_open(stdout,"div","ak-actions");
-        if(listen_safe_asset(asset)){fputs("<button type=\"button\" class=\"ak-btn is-primary\" data-ak-track data-ak-default data-src=\"",stdout);html(asset);fputs("\" data-title=\"",stdout);html(title);fputs("\" data-by=\"",stdout);html(*by?by:"Listen");fputs("\">Play</button>",stdout);}
+        if(listen_safe_asset(asset)){ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ak-btn is-primary");ui_flag(stdout,"data-ak-track");ui_flag(stdout,"data-ak-default");ui_attr_open(stdout,"data-src");html(asset);ui_attr_close(stdout);ui_attr_open(stdout,"data-title");html(title);ui_attr_close(stdout);ui_attr_open(stdout,"data-by");html(*by?by:"Listen");ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Play");ui_close(stdout,"button");}
         if(listen_safe_asset(transcript)){ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn");ui_attr_open(stdout,"href");html(transcript);fputs("\">Transcript</a>",stdout);}
         ui_close(stdout,"div");
         if(!listen_safe_asset(asset))ui_text(stdout, "p", "ak-empty", "This recording is listed here, but no public audio for it has been published.");
@@ -514,8 +514,11 @@ static int serve_cms_route(const BfRequest *r) {
                 printf("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n");
                 ak_app_open(title ? title : "Note", "workbench", "route-notes");
                 ui_open(stdout,"article","notes-read");ui_open(stdout,"header","ak-wb-hero is-solo");ui_open(stdout,"div",NULL);ui_open(stdout,"p","ak-kicker");ui_start(stdout,"a");ui_attr(stdout,"href","/notes/");ui_gt(stdout);ui_copy(stdout,"Notes");ui_close(stdout,"a");ui_close(stdout,"p");ui_open(stdout,"h1",NULL);
-                html(title ? title : ""); fputs("</h1><div class=\"ak-actions\"><button type=\"button\" class=\"ak-btn\" data-ak-track data-narrate=\"#note-text\" data-title=\"", stdout);
-                html(title ? title : "Note"); fputs("\" data-by=\"Aurekai notes\">Listen</button></div></div></header><div class=\"notes-text\" id=\"note-text\">", stdout);
+                html(title ? title : ""); ui_close(stdout,"h1");ui_open(stdout,"div","ak-actions");
+                ui_start(stdout,"button");ui_attr(stdout,"type","button");ui_attr(stdout,"class","ak-btn");ui_flag(stdout,"data-ak-track");ui_attr(stdout,"data-narrate","#note-text");ui_attr_open(stdout,"data-title");
+                html(title ? title : "Note"); ui_attr_close(stdout);ui_attr(stdout,"data-by","Aurekai notes");ui_gt(stdout);ui_copy(stdout,"Listen");ui_close(stdout,"button");
+                ui_close(stdout,"div");ui_close(stdout,"div");ui_close(stdout,"header");
+                ui_start(stdout,"div");ui_attr(stdout,"class","notes-text");ui_attr(stdout,"id","note-text");ui_gt(stdout);
                 {   /* blank lines separate paragraphs */
                     const char *p = content ? content : "";
                     while (*p) {

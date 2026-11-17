@@ -603,7 +603,7 @@ architecture rate-discovery
   source_path scripts/sweep-rates.mjs
   source_path scripts/rate-discovery.cue
   source_path scripts/public-source-fetch.mjs
-  consumes PriceSource
+  consumes SourceChannel
   publishes RateAdmissionAttempt
   internal_calculus a 402 response is a source observation; maxAmountRequired and crypto-asset amounts may be base-unit quantities and cannot become decimal Meter rates without denomination evidence, so this lowering admits only explicit fiat amounts under the declared currency list
   invariant a 402 alone does not increment the admitted count; only a successful native Meter command does

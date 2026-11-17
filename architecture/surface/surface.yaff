@@ -760,6 +760,8 @@ architecture internet-census
   consumes ForeignTwin
   consumes PackDemand
   publishes ForeignOccurrence
+  publishes InternetCensus
+  publishes InternetSource
   internal_calculus two hundred and twenty two rows: two hundred families declared and deliberately unwalked, eighteen concrete sources observed on a schedule, four refused and frozen. Each observed row carries an extraction contract -- which path holds the items, which field is the title, which field is the number -- so a surface reads a source it has never heard of without knowing its shape. Reheating is scheduled by ResourceWeather: the source's own cadence, multiplied by a tier, promoted by pack demand, demoted by silence, frozen by a refusal.
   invariant the census is a map and not a walk; most of it is declared and unobserved on purpose, and an estate that has observed most of its own census is mirroring the internet slowly
   invariant the extraction contract lives on the row rather than in a page; eighteen source shapes compiled into a landing page is the branch-per-product shape one layer up
@@ -882,9 +884,12 @@ architecture world-publication
   source_path deploy/systemd/bonfyre-public-projection-worker.service
   source_path deploy/systemd/bonfyre-public-projection-worker.timer
   consumes InternetCensus
-  consumes SurfaceRenderer
+  consumes SurfaceIR
   consumes PresentationTemplate
   publishes DerivedView
+  publishes WorldPublication
+  publishes PublicationOccurrence
+  publishes WorldFragment
   internal_calculus a world row names its character, its lede, the census sources it composes and the grammars it descends into. The World-fragment authoring compiler lowers each declared grammar into one published presentation-only world_fragment row: it names a SurfaceRenderer family and variant, an extent, a same-origin source projection and an honest cannot_infer, while source bodies remain with the census/ForeignTwin reader. This makes Pixelfed-like vertical movement, stage calendar/timeline, Zulip-like topics, Pinry arrangement, MapLibre spatial composition, commerce availability and Plane-like work density independently addressable expressions of one World rather than branches copied into a page.
   invariant the character is presentation and never a data model; the same reader composes all three, so a fourth character is a stylesheet and a branch, not an application
   invariant every World character resolves through a CUE-compiled material renderer descriptor; native emission selects only typed container and item opcodes, while an unrecognized legacy character receives the explicitly authored `default` descriptor rather than a C character-name ladder
@@ -968,12 +973,14 @@ architecture human-community-body
   invariant guild programme lists use the shared compiled composition stylesheet
   invariant the public community entrance uses the compiled shared page component stylesheet
   witness cmd/BonfyreWebAddress/tests/community_journey.test.mjs checks programme styling delivery and membership boundaries
+  witness 2026-11-16 dogfood P0-10: community-work transfer op passes stewardship to an active member (digest-guarded, old steward stays member); cmd/BonfyreCMS/tests/community_stewardship.test.mjs 2 pass/37 expects via CLI-driven fixture, Makefile-gated
   source_path cmd/BonfyreWebAddress/src/front_community.h
   source_path schemas/control/community-discovery.cue
   source_path cmd/BonfyreWebAddress/src/main.c
   source_path cmd/BonfyreWebAddress/src/public_projection_cache.c
   consumes ContentRecord
   publishes SurfaceIR
+  publishes HumanCommunityBody
   invariant /community renders accepted human posts, active reactions and temporally current active memberships from the canonical body and never substitutes federation rows
   invariant a retained membership or presence past its own expiry is historical evidence and never enters the public current count
   invariant public presence is an aggregate over explicitly public, current presence records whose actors still have a current membership; it never exposes an actor identity or turns presence into attendance
@@ -1036,6 +1043,10 @@ architecture human-community-body
   invariant a new account claims one address once through POST /profile/claim: handle validation, a one-time user-to-person binding, Matrix subject/institution/domain/presence bootstrap and one draft site per territory; claimed drafts wait for the existing publish review and the profile shows the waiting state instead of the setup loop
   witness 2026-11-15 preview claimed riverstone end to end (303, binding plus 4 domains plus 4 presences plus 8 drafts), refused rival, second-handle, anonymous and bad-handle claims (409, 409, 401, 400), and served the live profile and public apex after CMS publish; profile_claim.test.mjs holds the same contract with 4 passing tests
   cannot_infer a claimed handle -> a published site, a public presence, identity proof, or authority over anything; only the publish review opens pages
+  witness 2026-11-16 preview dogfood: a community created with an optional interest ("Sci-Fi") stores interest_label sci-fi, folded by the member-interest rule, and appears in /companions/clubs; a new conversation with when and where (2026-11-26T19:30, a named venue) stores event_at and venue and appears on /companions/events with an RSVP form; community_journey tests 20/20
+  forbidden_inference an interest_label -> a verified topic, a membership requirement or a match between people; it is the founder's stated subject
+  forbidden_inference a post's event_at and venue -> a booking, a reservation, a venue's consent or anyone's attendance; it is the author's stated plan
+  known_gap an owner's event is a community post; recurring programs, capacity, group sizes and provider-confirmed bookings are not yet composed onto it
 
 interaction census-reader-serves-every-surface
   source census-reader
@@ -1072,6 +1083,7 @@ architecture presentation-template
   source_path site/matrix/surfaces/world.html
   consumes SurfaceIR
   publishes DerivedView
+  publishes PresentationTemplate
   internal_calculus six templates authored as CMS rows and served at /_surface/presentation-templates, each carrying a layout_tokens object over a closed list of presentation roles -- ground, ink, display, accent, muted, rule, panel, three faces, the display metrics, radius, card border and shadow, gap and measure. The reader resolves a template from the address first and the authored world second, parses the tokens, and sets them inline on the body so no selector has to out-specify another. A role a template does not mention keeps the character's own.
   invariant a template reads no owner and holds no subject state; one that names a content type, an organ or a subject has stopped being a way of looking and become a thing looked at
   invariant the reader applies only roles it declared; an open-ended token bag would let a row reach past presentation into the layout the character owns
@@ -1259,7 +1271,7 @@ architecture site-presentation-composition
   consumes WorldPublication
   consumes SurfaceIR
   consumes PackGraph
-  consumes CapabilityClosure
+  consumes Capability
   publishes SurfaceCompositionIR
   invariant a selected Ghost profile changes page presentation and slot geometry only; it never changes subject identity, source admission, rights, audience, authority or effects
   invariant a SiteProgram applies only the closed CSS token set from its selected published PresentationTemplate; a reference-candidate Ghost census row is not live art direction, and a token cannot inject a selector, URL, script or a declaration outside the named composition variables
@@ -1397,6 +1409,7 @@ architecture listen-program
   consumes MusicRecording
   consumes MediaProgram
   publishes SurfaceIR
+  publishes MusicRecording
   invariant only an explicitly published same-origin audio asset may become an audio element
   invariant a Commons candidate crosses distinct subject, music, licence, robots-checked receipt, and exact body-digest gates before the CMS receives Work, Recording, Right, Credit and MediaProgram rows; dry-run creates none of them
   invariant missing audio representation renders an explicit unavailable state and never invents playback
@@ -1473,8 +1486,8 @@ architecture canonical-subject-address
   maturity measured
   source_path cmd/BonfyreWebAddress/src/main.c
   consumes AddressPlane
-  consumes SubjectIndex
-  consumes ObjectGrammar
+  consumes MatrixSubject
+  consumes ObjectContract
   consumes ClosureAlgebra
   publishes DerivedView
   internal_calculus one indexed row plus three counts -- the same read the subject index already does per row -- and the shortest address as a label, because an id is a digest for most kinds. Then the ways in and the relation count. Deliberately a shell: the lenses that fill a subject out are separate reads at their own addresses.

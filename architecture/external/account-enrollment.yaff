@@ -8,9 +8,10 @@ architecture account-enrollment
   semantic_question For each of the 200 onboarding targets and each identity (Gmail, Proton), what has been checked, which account holds it, which key is kept under which account, what is it waiting for, and what needs a person?
   purpose Replaces the retired standalone launcher's progress file, key writer and window bindings with native work: one BonfyreQueue mission per capability per identity, leases held per identity so one provider page is open at a time, revision-checked checkpoints for the six stages, waiting and decision states, keys sealed by BonfyreCredentials under the identity's account, and a BrowserHost side-panel section that only presents the item
   maturity implemented
-  consumes BonfyreQueue
-  consumes CredentialBoundary
+  consumes WorkState
+  consumes CredentialedRequest
   consumes BrowserHost
+  publishes BrowserHost
   node_types EnrollmentItem, EnrollmentLease, EnrollmentCheckpoint, EnrollmentStage, Interruption
   internal_calculus priority: accounts with history to recover first, then by source tier, accounts likely shared with another target last; the queue orders claims by priority
   internal_calculus waiting (email, second factor, review) fails the attempt as a resource shortage so the lease is released and the item retries after a ten-minute backoff, up to forty times; a decision (human check, paid plan, terms, no developer access) is a dependency failure held for the person

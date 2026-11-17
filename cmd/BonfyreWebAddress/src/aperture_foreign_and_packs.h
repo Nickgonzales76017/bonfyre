@@ -1,6 +1,7 @@
 #ifndef BONFYRE_APERTURE_FOREIGN_AND_PACKS_H
 #define BONFYRE_APERTURE_FOREIGN_AND_PACKS_H
 #include "ui_tree.h"
+#include "bf_jsonw.h"
 /* Extracted verbatim from main.c lines 15949-18032 (mechanical split, no logic changes). */
 static int twin_classified_kind(const char *subject, char *out, size_t cap) {
     sqlite3 *db = cms_open_ro();
@@ -1200,10 +1201,15 @@ static int serve_packs(const BfRequest *r) {
 
     /* ------------------------------------------------------ the registry */
     if (!is_closure) {
-        printf("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
-               "Access-Control-Allow-Origin: *\r\n"
-               "Cache-Control: no-store\r\nConnection: close\r\n\r\n");
-        printf("{\"schema\":\"bonfyre-pack-graph.v1\",\"packs\":[");
+        bf_jsonw w;
+        const char *pc;
+        static const char *const layers[] = {"official","institution","community","household","scenario"};
+        static const char *const verbs[] = {"hide","add","specialize","present","tighten","default"};
+        size_t li;
+        bf_jsonw_init(&w, 0);
+        bf_jsonw_obj(&w);
+        bf_jsonw_key(&w, "schema"); bf_jsonw_str(&w, "bonfyre-pack-graph.v1");
+        bf_jsonw_key(&w, "packs"); bf_jsonw_arr(&w);
         if (sqlite3_prepare_v2(db,
                 "SELECT a.pack, a.canonical_name, a.publisher, a.layer, a.kind, "
                 "  a.purpose, COALESCE(a.forks_from,''), a.governed_by, a.cannot_infer, "
@@ -1220,41 +1226,35 @@ static int serve_packs(const BfRequest *r) {
                 "ORDER BY CASE a.layer WHEN 'official' THEN 0 WHEN 'institution' THEN 1 "
                 "  WHEN 'community' THEN 2 WHEN 'household' THEN 3 ELSE 4 END, a.pack",
                 -1, &st, NULL) == SQLITE_OK) {
-            while (sqlite3_step(st) == SQLITE_ROW) {
-                char e[6][2048];
-                int c;
-                for (c = 0; c < 6; c++)
-                    json_escape_into((const char *)sqlite3_column_text(st, c == 0 ? 1 :
-                                     c == 1 ? 2 : c == 2 ? 5 : c == 3 ? 6 :
-                                     c == 4 ? 7 : 8), e[c], sizeof(e[c]));
-                printf("%s{\"pack\":\"%s\",\"canonical_name\":\"%s\",\"publisher\":\"%s\","
-                       "\"layer\":\"%s\",\"kind\":\"%s\",\"purpose\":\"%s\","
-                       "\"forks_from\":\"%s\",\"governed_by\":\"%s\","
-                       "\"cannot_infer\":\"%s\",\"head\":\"%s\",\"root\":\"%s\","
-                       "\"dependencies\":%d,\"overlays\":%d,\"demands\":%d,"
-                       "\"installations\":%d,\"activations\":%d}",
-                       rows ? "," : "",
-                       (const char *)sqlite3_column_text(st, 0), e[0], e[1],
-                       (const char *)sqlite3_column_text(st, 3),
-                       (const char *)sqlite3_column_text(st, 4),
-                       e[2], e[3], e[4], e[5],
-                       (const char *)sqlite3_column_text(st, 9),
-                       (const char *)sqlite3_column_text(st, 10),
-                       sqlite3_column_int(st, 11), sqlite3_column_int(st, 12),
-                       sqlite3_column_int(st, 13), sqlite3_column_int(st, 14),
-                       sqlite3_column_int(st, 15));
+            while (!w.oom && sqlite3_step(st) == SQLITE_ROW) {
+                static const char *const keys[] = {"pack","canonical_name","publisher","layer","kind","purpose","forks_from","governed_by","cannot_infer","head","root"};
+                static const int cols[] = {0,1,2,3,4,5,6,7,8,9,10};
+                static const char *const ckeys[] = {"dependencies","overlays","demands","installations","activations"};
+                int ki;
+                bf_jsonw_obj(&w);
+                for (ki = 0; ki < 11; ki++) { bf_jsonw_key(&w, keys[ki]); pc = (const char *)sqlite3_column_text(st, cols[ki]); bf_jsonw_str(&w, pc ? pc : ""); }
+                for (ki = 0; ki < 5; ki++) { bf_jsonw_key(&w, ckeys[ki]); bf_jsonw_int(&w, sqlite3_column_int(st, 11 + ki)); }
+                bf_jsonw_obj_end(&w);
                 rows++;
             }
             sqlite3_finalize(st);
         }
-        printf("],\"count\":%d,"
-               "\"layers\":[\"official\",\"institution\",\"community\",\"household\","
-               "\"scenario\"],"
-               "\"overlay_verbs\":[\"hide\",\"add\",\"specialize\",\"present\","
-               "\"tighten\",\"default\"],"
-               "\"cannot_infer\":\"a pack is behaviour and never an identity; forking is "
-               "not installing, installing is not activating, and activating is not "
-               "authorizing\"}\n", rows);
+        bf_jsonw_arr_end(&w);
+        bf_jsonw_key(&w, "count"); bf_jsonw_int(&w, rows);
+        bf_jsonw_key(&w, "layers"); bf_jsonw_arr(&w);
+        for (li = 0; li < 5; li++) bf_jsonw_str(&w, layers[li]);
+        bf_jsonw_arr_end(&w);
+        bf_jsonw_key(&w, "overlay_verbs"); bf_jsonw_arr(&w);
+        for (li = 0; li < 6; li++) bf_jsonw_str(&w, verbs[li]);
+        bf_jsonw_arr_end(&w);
+        bf_jsonw_key(&w, "cannot_infer"); bf_jsonw_str(&w, "a pack is behaviour and never an identity; forking is not installing, installing is not activating, and activating is not authorizing");
+        bf_jsonw_obj_end(&w);
+        if (w.oom || !w.buf) { bf_jsonw_free(&w); sqlite3_close(db); protocol_reply(503, "text/plain", "The configuration store is unavailable.\n"); return 1; }
+        printf("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+               "Access-Control-Allow-Origin: *\r\n"
+               "Cache-Control: no-store\r\nConnection: close\r\n\r\n");
+        fputs(w.buf, stdout); fputc('\n', stdout);
+        bf_jsonw_free(&w);
         sqlite3_close(db);
         fflush(stdout);
         return 1;

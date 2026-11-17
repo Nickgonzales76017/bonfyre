@@ -15,7 +15,7 @@ static int bf_profile_authoring_overview_emit(FILE *out,sqlite3 *db,const char *
  int ready=bf_site_authored_document_project(db,site_id,"/",content,cap,&blocks);
  if(ready==1&&blocks>0){
   ui_start(out,"link");ui_attr(out,"rel","stylesheet");ui_attr(out,"href","/assets/authoring-reader.css");ui_gt(out);
-  fputs("<script defer src=\"/assets/authoring-reader.js\"></script>",out);
+  ui_start(out,"script");ui_flag(out,"defer");ui_attr(out,"src","/assets/authoring-reader.js");ui_gt(out);ui_close(out,"script");
   ui_start(out,"div");ui_attr(out,"data-profile-authoring","typed-native-c");ui_attr(out,"role","region");ui_attr(out,"aria-label","Published profile composition");ui_gt(out);
   fputs(content,out);
   ui_close(out,"div");

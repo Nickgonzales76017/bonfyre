@@ -63,6 +63,7 @@ architecture semantic-derivation
   consumes FactDelta
   publishes DecisionSnapshot
   publishes SemanticSlice
+  publishes FactDelta
   node_types SemanticProgramIR
   node_types ConstraintIR
   node_types FactDelta

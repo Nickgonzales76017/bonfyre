@@ -149,7 +149,7 @@ static const char *psetup_presentation_query;
 static void psetup_bar(void){
     const char *bar=BF_ESTATE_BAR,*a=strstr(bar,"<!--BF_SESSION_BEGIN-->"),*b=a?strstr(a,"<!--BF_SESSION_END-->"):NULL;
     if(!a||!b){fputs(bar,stdout);return;}
-    fwrite(bar,1,(size_t)(a-bar),stdout);fputs("<!--BF_SESSION_BEGIN-->",stdout);
+    fwrite(bar,1,(size_t)(a-bar),stdout);ui_lit(stdout,"<!--BF_SESSION_BEGIN-->");
     account_navigation_emit(page_request_bearer,page_request_auth_db);fputs(b,stdout);
 }
 static void psetup_open_with_style(int code,const char *title,const char *main_class,const char *extra_style){
@@ -165,15 +165,20 @@ static void psetup_open_with_style(int code,const char *title,const char *main_c
         }
         if(head)fclose(head);if(attrs)fclose(attrs);
     }
-    fputs("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"theme-color\" content=\"#0f1511\"><meta name=\"robots\" content=\"noindex\"><title>",stdout);
-    html(title);fputs(" \xc2\xb7 Aurekai</title><link rel=\"stylesheet\" href=\"/assets/authoring-reader.css\">",stdout);
+    ui_lit(stdout,"<!doctype html>");ui_start(stdout,"html");ui_attr(stdout,"lang","en");ui_gt(stdout);
+    ui_open(stdout,"head",NULL);ui_open_a(stdout,"meta","charset","utf-8");
+    ui_open_a(stdout,"meta","name","viewport","content","width=device-width,initial-scale=1");
+    ui_open_a(stdout,"meta","name","theme-color","content","#0f1511");
+    ui_open_a(stdout,"meta","name","robots","content","noindex");ui_open(stdout,"title",NULL);
+    html(title);fputs(" \xc2\xb7 Aurekai",stdout);ui_close(stdout,"title");
+    ui_open_a(stdout,"link","rel","stylesheet","href","/assets/authoring-reader.css");
     if(head_extra&&*head_extra)fputs(head_extra,stdout);else ui_open_a(stdout,"link","rel","stylesheet","href","/assets/composition.css");
     if(!strcmp(main_class,"pack-workspace")) do{ ui_open_a(stdout,"link","rel","stylesheet","href","/assets/pack-setup.css"); ui_open_a(stdout,"link","rel","stylesheet","href","/assets/pack-presentation.css"); }while(0);
     if(extra_style) { ui_open_a(stdout,"link","rel","stylesheet",UI_DYN,"href","",(extra_style)); }
-    fputs("</head><body class=\"ak-app\"",stdout);
+    ui_close(stdout,"head");ui_start(stdout,"body");ui_attr(stdout,"class","ak-app");
     if(body_extra&&*body_extra)fputs(body_extra,stdout);else fputs(" data-aurekai-pattern=\"workbench\"",stdout);
     fputs(">",stdout);free(head_extra);free(body_extra);
-    psetup_bar();fputs("<main class=\"",stdout);fputs(main_class,stdout);fputs("\">",stdout);
+    psetup_bar();ui_start(stdout,"main");ui_attr_open(stdout,"class");fputs(main_class,stdout);ui_attr_close(stdout);ui_gt(stdout);
 }
 static void psetup_open(int code,const char *title,const char *main_class){
     psetup_open_with_style(code,title,main_class,NULL);
@@ -183,7 +188,7 @@ static void psetup_start(int code, const char *title) {
 }
 /* The Stitch workbench layout (composition.css .ak-wb) on the same shell. */
 static void psetup_start_wb(int code,const char *title){psetup_open(code,title,"ak-wb");}
-static void psetup_end(void) { fputs("</main>" BF_ESTATE_FOOT "</body></html>\n",stdout); }
+static void psetup_end(void) { ui_close(stdout,"main");fputs(BF_ESTATE_FOOT,stdout);ui_close(stdout,"body");ui_close(stdout,"html");fputs("\n",stdout); }
 static void psetup_hidden(const char *name,const char *value) { ui_open_a(stdout,"input","type","hidden",UI_DYN,"name","",(name),UI_DYN,"value","",(value)); }
 static void psetup_link(const PackSetupInput *in,int share,const char *digest) {
     fputs("/packs/setup?pack=",stdout); url_query_value(in->pack);
@@ -273,8 +278,8 @@ static void psetup_destination_picker_with(const PackSetupInput *in,const char *
         const FtField hidden[]={{extra_name&&extra_value?extra_name:NULL,extra_value},{"pack",in->pack},{"version",in->version}};
         psetup_picker("pack-context",target,label,NULL,rows,count,result,in->context,hidden,3);
     }
-    fputs("<p><a data-organizations href=\"/organizations",stdout);if(*in->pack){fputs("?pack=",stdout);url_query_value(in->pack);}fputs("\">Create an organization or manage your people</a></p>",stdout);
-    if(!strncmp(in->context,"household:",10)){fputs("<p><a href=\"/households/access?household=",stdout);url_query_value(in->context+10);fputs("\">Household access</a></p>",stdout);}
+    ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_flag(stdout,"data-organizations");ui_attr_open(stdout,"href");ui_copy(stdout,"/organizations");if(*in->pack){fputs("?pack=",stdout);url_query_value(in->pack);}fputs("\">Create an organization or manage your people",stdout);ui_close(stdout,"a");ui_close(stdout,"p");
+    if(!strncmp(in->context,"household:",10)){ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/households/access?household=");url_query_value(in->context+10);fputs("\">Household access",stdout);ui_close(stdout,"a");ui_close(stdout,"p");}
 }
 static void psetup_destination_picker(const PackSetupInput *in,const char *bearer,const char *auth_db,const char *target,const char *label) {
     psetup_destination_picker_with(in,bearer,auth_db,target,label,NULL,NULL);
@@ -316,7 +321,7 @@ static void psetup_listing_link(const PackSetupInput *in,const char *kind,const 
     if(view&&*view&&strcmp(view,"gallery")){fputs("&amp;view=",stdout);url_query_value(view);}
 }
 static void psetup_option(const char *value,const char *current,const char *label){
-    fputs("<option value=\"",stdout);html(value);fputs(!strcmp(value,current)?"\" selected>":"\">",stdout);html(label);ui_close(stdout,"option");
+    ui_start(stdout,"option");ui_attr_open(stdout,"value");html(value);ui_attr_close(stdout);if(!strcmp(value,current))ui_flag(stdout,"selected");ui_gt(stdout);html(label);ui_close(stdout,"option");
 }
 static void psetup_chain(sqlite3 *db,const char *pack){
     sqlite3_stmt *s=NULL;int n=0;
@@ -348,13 +353,22 @@ static void psetup_directory(const PackSetupInput *in,const char *bearer,const c
     /* Where the tools land: the destination picker is the same owner read the setup review uses. */
     ui_open_a(stdout,"section","class","ak-packs-rail","aria-label","Workspace"); ui_open(stdout,"div","ak-packs-where");
     psetup_destination_picker_with(in,bearer,auth_db,"/packs/setup","Use these tools in",NULL,NULL);
-    fputs("</div><nav class=\"ak-packs-links\"><a data-setup-existing href=\"/apps?context=",stdout);url_query_value(in->context);fputs("\">Open your installed tools and saved work</a></nav></section>",stdout);
+    ui_close(stdout,"div");ui_start(stdout,"nav");ui_attr(stdout,"class","ak-packs-links");ui_gt(stdout);
+    ui_start(stdout,"a");ui_flag(stdout,"data-setup-existing");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps?context=");url_query_value(in->context);
+    fputs("\">Open your installed tools and saved work",stdout);ui_close(stdout,"a");ui_close(stdout,"nav");ui_close(stdout,"section");
     /* Filters are a plain GET form; the server does the filtering. */
-    fputs("<form class=\"ak-packs-filter\" method=\"get\" action=\"/packs/setup\" role=\"search\"><input type=\"hidden\" name=\"context\" value=\"",stdout);html(in->context);
-    fputs("\"><label class=\"ak-packs-find\"><span class=\"ak-visually-hidden\">Find a tool</span><input type=\"search\" name=\"q\" maxlength=\"96\" placeholder=\"Find a tool\xe2\x80\xa6\" value=\"",stdout);html(in->q);
-    fputs("\">",stdout); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); ui_open(stdout,"span",NULL); fputs("Type",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"select","name","kind");psetup_option("",kind,"All types");psetup_option("application",kind,"Applications");psetup_option("configuration",kind,"Workflow configurations");
+    ui_open_a(stdout,"form","class","ak-packs-filter","method","get","action","/packs/setup","role","search");
+    ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","context");ui_attr_open(stdout,"value");html(in->context);ui_attr_close(stdout);ui_gt(stdout);
+    ui_start(stdout,"label");ui_attr(stdout,"class","ak-packs-find");ui_gt(stdout);
+    ui_open(stdout,"span","ak-visually-hidden");ui_copy(stdout,"Find a tool");ui_close(stdout,"span");
+    ui_start(stdout,"input");ui_attr(stdout,"type","search");ui_attr(stdout,"name","q");ui_attr(stdout,"maxlength","96");ui_attr(stdout,"placeholder","Find a tool\xe2\x80\xa6");ui_attr_open(stdout,"value");html(in->q);ui_attr_close(stdout);ui_gt(stdout);
+    ui_close(stdout,"label"); ui_open(stdout,"label",NULL); ui_open(stdout,"span",NULL); fputs("Type",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"select","name","kind");psetup_option("",kind,"All types");psetup_option("application",kind,"Applications");psetup_option("configuration",kind,"Workflow configurations");
     ui_close(stdout,"select"); ui_close(stdout,"label"); ui_open(stdout,"label",NULL); ui_open(stdout,"span",NULL); fputs("Order",stdout); ui_close(stdout,"span"); ui_open_a(stdout,"select","name","order");psetup_option("published",order,"Published order");psetup_option("name",order,"Alphabetical");psetup_option("recent",order,"Recently updated");
-    fputs("</select></label><input type=\"hidden\" name=\"view\" value=\"",stdout);html(view);fputs("\"><button class=\"ak-btn\" type=\"submit\">Apply</button><span class=\"ak-packs-views\" role=\"group\" aria-label=\"View\"><a href=\"",stdout);
+    ui_close(stdout,"select");ui_close(stdout,"label");
+    ui_start(stdout,"input");ui_attr(stdout,"type","hidden");ui_attr(stdout,"name","view");ui_attr_open(stdout,"value");html(view);ui_attr_close(stdout);ui_gt(stdout);
+    ui_start(stdout,"button");ui_attr(stdout,"class","ak-btn");ui_attr(stdout,"type","submit");ui_gt(stdout);ui_copy(stdout,"Apply");ui_close(stdout,"button");
+    ui_start(stdout,"span");ui_attr(stdout,"class","ak-packs-views");ui_attr(stdout,"role","group");ui_attr(stdout,"aria-label","View");ui_gt(stdout);
+    ui_start(stdout,"a");ui_attr_open(stdout,"href");
     psetup_listing_link(in,kind,order,"gallery");fputs(strcmp(view,"list")?"\" aria-current=\"true\">Gallery</a><a href=\"":"\">Gallery</a><a href=\"",stdout);
     psetup_listing_link(in,kind,order,"list");fputs(!strcmp(view,"list")?"\" aria-current=\"true\">List</a></span></form>":"\">List</a></span></form>",stdout);
     int group=-1,step=SQLITE_DONE,section=0;size_t shown=0;
@@ -364,20 +378,24 @@ static void psetup_directory(const PackSetupInput *in,const char *bearer,const c
         snprintf(choice.pack,sizeof(choice.pack),"%s",pack);
         if(group!=application){
             if(group!=-1)do{ ui_close(stdout,"div"); ui_close(stdout,"section"); }while(0);
-            printf("<section class=\"ak-sec ak-packs-sec\" data-setup-kind=\"%s\"><header><div><span class=\"ak-kicker\">%02d</span><h2>%s</h2></div><p>%s</p></header><div class=\"ak-grid ak-packs-grid\">",
-                application?"application":"configuration",++section,application?"Applications":"Workflow configurations",
-                application?"Review the editor release and choose where its records belong.":"Reusable behaviour. Installing a plan does not provision an application or connect an outside account.");
+            ui_start(stdout,"section");ui_attr(stdout,"class","ak-sec ak-packs-sec");ui_attr_open(stdout,"data-setup-kind");
+            fputs(application?"application":"configuration",stdout);ui_attr_close(stdout);ui_gt(stdout);
+            ui_open(stdout,"header",NULL);ui_open(stdout,"div",NULL);ui_open(stdout,"span","ak-kicker");printf("%02d",++section);ui_close(stdout,"span");
+            ui_open(stdout,"h2",NULL);fputs(application?"Applications":"Workflow configurations",stdout);ui_close(stdout,"h2");ui_close(stdout,"div");
+            ui_open(stdout,"p",NULL);fputs(application?"Review the editor release and choose where its records belong.":"Reusable behaviour. Installing a plan does not provision an application or connect an outside account.",stdout);ui_close(stdout,"p");ui_close(stdout,"header");
+            ui_open(stdout,"div","ak-grid ak-packs-grid");
             group=application;
         }
         const char *label=(const char*)sqlite3_column_text(s,1),*purpose=(const char*)sqlite3_column_text(s,2),*version=(const char*)sqlite3_column_text(s,4),*raw_kind=(const char*)sqlite3_column_text(s,5);
-        fputs("<article class=\"ak-panel ak-pack\" data-pack=\"",stdout);html(pack);fputs("\"><header><span class=\"ak-tag",stdout);fputs(application?" is-on\">Application":"\">Workflow configuration",stdout);
+        ui_start(stdout,"article");ui_attr(stdout,"class","ak-panel ak-pack");ui_attr_open(stdout,"data-pack");html(pack);ui_attr_close(stdout);ui_gt(stdout);
+        ui_open(stdout,"header",NULL);ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-tag");fputs(application?" is-on\">Application":"\">Workflow configuration",stdout);
         ui_close(stdout,"span"); ui_open_a(stdout,"span","class","ak-pack-glyph","aria-hidden","true");page_glyph(bf_pack_icon(pack,raw_kind?raw_kind:""));ui_close(stdout,"span"); ui_close(stdout,"header"); ui_open(stdout,"h3",NULL);html(label?label:pack);ui_close(stdout,"h3");
         if(!application)psetup_chain(db,pack);
         if(purpose&&*purpose){ui_text(stdout, "p", NULL, purpose);}
         if(application&&identity==1){PackSetupResult existing={0};if(!psetup_call("current",&choice,actor,subject,scope,&existing)&&!strcmp(existing.state,"active")){ui_open(stdout,"div","ak-pack-open");workspace_editor_links(existing.installation);ui_close(stdout,"div");}}
         ui_open(stdout,"footer",NULL); ui_open(stdout,"small",NULL);if(version&&*version){fputs("Release ",stdout);char v[9];snprintf(v,sizeof(v),"%s",version);html(v);}else fputs("No stable release",stdout);
-        fputs("</small><a class=\"ak-btn",stdout);fputs(application?" is-primary":"",stdout);fputs("\" data-setup-review href=\"",stdout);psetup_link(&choice,0,NULL);
-        fputs(application?"\">Review application setup</a></footer></article>":"\">Review workflow configuration</a></footer></article>",stdout);
+        ui_close(stdout,"small");ui_start(stdout,"a");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-btn");fputs(application?" is-primary":"",stdout);ui_attr_close(stdout);ui_flag(stdout,"data-setup-review");ui_attr_open(stdout,"href");psetup_link(&choice,0,NULL);
+        if(application)fputs("\">Review application setup",stdout);else fputs("\">Review workflow configuration",stdout);ui_close(stdout,"a");ui_close(stdout,"footer");ui_close(stdout,"article");
         shown++;
     }
     if(group!=-1)do{ ui_close(stdout,"div"); ui_close(stdout,"section"); }while(0);
@@ -412,7 +430,7 @@ static int serve_pack_setup(const BfRequest *r) {
             if(*in.design&&!strcmp(in.operation,"activate")){fputs("HTTP/1.1 303 See Other\r\nLocation: /cms/productions?context=",stdout);url_query_value(in.context);fputs("&design=",stdout);url_query_value(in.design);}
             else{fputs("HTTP/1.1 303 See Other\r\nLocation: /packs/setup?pack=",stdout);url_query_value(in.pack);fputs("&context=",stdout);url_query_value(in.context);if(*in.version){fputs("&version=",stdout);url_query_value(in.version);}if(*in.design){fputs("&design=",stdout);url_query_value(in.design);}}
             fputs("\r\nCache-Control: no-store\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",stdout);return 1;}
-        psetup_start_wb(rc==2&&plan.committed?200:409,"Review setup again");ui_open(stdout,"header","ak-wb-hero is-solo"); ui_open(stdout,"div",NULL); ui_text(stdout,"p","ak-kicker","Workspace setup"); ui_open(stdout,"h1",NULL);fputs(plan.committed?"Saved; a downstream refresh needs attention":"This setup was not changed",stdout);ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede");html(plan.reason[0]?plan.reason:"The content owner could not confirm the operation.");fputs("</p><p class=\"ak-actions\"><a class=\"ak-btn is-primary\" href=\"",stdout);psetup_link(&in,0,NULL);fputs("\">Review the current configuration</a></p></div></header>",stdout);psetup_end();return 1;
+        psetup_start_wb(rc==2&&plan.committed?200:409,"Review setup again");ui_open(stdout,"header","ak-wb-hero is-solo"); ui_open(stdout,"div",NULL); ui_text(stdout,"p","ak-kicker","Workspace setup"); ui_open(stdout,"h1",NULL);fputs(plan.committed?"Saved; a downstream refresh needs attention":"This setup was not changed",stdout);ui_close(stdout,"h1"); ui_open(stdout,"p","ak-lede");html(plan.reason[0]?plan.reason:"The content owner could not confirm the operation.");ui_close(stdout,"p");ui_open(stdout,"p","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_attr_open(stdout,"href");psetup_link(&in,0,NULL);fputs("\">Review the current configuration",stdout);ui_close(stdout,"a");ui_close(stdout,"p");ui_close(stdout,"div");ui_close(stdout,"header");psetup_end();return 1;
     }
     if(!in.pack[0]){psetup_directory(&in,bearer,auth_db,identity,actor,subject,scope);return 1;}
     int result=psetup_call("plan",&in,actor,subject,scope,&plan);
@@ -425,12 +443,17 @@ static int serve_pack_setup(const BfRequest *r) {
      * instrument row, the included-behaviour ledger beside the configuration,
      * and the fingerprint band. Every action is the existing reviewed POST. */
     psetup_start_wb(result<0?503:200,label);
-    fputs("<div class=\"ak-wb-strip\"><a href=\"/packs/setup?context=",stdout);url_query_value(in.context);fputs("\">Workspace setup</a><span>/</span><a href=\"/apps?context=",stdout);url_query_value(in.context);
+    ui_open(stdout,"div","ak-wb-strip");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/packs/setup?context=");url_query_value(in.context);fputs("\">Workspace setup",stdout);ui_close(stdout,"a");ui_open(stdout,"span",NULL);ui_copy(stdout,"/");ui_close(stdout,"span");ui_start(stdout,"a");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps?context=");url_query_value(in.context);
     fputs("\">Your work",stdout); ui_close(stdout,"a"); ui_open(stdout,"span","ak-live");html(state_words);ui_close(stdout,"span"); ui_close(stdout,"div");
     ui_open(stdout,"header","ak-wb-hero"); ui_open(stdout,"div",NULL); ui_text(stdout,"p","ak-kicker","Set up a tool"); ui_open(stdout,"h1",NULL);html(label);ui_close(stdout,"h1"); ui_text(stdout,"p","ak-lede","Check what it adds, choose where it goes, then add it and switch it on. Nothing changes until you press a button.");
-    if(*in.version){PackSetupInput latest=in;latest.version[0]='\0';fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-quiet\" data-pack-latest href=\"",stdout);psetup_link(&latest,0,NULL);fputs("\">See the newest version</a></p>",stdout);}
-    fputs("</div><aside class=\"ak-panel is-raised\" data-pack-config><h2>In this workspace</h2><p class=\"pack-status\" data-pack-state=\"",stdout);html(state);fputs("\"><span class=\"ak-dot",stdout);fputs(strcmp(state,"active")?" is-off":"",stdout);fputs("\">",stdout);html(state_words);ui_close(stdout,"span"); ui_close(stdout,"p");
-    if(!identity){fputs("<p>Sign in to add this to your workspace.</p><p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-signin href=\"/login?next=",stdout);char back[1024];snprintf(back,sizeof(back),"/packs/setup?pack=%s&version=%s&shared=%s&context=%s%s%s",in.pack,in.version,in.shared,in.context,*in.design?"&design=":"",in.design);url_query_value(back);fputs("\">Sign in or create an account</a></p>",stdout);}
+    if(*in.version){PackSetupInput latest=in;latest.version[0]='\0';ui_open(stdout,"p","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-quiet");ui_flag(stdout,"data-pack-latest");ui_attr_open(stdout,"href");psetup_link(&latest,0,NULL);fputs("\">See the newest version",stdout);ui_close(stdout,"a");ui_close(stdout,"p");}
+    ui_close(stdout,"div");ui_start(stdout,"aside");ui_attr(stdout,"class","ak-panel is-raised");ui_flag(stdout,"data-pack-config");ui_gt(stdout);
+    ui_open(stdout,"h2",NULL);ui_copy(stdout,"In this workspace");ui_close(stdout,"h2");
+    ui_start(stdout,"p");ui_attr(stdout,"class","pack-status");ui_attr_open(stdout,"data-pack-state");html(state);ui_attr_close(stdout);ui_gt(stdout);
+    ui_start(stdout,"span");ui_attr_open(stdout,"class");ui_copy(stdout,"ak-dot");fputs(strcmp(state,"active")?" is-off":"",stdout);ui_attr_close(stdout);ui_gt(stdout);
+    html(state_words);ui_close(stdout,"span");ui_close(stdout,"p");
+    if(!identity){ui_open(stdout,"p",NULL);ui_copy(stdout,"Sign in to add this to your workspace.");ui_close(stdout,"p");
+     ui_open(stdout,"p","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_flag(stdout,"data-pack-signin");ui_attr_open(stdout,"href");ui_copy(stdout,"/login?next=");char back[1024];snprintf(back,sizeof(back),"/packs/setup?pack=%s&version=%s&shared=%s&context=%s%s%s",in.pack,in.version,in.shared,in.context,*in.design?"&design=":"",in.design);url_query_value(back);fputs("\">Sign in or create an account",stdout);ui_close(stdout,"a");ui_close(stdout,"p");}
     else{
         char a[160],sb[160];const char *sc;int canwrite=psetup_context(bearer,auth_db,in.context,1,a,sizeof(a),sb,sizeof(sb),&sc)==1;
         if(!canwrite)ui_text(stdout, "p", NULL, "You can look, but only an administrator of this workspace can change it.");
@@ -442,7 +465,7 @@ static int serve_pack_setup(const BfRequest *r) {
             /* One primary per stage; turning off and removing stay quiet, beside it. */
             if(installed&&strcmp(state,"removed")){ui_open(stdout,"div","ak-pack-more");if(!strcmp(state,"active"))psetup_form("deactivate","Switch off",&in,&plan,plan.pinned);psetup_form("remove","Remove from this workspace",&in,&plan,plan.pinned);ui_close(stdout,"div");}
         }
-        if(current_ok&&!strcmp(current.state,"active")){if(!workspace_editor_links(current.installation)){fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-work href=\"/apps?context=",stdout);url_query_value(in.context);fputs("\">Open your work</a></p>",stdout);}fputs("<p><a data-pack-current href=\"/packs/closure?pack=",stdout);url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">See what is switched on</a></p>",stdout);}
+        if(current_ok&&!strcmp(current.state,"active")){if(!workspace_editor_links(current.installation)){ui_open(stdout,"p","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_flag(stdout,"data-pack-work");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps?context=");url_query_value(in.context);fputs("\">Open your work",stdout);ui_close(stdout,"a");ui_close(stdout,"p");}ui_open(stdout,"p",NULL);ui_start(stdout,"a");ui_flag(stdout,"data-pack-current");ui_attr_open(stdout,"href");ui_copy(stdout,"/packs/closure?pack=");url_query_value(in.pack);fputs("&amp;context=",stdout);url_query_value(in.context);fputs("\">See what is switched on",stdout);ui_close(stdout,"a");ui_close(stdout,"p");}
     }
     ui_close(stdout,"aside"); ui_close(stdout,"header");
     {   /* One flow, read from the saved state: check, add, switch on, open. */
@@ -456,7 +479,10 @@ static int serve_pack_setup(const BfRequest *r) {
     ui_open(stdout,"dl","ak-stats is-row"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Parts"); ui_open(stdout,"dd",NULL);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",plan.resolution.count);
     ui_close(stdout,"dd"); ui_text(stdout,"small",NULL,"included in this tool"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"New here"); ui_open(stdout,"dd",NULL);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",added);
     ui_close(stdout,"dd"); ui_text(stdout,"small",NULL,"not yet in this workspace"); ui_close(stdout,"div"); ui_open(stdout,"div",NULL); ui_text(stdout,"dt",NULL,"Changed"); ui_open(stdout,"dd",NULL);if(result)fputs("\xe2\x80\x94",stdout);else printf("%zu",changed);
-    fputs("</dd><small>would be updated</small></div><div><dt>Status</dt><dd class=\"",stdout);fputs(!strcmp(state,"active")?"is-on":"",stdout);fputs("\">",stdout);html(!strcmp(state,"active")?"On":installed&&strcmp(state,"removed")?"Installed":"Off");ui_close(stdout,"dd"); ui_open(stdout,"small",NULL);html(state_words);ui_close(stdout,"small"); ui_close(stdout,"div"); ui_close(stdout,"dl");
+    ui_close(stdout,"dd");ui_open(stdout,"small",NULL);ui_copy(stdout,"would be updated");ui_close(stdout,"small");ui_close(stdout,"div");
+    ui_open(stdout,"div",NULL);ui_open(stdout,"dt",NULL);ui_copy(stdout,"Status");ui_close(stdout,"dt");
+    ui_start(stdout,"dd");ui_attr_open(stdout,"class");fputs(!strcmp(state,"active")?"is-on":"",stdout);ui_attr_close(stdout);ui_gt(stdout);
+    html(!strcmp(state,"active")?"On":installed&&strcmp(state,"removed")?"Installed":"Off");ui_close(stdout,"dd"); ui_open(stdout,"small",NULL);html(state_words);ui_close(stdout,"small"); ui_close(stdout,"div"); ui_close(stdout,"dl");
     ui_open(stdout,"section","ak-sec"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_text(stdout,"span","ak-kicker","Where it goes"); ui_text(stdout,"h2",NULL,"Workspace"); ui_close(stdout,"div"); ui_close(stdout,"header"); ui_open(stdout,"div","ak-panel ak-packs-where");psetup_context_picker(&in,bearer,auth_db);ui_close(stdout,"div"); ui_close(stdout,"section");
     ui_open(stdout,"section","ak-sec"); ui_open(stdout,"header",NULL); ui_open(stdout,"div",NULL); ui_text(stdout,"span","ak-kicker","Check"); ui_text(stdout,"h2",NULL,"What it adds"); ui_close(stdout,"div"); ui_text(stdout,"p",NULL,"Adding it gives this workspace the parts below and any editor they come with. Your drafts stay in your workspace. It never connects an outside account, books a service or publishes anything."); ui_close(stdout,"header"); ui_open(stdout,"div","ak-panel ak-scroll");
     if(result){ui_open_a(stdout,"p","class","pack-warning","role","alert"); fputs("This tool cannot be added yet: ",stdout);html(plan.reason[0]?plan.reason:"The content owner is unavailable.");if(*plan.subject){fputs(" (",stdout);html(plan.subject);fputs(")",stdout);}fputs(". Nothing was changed.</p>",stdout);}
@@ -472,7 +498,7 @@ static int serve_pack_setup(const BfRequest *r) {
     ui_open(stdout,"section","ak-band ak-pack-proof"); ui_open(stdout,"div",NULL); ui_text(stdout,"p","ak-kicker","Share"); ui_open(stdout,"h2",NULL);
     fputs(result?"Nothing to share yet":"Send this exact setup to someone",stdout);
     ui_close(stdout,"h2"); ui_text(stdout,"p",NULL,"The link opens the same version you checked here. Whoever opens it chooses their own workspace."); ui_close(stdout,"div");
-    if(result==0){PackSetupInput shared=in;snprintf(shared.version,sizeof(shared.version),"%s",plan.version);fputs("<a class=\"ak-btn pack-link\" data-pack-share href=\"",stdout);psetup_link(&shared,1,plan.digest);fputs("\">Open the share link</a>",stdout);}
+    if(result==0){PackSetupInput shared=in;snprintf(shared.version,sizeof(shared.version),"%s",plan.version);ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn pack-link");ui_flag(stdout,"data-pack-share");ui_attr_open(stdout,"href");psetup_link(&shared,1,plan.digest);fputs("\">Open the share link",stdout);ui_close(stdout,"a");}
     ui_close(stdout,"section");
     psetup_end();return 1;
 }

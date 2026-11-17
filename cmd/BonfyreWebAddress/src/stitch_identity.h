@@ -157,9 +157,9 @@ static const char *bf_si_css(const char *view) {
 static void bf_stitch_identity_head(FILE *out, const char *view) {
     const char *css = bf_si_css(view);
     if (!css) return;
-    fprintf(out, "<style id=\"aurekai-identity-%s\">", view);
+    ui_start(out,"style");ui_attr_open(out,"id");ui_copy(out,"aurekai-identity-");fprintf(out,"%s",view);ui_attr_close(out);ui_gt(out);
     fputs(css, out);
-    fputs("</style>", out);
+    ui_close(out,"style");
 }
 
 /* The opening band of /organisations. Every link goes to an existing owner:

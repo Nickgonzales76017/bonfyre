@@ -296,6 +296,46 @@ the `@bonfyre/authoring` visual-editor bundle. A false stamp is a review
 finding, tracked like any drifted projection. The older path-based
 exclusions stay until their artifacts migrate to stamps.
 
+### 2026-11-16, unreferenced release-cluster census
+
+Fresh census of all 341 `scripts/**/*.mjs` in-tree (imports, subprocess
+literals, Makefiles, workflows, hooks, package.json, C/H, atlas, docs) plus
+stems, `~/Library/LaunchAgents`, cron and `~/.bonfyre`. Retired 8 files,
+514 lines, into restore-verified
+`~/.bonfyre/archive/retired/js-unreferenced-20261116.tar.zst`:
+
+- `scripts/release/workspace_review_sweep.mjs` (38) and
+  `scripts/release/workspace_fresh_upgrade.mjs` (61): zero references; the
+  only callers of the three specs below.
+- `scripts/release/procurement_workspace_upgrade.mjs` (135),
+  `scripts/release/procurement_downstream_workspace_upgrade.mjs` (84),
+  `scripts/release/crm_finance_workspace_upgrade.mjs` (76): referenced only
+  by the retired sweep/fresh scripts. Wired siblings (connection-studio,
+  research, source-library, publication-picker) stay.
+- `scripts/materialize_procurement_continuation.mjs` (5): re-export shim
+  referenced only by the retired procurement spec.
+- `scripts/release/reference_reader_rollout.mjs` (62): one-shot Oct-22
+  shipment upgrade; only reference is its dated doc. Its acceptance tests
+  stay (atlas-witnessed, live).
+- `scripts/domain_mail.mjs` (53): standalone Cloudflare mail CLI; only
+  reference is an unread `capabilities.json` witness pointer (no in-tree
+  readers). Judgment call: restore with
+  `zstd -dc --long=27 ~/.bonfyre/archive/retired/js-unreferenced-20261116.tar.zst | tar -xf - scripts/domain_mail.mjs`
+  if it is still run by hand. Follow-up: repoint or drop the dangling
+  witness entry in `components/BonfyreControlPlane/closure/capabilities.json`.
+
+Explicitly kept after looking live despite zero in-tree references:
+`scripts/release/nightly_checkout.mjs` (190) runs nightly at 03:00 from
+`com.bonfyre.nightly-checkout.plist`; `editorial_audio_workspace_upgrade.mjs`
+(91) was edited 2026-11-14 to track live UI strings. Lesson: in-tree census
+alone cannot clear manually-run ops tools; check launchd and recent edits.
+
+Ratchet: 1663 -> 1655 files, 186087 -> 185573 lines (other scripts 81,
+compile sites 0, installed unchanged). Neighbour suites still pass:
+`scripts/release/tests/workspace_upgrade.test.mjs` +
+`connection_studio_upgrade.test.mjs` (33 pass, 0 fail). Budgets not
+tightened (merge-time decision).
+
 ### Next
 
 1. WX: multi-call `bonfyre` binary over libbonfyre (largest program now 13.8 MB).

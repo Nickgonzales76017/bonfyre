@@ -10,9 +10,8 @@ architecture bonfyre-semantic-shell
   owns ProcessOccurrenceView
   consumes CommandAdvertisement
   consumes HouseholdEconomicCircuitProjection
-  consumes FinancialMetabolism
+  consumes FinancialPosition
   consumes ProviderState
-  consumes HouseholdProjection
   publishes ShellQueryResult
   node_types SemanticShellProgram
   node_types ProcessOccurrenceView

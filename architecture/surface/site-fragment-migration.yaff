@@ -14,7 +14,7 @@ architecture site-fragment-migration
   source_path cmd/BonfyreCMS/content-types/site_fragment.json
   source_path cmd/BonfyreSurface/tests/fragment_migration_native.test.mjs
   witness cmd/BonfyreSurface/tests/fragment_migration_native.test.mjs proves literal source identity, human text extraction, review isolation, duplicate-equivalence counts, atomic draft-only CMS import, skip-existing behavior, and a separate rebuildable index manifest
-  consumes SourceArtifact
+  consumes Artifact
   publishes DerivedView
   internal_calculus Clang AST ranges and source bytes name candidates; an authored function map decides exact page, slot and audience; the native planner assigns draft-only coordinates and leaves unreviewed functions unadmitted. The staging tool applies the CMS schema and imports all new drafts in one transaction. A read-only CMS scan produces a distinct semantic-index generation in a fresh work directory; no index result is written back into canonical content.
   invariant a candidate without a reviewed page/slot/audience mapping stays in review and never enters CMS

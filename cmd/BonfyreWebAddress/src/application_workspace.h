@@ -28,7 +28,7 @@ static int workspace_editor_links(long long installation){
         sqlite3_bind_int64(q,1,installation);while(sqlite3_step(q)==SQLITE_ROW){const char *id=(const char *)sqlite3_column_text(q,0),*entry=(const char *)sqlite3_column_text(q,1),*release=(const char *)sqlite3_column_text(q,2);
             if(!id||strlen(id)!=43||strncmp(id,"ws-",3)||strspn(id+3,"abcdef0123456789")!=40||!workspace_package_available(release,entry))continue;
             char word[64];size_t n=0;for(const char *c=!strcmp(entry,"product-room/")?"room editor":entry;*c&&*c!='/'&&n+1<sizeof(word);c++)word[n++]=*c=='-'?' ':*c;word[n]=0;
-            fputs("<p class=\"ak-actions\"><a class=\"ak-btn is-primary\" data-pack-editor href=\"/apps/",stdout);html(id);fputs("/",stdout);html(entry);fputs("\">Open ",stdout);html(word);ui_close(stdout,"a"); ui_close(stdout,"p");shown++;
+            ui_open(stdout,"p","ak-actions");ui_start(stdout,"a");ui_attr(stdout,"class","ak-btn is-primary");ui_flag(stdout,"data-pack-editor");ui_attr_open(stdout,"href");ui_copy(stdout,"/apps/");html(id);ui_copy(stdout,"/");html(entry);ui_attr_close(stdout);ui_gt(stdout);ui_copy(stdout,"Open ");html(word);ui_close(stdout,"a"); ui_close(stdout,"p");shown++;
         }
     }
     sqlite3_finalize(q);if(db)sqlite3_close(db);return shown;

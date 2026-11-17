@@ -6,8 +6,9 @@ architecture context-cut-compiler
   consumes RankedCandidateEnvelope
   consumes ReceiptBoundMaterialManifest
   consumes ExactOwnerQueryEvidence
-  consumes InformationPolicyClass
+  consumes InformationPolicy
   publishes ContextCutManifest
+  publishes ExactOwnerQueryEvidence
   publishes PurposeBoundContext
   publishes DecisionCaseFrontier
   family context
